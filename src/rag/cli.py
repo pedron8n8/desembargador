@@ -101,6 +101,47 @@ def _procedencia(p, prec):
     return out
 
 
+def _sustentacao(estado):
+    """A linha de argumentação pedida: o material do lado escolhido, e o que se
+    repete nele. Fica em seção própria porque NÃO é amostra — é material."""
+    sust = estado.get("sustentacao") or []
+    tese = estado.get("tese")
+    if not sust or tese in (None, "neutra"):
+        return []
+    lado = {"reformar": "REFORMAR (dar provimento)",
+            "manter": "MANTER (negar provimento)"}[tese]
+    out = ["---", "", "# Linha de argumentação pedida: %s" % lado, "",
+           "> Estes %d precedentes foram recuperados **já filtrados** pelo lado "
+           "que você pediu. Por isso eles não medem tendência nenhuma — quem "
+           "mede é a busca neutra, na seção anterior. Aqui é material de "
+           "sustentação." % len(sust), ""]
+    c = estado.get("comuns") or {}
+    if c.get("n"):
+        out += ["## O que se repete entre eles", ""]
+        for rotulo, chave in (("Âncoras citadas por mais de um", "ancoras"),
+                              ("Câmaras", "orgaos"), ("Classes", "classes")):
+            if c.get(chave):
+                out.append("- **%s:** %s" % (rotulo, "; ".join(
+                    "%s (%d)" % t for t in c[chave])))
+        out += ["- **%d de %d unânimes**, %d transitaram em julgado, anos %s"
+                % (c["unanimes"], c["n"], c["transitaram"],
+                   "–".join(str(x) for x in (c["anos"][:1] + c["anos"][-1:]))), ""]
+        if not c.get("ancoras"):
+            out += ["> Nenhuma âncora aparece em mais de um deles: são decisões "
+                    "que chegaram ao mesmo resultado por caminhos diferentes. "
+                    "O ponto comum, se existir, está nos fatos — não há tese "
+                    "única para citar.", ""]
+    out += ["## Precedentes de sustentação", ""]
+    for d in sust:
+        out += ["**%s** — %s, %s — *%s* (analogia %d/5: %s)"
+                % (d["numero"], d["classe"], d["data"], d["resultado"],
+                   d["nota"], d["por_que"]),
+                "", "  Procedência: %s" % sinais.resumir_ficha(d), "",
+                "  " + (d["ementa"] or "(sem ementa)")[:300], "",
+                "  <%s>" % d["url"], ""]
+    return out
+
+
 def formatar(estado, segundos):
     p = estado.get("prognostico") or {}
     prec = estado.get("precedentes") or []
@@ -131,13 +172,19 @@ def formatar(estado, segundos):
         out += ["Nenhum precedente com analogia suficiente foi encontrado.", ""]
 
     out += _procedencia(p, prec)
-    out += _veredito(p)
+    out += _sustentacao(estado)
+    out += _veredito(p, estado.get("tese"))
     return _fechar(out, estado, prec, segundos)
 
 
-def _veredito(p):
+def _veredito(p, tese=None):
     """O prognóstico — ou a recusa de dar um. Vem DEPOIS das evidências."""
     out = ["---", "", "# Prognóstico", ""]
+    if tese and tese != "neutra":
+        out += ["> Calculado na busca **neutra**, sem o filtro de lado que você "
+                "pediu. Se ele apontar contra a sua linha de argumentação, é "
+                "esse o recado: a sustentação existe, mas rema contra a "
+                "corrente do acervo.", ""]
 
     if p.get("decide") is False:
         out += ["## NÃO DECIDO", "",
@@ -250,9 +297,52 @@ def _fechar(out, estado, prec, segundos):
     return "\n".join(out), total
 
 
+MENU = """
+Que análise você quer deste caso?
+
+  1) neutra     — o que o acervo diz, sem lado. É a única em que o percentual
+                  vale como probabilidade.
+  2) reformar   — puxa também os precedentes que DERAM provimento, para achar o
+                  que eles têm em comum e você poder usar.
+  3) manter     — o mesmo, do lado que NEGOU provimento.
+  4) histórico  — processos e consultas que você já usou.
+
+Em 2 e 3 o prognóstico continua sendo calculado na busca NEUTRA: o sistema
+monta a sustentação que você pediu, mas não mente sobre para que lado a
+jurisprudência pende.
+
+Escolha [1]: """
+
+
+def _perguntar_tese():
+    """A pergunta do enunciado. Só em terminal — script nenhum trava por isso."""
+    if not sys.stdin.isatty():
+        return "neutra"
+    while True:
+        print(MENU, end="", flush=True)
+        try:
+            r = input().strip().lower()
+        except EOFError:
+            return "neutra"
+        if r in ("", "1", "neutra"):
+            return "neutra"
+        if r in ("2", "reformar"):
+            return "reformar"
+        if r in ("3", "manter"):
+            return "manter"
+        if r in ("4", "historico", "histórico"):
+            print("termo (número de processo, tema, ou enter para tudo): ",
+                  end="", flush=True)
+            feedback.imprimir_historico(input().strip() or None)
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description="Segundo cérebro — Des. Rubens Schulz")
     ap.add_argument("arquivo", nargs="?", help="arquivo .txt com o caso")
+    ap.add_argument("--tese", choices=("neutra", "reformar", "manter"),
+                    help="linha de argumentação. Sem isto, o sistema pergunta.")
+    ap.add_argument("--historico", nargs="?", const="", default=None, metavar="TERMO",
+                    help="só consulta o que você já usou e sai (não gasta nada)")
     ap.add_argument("--so-prognostico", action="store_true",
                     help="para antes de redigir a minuta (mais barato)")
     ap.add_argument("--classe", help="força a classe processual no filtro")
@@ -262,6 +352,10 @@ def main(argv=None):
     ap.add_argument("--thread", default=None,
                     help="id da consulta; repetir retoma do checkpoint")
     a = ap.parse_args(argv)
+
+    if a.historico is not None:
+        feedback.imprimir_historico(a.historico or None)
+        return 0
 
     if a.arquivo:
         with open(a.arquivo, encoding="utf-8", errors="replace") as f:
@@ -278,6 +372,8 @@ def main(argv=None):
         print("Caso vazio.", file=sys.stderr)
         return 2
 
+    tese = a.tese or _perguntar_tese()
+
     os.makedirs(SAIDA, exist_ok=True)
     ckpt = os.path.join(RAIZ, "output", "rag_runs.db")
     app = grafo.construir(checkpoint=ckpt, so_prognostico=a.so_prognostico)
@@ -286,6 +382,7 @@ def main(argv=None):
 
     cfg_run = {"configurable": {"thread_id": thread}, "recursion_limit": 30}
     entrada = {"caso": caso, "custos": [], "criticas": [], "ciclo_revisao": 0,
+               "tese": tese,
                "filtros": {"classe": a.classe, "ano_min": a.ano_min,
                            "excluir": tuple(a.excluir)}}
     # Retomar exige invoke(None): mandar o input de novo reinicia o grafo do

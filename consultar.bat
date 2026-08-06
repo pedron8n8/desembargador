@@ -46,6 +46,9 @@ if not exist "output\floresta.pkl" (
 REM ---------- 4) Consulta ----------
 REM Uso:  consultar.bat  caso.txt  [--so-prognostico] [--classe "Apelacao Civel"]
 REM Sem argumento: cola o texto no terminal e termina com uma linha FIM.
+REM O sistema pergunta a linha de analise (neutra / reformar / manter); para
+REM pular a pergunta:            consultar.bat caso.txt --tese reformar
+REM Ver o que voce ja' usou:     consultar.bat --historico [termo]
 echo.
 %VPY% -X utf8 -m src.rag.cli %*
 

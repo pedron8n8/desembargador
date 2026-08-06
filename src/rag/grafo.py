@@ -35,13 +35,28 @@ TJSC = os.path.join(RAIZ, "output", "tjsc.db")
 PESO_CONFIANCA = {"dispositivo": 1.0, "texto completo": 0.7, "ementa": 0.5, "-": 0.2}
 
 
+# Linha de argumentacao pedida pelo usuario -> resultados que a sustentam.
+# NAO existe "condenar/absolver" neste acervo: 18 decisoes criminais em 20.363.
+# O eixo real do corpus e' reformar x manter, e e' nele que a busca opera.
+TESES = {
+    "reformar": ("provido", "parcialmente provido"),
+    "manter": ("desprovido",),
+    "neutra": (),
+}
+ROTULO_TESE = {"reformar": "reformar a decisão de origem (dar provimento)",
+               "manter": "manter a decisão de origem (negar provimento)"}
+
+
 class Estado(TypedDict, total=False):
     caso: str
     filtros: dict                       # classe / ano_min / ano_max / excluir
+    tese: str                           # neutra | reformar | manter
     triagem: dict
     consulta: str
     candidatos: list
     precedentes: list
+    sustentacao: list                   # precedentes do lado pedido (so' com --tese)
+    comuns: dict                        # o que se repete entre eles
     perfil: dict                        # historico do argumento (sinais.perfil)
     contra: dict                        # quem discorda, dentro do que veio
     ciclo_busca: int
@@ -171,6 +186,20 @@ Portanto:
 Quem decide é o desembargador; seu papel aqui é deixar a escolha informada.
 """
 
+P_TESE = """
+LINHA DE ARGUMENTAÇÃO PEDIDA: o usuário quer a sustentação para {lado}.
+
+Escreva a fundamentação que sustenta esse lado, apoiada nos PRECEDENTES DE
+SUSTENTAÇÃO abaixo e no que se repete entre eles.
+
+Isto NÃO é licença para forçar nem para esconder:
+- a contra-argumentação continua tendo de ser enfrentada pelo número;
+- se o prognóstico neutro (que foi calculado SEM este filtro) apontar para o
+  outro lado, escreva uma seção final "O que joga contra" dizendo isso com todas
+  as letras e apontando o que precisaria ser provado nos autos para virar;
+- não invente precedente, súmula nem tese que não esteja na lista.
+{comuns}"""
+
 P_REVISAR = """Você é o revisor. Não reescreva nada — aponte problemas.
 
 Confira a minuta contra os precedentes e o prognóstico e verifique:
@@ -238,13 +267,26 @@ def no_recuperar(estado):
     # Busca o dobro e reordena pela ficha de procedencia antes de cortar: o LLM
     # de triagem passa a ver os N melhores de 2N, e nao os 2N primeiros do BM25.
     # Custo de LLM identico — quem paga o dobro e' o SQLite, em milissegundos.
-    cand = busca.buscar(consulta, limite=limite * 2, classe=classe,
-                        ano_min=f.get("ano_min"), ano_max=f.get("ano_max"),
-                        excluir=f.get("excluir") or ())
+    comum = dict(classe=classe, ano_min=f.get("ano_min"), ano_max=f.get("ano_max"),
+                 excluir=f.get("excluir") or ())
+    cand = busca.buscar(consulta, limite=limite * 2, **comum)
     cand = rerank.ordenar(cand, limite=limite, boost=fb)
+    for c in cand:
+        c["neutro"] = True   # so' estes contam no prognostico
+
+    # Linha de argumentacao: uma SEGUNDA busca, restrita ao lado pedido, para
+    # achar sustentacao que nao cabia no top-N neutro. As duas listas seguem
+    # separadas de proposito — a neutra alimenta o prognostico calibrado, esta
+    # alimenta a minuta. Custo de LLM: so' as linhas novas na triagem.
+    lado = TESES.get(estado.get("tese") or "neutra", ())
+    if lado:
+        vistos = {c["id"] for c in cand}
+        extra = busca.buscar(consulta, limite=limite * 2, resultados=lado, **comum)
+        extra = [c for c in rerank.ordenar(extra, boost=fb) if c["id"] not in vistos]
+        cand += extra[:max(8, limite // 2)]
     return {"consulta": consulta, "candidatos": cand, "ciclo_busca": ciclo + 1,
             "perfil": sinais.perfil(consulta),
-            "contra": sinais.contra_argumentacao(cand)}
+            "contra": sinais.contra_argumentacao([c for c in cand if c.get("neutro")])}
 
 
 def no_triar(estado):
@@ -285,12 +327,21 @@ def no_triar(estado):
     # a nota do LLM manda (e' ela que veta o que nao e' analogo); o rerank so'
     # desempata dentro da mesma nota
     escolhidos.sort(key=lambda c: (-c["nota"], -c.get("pontos", 0.0)))
-    escolhidos = escolhidos[:cfg["precedentes"]]
     if cand and not notas:
         print("  AVISO: a triagem não devolveu nota nenhuma para %d candidatos "
               "— o prognóstico vai sair vazio" % len(cand), flush=True)
-    return {"precedentes": escolhidos, "custos": custos,
-            "contra": sinais.contra_argumentacao(escolhidos)}
+
+    # A LISTA DO PROGNOSTICO E' SO' A NEUTRA. Deixar a busca da tese entrar aqui
+    # empurraria a contagem para o lado pedido — o sistema responderia o que o
+    # usuario quer ouvir, com a cara de numero calibrado. E' o oposto do que ele
+    # serve para fazer.
+    prec = [c for c in escolhidos if c.get("neutro")][:cfg["precedentes"]]
+    lado = TESES.get(estado.get("tese") or "neutra", ())
+    sust = ([c for c in escolhidos if c["resultado"] in lado][:cfg["precedentes"]]
+            if lado else [])
+    return {"precedentes": prec, "custos": custos, "sustentacao": sust,
+            "comuns": sinais.comuns(sust),
+            "contra": sinais.contra_argumentacao(prec)}
 
 
 def _suficiente(estado):
@@ -443,12 +494,36 @@ def _bloco_procedencia(estado):
     return "\n".join(linhas) + "\n"
 
 
+def _bloco_comuns(c):
+    """O que se repete entre os precedentes do lado pedido — material bruto."""
+    if not c.get("n"):
+        return ""
+    l = ["\nO QUE SE REPETE nos %d precedentes de sustentação (contagem, não "
+         "opinião):" % c["n"]]
+    for rotulo, chave in (("âncoras citadas por mais de um", "ancoras"),
+                          ("câmaras", "orgaos"), ("classes", "classes")):
+        if c.get(chave):
+            l.append("- %s: %s" % (rotulo, "; ".join("%s (%d)" % t for t in c[chave])))
+    l.append("- %d de %d unânimes; %d transitaram em julgado; anos %s"
+             % (c["unanimes"], c["n"], c["transitaram"],
+                "-".join(str(a) for a in (c["anos"][:1] + c["anos"][-1:]))))
+    return "\n".join(l) + "\n"
+
+
 def no_redigir(estado):
     cfg = config()["busca"]
     prec = estado.get("precedentes") or []
+    vistos = {p["id"] for p in prec}
+    sust = [p for p in (estado.get("sustentacao") or []) if p["id"] not in vistos][:4]
     db = sqlite3.connect("file:%s?mode=ro" % TJSC.replace("\\", "/"), uri=True)
     try:
         blocos = [_texto_precedente(db, p, cfg["chars_por_precedente"]) for p in prec]
+        if sust:
+            blocos.append("\n## PRECEDENTES DE SUSTENTAÇÃO (recuperados já "
+                          "filtrados pelo lado pedido — não servem de amostra "
+                          "para medir tendência, servem de material)\n")
+            blocos += [_texto_precedente(db, p, cfg["chars_por_precedente"])
+                       for p in sust]
     finally:
         db.close()
     criticas = estado.get("criticas") or []
@@ -468,6 +543,9 @@ def no_redigir(estado):
         aviso = P_DIVERGENCIA.format(divergencia=prog["divergencia"])
     else:
         aviso = ""
+    if ROTULO_TESE.get(estado.get("tese")):
+        aviso += P_TESE.format(lado=ROTULO_TESE[estado["tese"]],
+                               comuns=_bloco_comuns(estado.get("comuns") or {}))
     msg = [{"role": "user", "content": P_REDIGIR.format(
         prognostico=json.dumps(enxuto, ensure_ascii=False),
         divergencia=aviso,
@@ -503,7 +581,11 @@ foi instruído a NÃO cravar um desfecho. Então, aqui:
 
 
 def no_revisar(estado):
-    numeros = [p["numero"] for p in (estado.get("precedentes") or [])]
+    # a sustentacao entra: sao numeros que o redator recebeu e pode citar com
+    # razao. Fora daqui, o revisor os acusaria de inventados.
+    numeros = list(dict.fromkeys(
+        p["numero"] for p in ((estado.get("precedentes") or [])
+                              + (estado.get("sustentacao") or []))))
     absteve = (estado.get("prognostico") or {}).get("decide") is False
     txt, custo = chamar("revisar", [{"role": "user", "content": P_REVISAR.format(
         modo=R_SEM_DECISAO if absteve else "",
@@ -531,7 +613,9 @@ def no_julgar(estado):
     redator = next((c["modelo"] for c in reversed(estado.get("custos") or [])
                     if c["no"] == "redigir"), None)
     d, custo = juiz.avaliar(
-        minuta, [p["numero"] for p in (estado.get("precedentes") or [])],
+        minuta, list(dict.fromkeys(
+            p["numero"] for p in ((estado.get("precedentes") or [])
+                                  + (estado.get("sustentacao") or [])))),
         caso=estado.get("caso"), decisao_real=estado.get("decisao_real"),
         modelo_redator=redator,
         absteve=(estado.get("prognostico") or {}).get("decide") is False)
@@ -680,6 +764,33 @@ if __name__ == "__main__":
                                        "lado_majoritario": "manutencao",
                                        "exemplos": [{"numero": "123"}]}})
     assert "300 decisões" in b and "CONTRA-ARGUMENTAÇÃO" in b and "123" in b, b
+
+    # --- linha de argumentacao: puxa material do lado pedido SEM mexer no
+    # prognostico. E' a invariante que sustenta o resto do sistema — se a busca
+    # enviesada vazar para a contagem, o percentual calibrado vira propaganda.
+    fake = [{"id": i, "numero": "n%d" % i, "resultado": r, "confianca": "dispositivo",
+             "nota": 5, "pontos": 10.0, "ano": 2024, "orgao": "Segunda Câmara",
+             "classe": "Apelação Cível", "unanime": 1,
+             "ancoras_json": '["Tema 1059/STJ"]', "neutro": n}
+            for i, (r, n) in enumerate([("desprovido", True)] * 6
+                                       + [("provido", False)] * 4)]
+    base = {"triagem": {"classe": "Apelação Cível"}, "filtros": {}}
+    neutros = [c for c in fake if c["neutro"]]
+    p_neutro = no_prognostico({**base, "precedentes": neutros})["prognostico"]
+    assert p_neutro["reforma_nos_precedentes"] == 0.0, p_neutro
+
+    prec = [c for c in fake if c.get("neutro")][:8]
+    lado = TESES["reformar"]
+    sust = [c for c in fake if c["resultado"] in lado][:8]
+    assert len(prec) == 6 and len(sust) == 4, (len(prec), len(sust))
+    assert no_prognostico({**base, "precedentes": prec})["prognostico"][
+        "reforma_nos_precedentes"] == 0.0, "a busca da tese vazou para a contagem"
+
+    c = sinais.comuns(sust)
+    assert c["n"] == 4 and c["ancoras"] == [("Tema 1059/STJ", 4)], c
+    assert sinais.comuns([]) == {}
+    assert "Tema 1059/STJ" in _bloco_comuns(c) and _bloco_comuns({}) == ""
+    assert TESES["neutra"] == () and set(TESES) == {"neutra", "reformar", "manter"}
 
     assert _suficiente({"precedentes": [1, 2, 3], "ciclo_busca": 1}) == "prognostico"
     assert _suficiente({"precedentes": [1], "ciclo_busca": 1}) == "recuperar"

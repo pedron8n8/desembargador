@@ -61,7 +61,10 @@ def registrar_consulta(thread, caso, estado, custo_total):
                    json.dumps(estado.get("prognostico") or {}, ensure_ascii=False),
                    estado.get("minuta") or "", custo_total,
                    json.dumps([x.get("modelo") for x in (estado.get("custos") or [])])))
-        for p in estado.get("precedentes") or []:
+        # a sustentacao (--tese) entra junto: para "ja' usei esse processo?" o
+        # que conta e' ter chegado ao redator, nao por qual das duas buscas
+        for p in ((estado.get("precedentes") or [])
+                  + (estado.get("sustentacao") or [])):
             c.execute("INSERT OR IGNORE INTO precedente_uso VALUES (?,?,?,?,NULL)",
                       (thread, p["id"], p["numero"], p.get("nota")))
     c.close()
@@ -96,6 +99,50 @@ def boost():
         "FROM precedente_uso WHERE veredito IS NOT NULL GROUP BY 1").fetchall()
     c.close()
     return {i: 1.0 + max(-TETO, min(TETO, saldo * POR_VOTO)) for i, saldo in linhas}
+
+
+def historico(termo=None, n=20):
+    """O que voce ja' usou: consultas passadas e os processos que entraram nelas.
+
+    `termo` casa com o numero do processo, com o texto do caso ou com o id da
+    consulta — e' a mesma pergunta feita de tres jeitos ("ja' usei aquele
+    acordao?", "ja' consultei esse tema?", "o que rodou naquele dia?").
+    """
+    if not os.path.exists(FB):
+        return {"consultas": [], "precedentes": []}
+    like = "%%%s%%" % termo if termo else None
+    c = db()
+    consultas = c.execute(
+        "SELECT thread, criado_em, substr(replace(caso,char(10),' '),1,70), custo_usd "
+        "FROM consulta WHERE ?1 IS NULL OR caso LIKE ?1 OR thread LIKE ?1 "
+        "ORDER BY criado_em DESC LIMIT ?2", (like, n)).fetchall()
+    precedentes = c.execute(
+        "SELECT p.numero, p.decisao_id, count(*), max(c.criado_em), "
+        "       sum(p.veredito='util'), sum(p.veredito='inutil') "
+        "FROM precedente_uso p JOIN consulta c USING (thread) "
+        "WHERE ?1 IS NULL OR p.numero LIKE ?1 OR c.caso LIKE ?1 "
+        "GROUP BY p.decisao_id ORDER BY count(*) DESC, max(c.criado_em) DESC "
+        "LIMIT ?2", (like, n)).fetchall()
+    c.close()
+    return {"consultas": consultas, "precedentes": precedentes}
+
+
+def imprimir_historico(termo=None, n=20):
+    h = historico(termo, n)
+    alvo = " contendo '%s'" % termo if termo else ""
+    print("\nConsultas%s (%d):" % (alvo, len(h["consultas"])))
+    print("%-22s %-17s %8s  %s" % ("thread", "quando", "US$", "caso"))
+    for t, q, caso, u in h["consultas"]:
+        print("%-22s %-17s %8.4f  %s" % (t, q[:16], u or 0, (caso or "").strip()))
+    print("\nProcessos já usados como precedente%s (%d):" % (alvo, len(h["precedentes"])))
+    print("%-28s %-8s %6s %-12s %s" % ("processo", "id", "vezes", "última", "veredito"))
+    for num, i, vezes, quando, ut, inu in h["precedentes"]:
+        v = "útil x%d" % ut if ut else ""
+        v += (" / " if v and inu else "") + ("inútil x%d" % inu if inu else "")
+        print("%-28s %-8d %6d %-12s %s" % (num[:28], i, vezes, quando[:10], v or "—"))
+    if not h["consultas"] and not h["precedentes"]:
+        print("(nada registrado ainda%s)" % alvo)
+    return h
 
 
 def concordancia():
@@ -141,7 +188,14 @@ def main(argv=None):
                     help="ids de precedentes que não serviram")
     ap.add_argument("--relatorio", action="store_true",
                     help="mostra a concordância entre você e o juiz automático")
+    ap.add_argument("--historico", nargs="?", const="", default=None,
+                    metavar="TERMO",
+                    help="processos e consultas que você já usou (filtra por termo)")
     a = ap.parse_args(argv)
+
+    if a.historico is not None:
+        imprimir_historico(a.historico or None)
+        return 0
 
     c = db()
     if a.relatorio:
@@ -238,4 +292,13 @@ if __name__ == "__main__":
     conc = concordancia()
     assert conc["n"] == 2 and conc["correlacao"] == 1.0, conc
     assert conc["erro_medio"] == 0.5, conc
+
+    # historico: acha pelo numero do processo e conta reuso
+    h = historico("A")
+    assert [p[0] for p in h["precedentes"]] == ["A"], h["precedentes"]
+    assert h["precedentes"][0][2] == 1 and h["precedentes"][0][4] == 1  # 1 uso, util
+    # t0..t19 sao 20 threads (o t1 do inicio foi sobrescrito pelo do laco)
+    assert historico("B")["precedentes"][0][2] == 20, historico("B")["precedentes"]
+    assert historico("nao-existe") == {"consultas": [], "precedentes": []}
+    assert len(historico()["precedentes"]) == 2, "sem termo, lista tudo"
     print("self-check OK")

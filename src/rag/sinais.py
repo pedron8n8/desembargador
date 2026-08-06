@@ -218,6 +218,36 @@ def contra_argumentacao(candidatos):
                          for c in (merito if empate else oposto)[:3]]}
 
 
+def comuns(decisoes, minimo=2):
+    """O que se REPETE num conjunto de decisoes do mesmo lado.
+
+    Serve a linha de argumentacao (--tese): dado um punhado de precedentes que
+    terminaram como o usuario quer, o que eles tem em comum e' o material de
+    sustentacao. Tudo sai de campo indexado — nada de LLM, nada de inferencia.
+    """
+    if not decisoes:
+        return {}
+    anc, org, cls = {}, {}, {}
+    un = tr = 0
+    for d in decisoes:
+        for a in json.loads(d.get("ancoras_json") or "[]"):
+            anc[a] = anc.get(a, 0) + 1
+        for mapa, chave in ((org, "orgao"), (cls, "classe")):
+            v = d.get(chave)
+            if v:
+                mapa[v] = mapa.get(v, 0) + 1
+        un += d.get("unanime") == 1
+        ef = d.get("efeito")
+        if isinstance(ef, str):
+            ef = json.loads(ef) if ef else None
+        tr += bool(ef and ef.get("transitou"))
+    topo = lambda m: sorted(  # noqa: E731
+        ((k, n) for k, n in m.items() if n >= minimo), key=lambda kv: -kv[1])[:_TOPO]
+    return {"n": len(decisoes), "ancoras": topo(anc), "orgaos": topo(org),
+            "classes": topo(cls), "unanimes": un, "transitaram": tr,
+            "anos": sorted({d.get("ano") for d in decisoes if d.get("ano")})}
+
+
 def resumir_ficha(d):
     """Uma linha legivel para o relatorio e para o prompt do redator."""
     ef = d.get("efeito")

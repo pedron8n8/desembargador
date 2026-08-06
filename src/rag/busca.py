@@ -57,7 +57,7 @@ def _db(banco):
 
 
 def buscar(consulta, limite=40, classe=None, ano_min=None, ano_max=None,
-           excluir=(), banco=RAG):
+           excluir=(), resultados=(), banco=RAG):
     """Devolve lista de dicts ordenada por relevancia BM25 (score: menor = melhor).
 
     So' BM25 e filtros. Quem mexe na ordem depois disso — feedback do usuario,
@@ -84,6 +84,12 @@ def buscar(consulta, limite=40, classe=None, ano_min=None, ano_max=None,
     if excluir:
         sql.append("AND d.id NOT IN (%s)" % ",".join("?" * len(excluir)))
         args += list(excluir)
+    if resultados:
+        # so' o grafo usa, e so' na busca da LINHA DE ARGUMENTACAO (--tese). O
+        # prognostico NUNCA enxerga uma busca filtrada assim: contar reforma numa
+        # amostra so' de reformas daria 100%, e a calibracao iria junto.
+        sql.append("AND d.resultado IN (%s)" % ",".join("?" * len(resultados)))
+        args += list(resultados)
     sql.append("ORDER BY score LIMIT ?")
     args.append(int(bruto))
 

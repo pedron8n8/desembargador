@@ -695,6 +695,86 @@ unânime | Datajud: transitou`) e o re-ranking explicou a própria ordem
 terminou apontando o fato concreto de que o caso depende, em vez de fingir um
 prognóstico.
 
+# Fase 5 — A linha de argumentação, e a memória do que você já usou
+
+Duas perguntas passaram a existir antes da consulta:
+
+```
+Que análise você quer deste caso?
+  1) neutra     — o que o acervo diz, sem lado
+  2) reformar   — puxa também os precedentes que DERAM provimento
+  3) manter     — o mesmo, do lado que NEGOU provimento
+  4) histórico  — processos e consultas que você já usou
+```
+
+`consultar.bat caso.txt --tese reformar` pula a pergunta. Sem terminal
+(scripts, bench, avaliação) o padrão é **neutra** — nenhum número medido antes
+desta fase mudou de significado.
+
+## "Condenar/absolver" não é o eixo deste acervo
+
+O pedido falava em condenar e absolver. Este acervo tem **18 decisões criminais
+em 20.363** — é cível. O eixo que existe nos dados é outro, e é nele que a busca
+opera: **reformar** (provido + parcialmente provido) contra **manter**
+(desprovido), 14.657 decisões de mérito. Traduzir um pelo outro seria dar ao
+sistema um vocabulário que os documentos não têm.
+
+## Duas buscas, e só uma conta
+
+Este é o ponto que decide se a fase serve ou estraga tudo:
+
+| busca | filtro | para que serve |
+|---|---|---|
+| **neutra** | nenhum | precedentes, contra-argumentação e **todo o prognóstico** |
+| **da tese** | `resultado IN (lado pedido)` | material de sustentação, e só |
+
+Uma busca filtrada pelo resultado que o usuário quer mediria 100% de reforma
+numa amostra só de reformas. Se ela alimentasse a contagem, o percentual
+calibrado — 5 pp de erro máximo, medido em 1.092 casos de 2025 — viraria
+propaganda com cara de medição. Então ela não alimenta: `no_triar` separa as
+duas listas, e o self-check do grafo falha se a lista da tese vazar para o
+prognóstico.
+
+O relatório diz isso na cara do usuário, no lugar onde ele leria o número:
+
+> Calculado na busca **neutra**, sem o filtro de lado que você pediu. Se ele
+> apontar contra a sua linha de argumentação, é esse o recado: a sustentação
+> existe, mas rema contra a corrente do acervo.
+
+## Os pontos em comum
+
+`sinais.comuns()` conta o que se repete entre os precedentes do lado pedido —
+tudo de campo indexado, sem LLM. No caso de exemplo, com `--tese reformar`:
+
+```
+- Âncoras citadas por mais de um: Súmula n. 5 (7)
+- Câmaras: Segunda Câmara de Direito Civil (8)
+- 8 de 8 unânimes, 7 transitaram em julgado, anos 2019–2019
+```
+
+Sete dos oito precedentes que deram provimento se apoiam na mesma súmula, todos
+unânimes, quase todos transitados. **É esse o material.** Quando nenhuma âncora
+aparece em mais de um, o relatório diz o contrário com todas as letras: são
+decisões que chegaram ao mesmo resultado por caminhos diferentes, e não há tese
+única para citar.
+
+Custo: **US$ 0,0135** na consulta com `--so-prognostico` — as 20 linhas a mais na
+triagem, e nada além disso. A segunda busca é SQLite.
+
+## O que você já usou
+
+```bat
+consultar.bat --historico                REM tudo
+consultar.bat --historico 0302503        REM por número de processo
+consultar.bat --historico "seguro"       REM por tema do caso
+```
+
+Sai de `feedback.db`, que já registrava as consultas — o que faltava era
+perguntar. Conta reuso (`0302503-58.2017.8.24.0008 — 4 vezes`) e mostra o
+veredito que você deu a cada precedente. Os precedentes de sustentação entram
+no registro junto com os neutros: para "já usei esse processo?", o que conta é
+ter chegado ao redator, não por qual das duas buscas.
+
 ## Qualificar as respostas e escolher o modelo
 
 Duas coisas ligadas: quem decide se um modelo mais barato serve é a **nota**, e
@@ -866,6 +946,20 @@ Fase 4 (todos offline, custo zero):
 .venv\Scripts\python -X utf8 -m src.rag.calibrar         REM monotonia + limites da isotônica
 .venv\Scripts\python -X utf8 -m src.rag.confianca        REM faixas de abstenção + intervalo
 ```
+
+Fase 5 (offline):
+
+```bat
+.venv\Scripts\python -X utf8 -m src.rag.grafo            REM inclui: a tese NÃO vaza para o prognóstico
+.venv\Scripts\python -X utf8 -m src.rag.feedback         REM inclui: histórico acha por número e conta reuso
+```
+
+**`src.rag.indexar` não é self-check** — é o construtor do índice. Ele apaga
+`output/rag.db` e reconstrói em ~4,5 min. Interrompido no meio, deixa o índice
+vazio; e depois de reconstruir, `floresta.pkl` e `calibrador.pkl` ficam com o
+selo defasado (o aviso aparece em stderr). O conserto é rodar
+`floresta --treinar` e `calibrar --ajustar` na sequência — ambos são semeados e
+reproduzem os mesmos números.
 
 ## Aviso
 
