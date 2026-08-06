@@ -1,0 +1,8 @@
+# Fase 5 — camada web. Instalar POR CIMA de requirements.txt.
+#
+# So' duas linhas de proposito: httpx, pydantic, starlette, anyio e h11 ja' vem
+# como dependencia do langgraph, e o resto da API e' stdlib (sqlite3, hashlib,
+# secrets, hmac, queue, concurrent.futures). Autenticacao nao trouxe nenhuma
+# dependencia: scrypt e' stdlib desde o Python 3.6.
+fastapi
+uvicorn

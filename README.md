@@ -903,6 +903,128 @@ output/
 
 ---
 
+---
+
+# Fase 6 — A interface
+
+Até aqui o produto era um `.md` de 400 linhas cuspido no PowerShell. A
+inteligência toda já existia como função Python importável; o que faltava era
+superfície. Um advogado sênior não lê `consultar.bat` — e a parte mais valiosa
+do sistema, **por que** cada precedente pesa o que pesa, estava enterrada em
+texto corrido.
+
+```bat
+.venv\Scripts\python -m pip install -r requirements-web.txt
+.venv\Scripts\python -m api.usuarios --criar voce@escritorio.com --papel admin
+web.bat
+```
+
+Duas dependências novas no Python (`fastapi`, `uvicorn`) — `httpx`, `pydantic`,
+`starlette` e `anyio` já vinham com o langgraph, e a autenticação é stdlib
+inteira (`hashlib.scrypt`, `secrets`, `hmac`).
+
+## O que a interface mostra que o `.md` não mostrava
+
+| tela | o que ela responde |
+|---|---|
+| pipeline ao vivo | qual nó está rodando, com qual modelo, quantos tokens e quantos centavos — nó a nó, por SSE |
+| painel de pesos | a cascata inteira: `\|BM25\| × idade × âncora × unanimidade × efeito × feedback = pontos`, depois `× confiança × analogia = peso final`, e a fração de cada precedente no total |
+| rede de precedentes | quais decisões se apoiam na mesma súmula ou tema repetitivo |
+| estatísticas | deriva de época, taxa por classe e câmara, curva de calibração, cobertura de abstenção **medida no seu uso**, livro-caixa |
+| acervo | as 20.363 decisões, com a busca explicando a própria ordem |
+| conversa | perguntar sobre uma consulta já feita por ~US$ 0,005, sem rodar o grafo de novo |
+
+## A âncora é nó, não aresta
+
+A forma óbvia do grafo de precedentes seria ligar decisão a decisão quando as
+duas citam a mesma súmula. Medido: 40 candidatos produziram **466 arestas**,
+porque 20 decisões que citam a Súmula 150 formam uma clique de 190. Isso não é
+visualização, é novelo — e pior, esconde o fato que interessa, que é *qual*
+precedente as segura. Com a âncora como nó, a mesma informação custa 20 arestas
+em vez de 190, e a leitura vira a frase jurídica: "estas 20 decisões se apoiam
+na Súmula 150".
+
+E a canonização não é detalhe. O `ancoras_json` tem **1.941 rótulos distintos**
+para bem menos âncoras reais, porque o mesmo verbete aparece como `Súmula 54 do
+STJ`, `SÚMULA 54 DO STJ`, `Súmula n. 54` e `Súmula 54`. Sem normalizar, as
+arestas de âncora simplesmente não aparecem — e o grafo sai vazio sem erro
+nenhum, que é o pior modo de falhar. `src/rag/rede.py` reduz tudo a uma chave
+(`sumula:54:stj`) e ainda resolve o tribunal ausente **quando não há dúvida**:
+se `Súmula 150` e `Súmula 150/STF` aparecem no mesmo conjunto, viram uma coisa
+só; se aparecem duas cortes com o mesmo número, a citação sem corte fica
+separada, porque escolher seria inventar de qual tribunal é o precedente.
+
+## Consulta longa dentro de uma request
+
+Uma consulta leva minutos e custa dinheiro; nada disso cabe num request HTTP.
+`ThreadPoolExecutor` de 2 workers no próprio processo do uvicorn — sem Celery e
+sem Redis, porque o grafo é síncrono, a durabilidade que importa já está no
+`rag_runs.db`, e o gargalo real é USD por consulta, não CPU.
+
+O `app.stream(stream_mode=["tasks","updates"])` entrega nó a nó. Como
+`Estado.custos` é `Annotated[list, operator.add]`, cada nó devolve o próprio
+custo no delta — **modelo, tokens e US$ por nó saem de graça, sem instrumentar
+nada**. O `result` da task é um `dict`; a primeira versão do leitor assumiu
+lista de pares e falhava calada, fazendo todo nó aparecer a US$ 0,0000 ao vivo
+com o total certo no fim — que é o jeito mais convincente de um número errado
+passar despercebido. Há um assert para isso em `api/execucao.py`.
+
+Os `print()` de `no_triar` e `no_redigir` ("triagem cortada no teto", "AVISO: a
+triagem não devolveu nota nenhuma") sumiriam no console do servidor.
+`contextlib.redirect_stdout` não serve: ele troca o `sys.stdout` do *processo*, e
+com dois workers um capturaria os prints do outro. O conserto é um roteador
+instalado uma vez que despacha por thread do SO — e o self-check roda duas
+threads imprimindo ao mesmo tempo para provar que não se misturam.
+
+Se o servidor cair no meio, o startup reconcilia: quem parou vira
+`interrompido`, e retomar usa `stream(None, config)` — reenviar o input
+reiniciaria o grafo do zero e **repagaria** o que já saiu. Por isso retomar é
+botão, não automatismo.
+
+## Confidencialidade sem migrar nada
+
+As decisões são públicas; as consultas dos advogados não. O `feedback.db` é
+escrito pela CLI também e não tem coluna de dono, então a propriedade vive numa
+tabela aditiva em `output/web.db`: thread sem dono é de quem rodou pelo
+terminal, e só o admin vê. Migração: nenhuma.
+
+Sessão opaca no servidor, não JWT — revogação imediata e "derrubar as sessões
+deste usuário agora" são requisitos reais aqui, e com JWT isso vira lista de
+revogação, que é o banco de sessão de volta só que pior. O token vive só no
+cookie; no banco fica o `sha256` dele.
+
+## Design
+
+Referência: publicação jurídica e jornal de formato grande. Papel quente em vez
+de branco, um acento só (verde-garrafa dessaturado), serifa para o texto
+jurídico, régua de 1px no lugar de sombra. `web/DESIGN.md` tem a lista do que é
+proibido — gradiente, glassmorphism, `box-shadow`, balão de chat em pílula,
+emoji, skeleton pulsante — e `npm run lint:css` faz valer a parte que dá para
+automatizar, para o padrão da indústria não voltar sorrateiramente um componente
+por vez.
+
+Duas regras que não são estéticas:
+
+- **Evidência antes de veredito.** A aba de Prognóstico vem depois da de
+  Evidências, sempre. Quem lê o percentual primeiro ancora nele e lê o resto
+  procurando confirmação — é a mesma razão de `cli.formatar` montar o markdown
+  nessa ordem.
+- **NÃO DECIDO é estado de primeira classe**, com a lista de motivos e uma faixa
+  hachurada no eixo dos estimadores. Não é erro nem vazio: é o comportamento
+  correto.
+
+O teste final do design é imprimir `/consulta/:thread` em PDF pelo Chrome. Se
+não ler como documento, falhou.
+
+## Sem fonte de CDN
+
+As consultas são confidenciais e não se vaza nem o referrer. A v1 usa pilha de
+sistema (`Charter, Georgia` no corpo). Para trocar por Source Serif 4, os
+`.woff2` vão em `web/public/fontes/` e a família entra na frente de
+`--fonte-serif`; nada mais muda.
+
+---
+
 ## Plugando novas fontes (Escavador, SAJ...)
 
 Cada fonte é um módulo com `coletar(config, storage)` que grava via `src/storage.py`.
@@ -952,6 +1074,19 @@ Fase 5 (offline):
 ```bat
 .venv\Scripts\python -X utf8 -m src.rag.grafo            REM inclui: a tese NÃO vaza para o prognóstico
 .venv\Scripts\python -X utf8 -m src.rag.feedback         REM inclui: histórico acha por número e conta reuso
+```
+
+Fase 6 (offline; `api.smoke` sobe a API inteira contra um `web.db` temporário):
+
+```bat
+verificar.bat                                            REM roda tudo o que está abaixo, de uma vez
+.venv\Scripts\python -X utf8 -m src.rag.rede             REM âncoras canonizadas, arestas únicas e sem laço
+.venv\Scripts\python -X utf8 -m src.rag.estatisticas     REM agregações fecham com o total
+.venv\Scripts\python -X utf8 -m src.rag.conversa         REM contexto do chat sai do checkpoint, cortado
+.venv\Scripts\python -X utf8 -m api.auth                 REM scrypt, expiração, revogação, rate limit
+.venv\Scripts\python -X utf8 -m api.serial               REM estado → JSON, e os pesos fecham
+.venv\Scripts\python -X utf8 -m api.execucao             REM eventos SSE + prints de dois workers não se misturam
+.venv\Scripts\python -X utf8 -m api.smoke                REM auth, CSRF, isolamento entre usuários
 ```
 
 **`src.rag.indexar` não é self-check** — é o construtor do índice. Ele apaga

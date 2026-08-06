@@ -142,10 +142,13 @@ def _sustentacao(estado):
     return out
 
 
-def formatar(estado, segundos):
+def formatar(estado, segundos, quando=None):
+    """`quando` existe para reformatar consulta antiga sem carimbar a data de
+    hoje no cabeçalho — a web relê threads de meses atrás."""
     p = estado.get("prognostico") or {}
     prec = estado.get("precedentes") or []
-    out = ["# Consulta — %s" % dt.datetime.now().strftime("%d/%m/%Y %H:%M"), "", AVISO, ""]
+    out = ["# Consulta — %s" % (quando or dt.datetime.now()).strftime("%d/%m/%Y %H:%M"),
+           "", AVISO, ""]
 
     t = estado.get("triagem") or {}
     out += ["## Leitura do caso", "",
@@ -297,6 +300,27 @@ def _fechar(out, estado, prec, segundos):
     return "\n".join(out), total
 
 
+def finalizar(thread, estado, segundos, quando=None):
+    """O que TEM de acontecer quando uma consulta termina, venha ela da CLI ou
+    da web: formata, grava o .md, registra no feedback.db e guarda a nota do
+    juiz. Existe como função porque duplicar isso nos dois lados garantia que
+    um dia eles divergiriam em silêncio — e o feedback.db é o que alimenta o
+    boost da recuperação.
+
+    Devolve (texto_markdown, custo_total, caminho_do_md).
+    """
+    texto, total = formatar(estado, segundos, quando=quando)
+    os.makedirs(SAIDA, exist_ok=True)
+    caminho = os.path.join(SAIDA, re.sub(r"[^\w-]", "", thread) + ".md")
+    with open(caminho, "w", encoding="utf-8") as f:
+        f.write(texto)
+    feedback.registrar_consulta(thread, estado.get("caso") or "", estado, total)
+    j = estado.get("julgamento") or {}
+    if j.get("media") is not None:
+        feedback.registrar_avaliacao(thread, "juiz", j["media"], j)
+    return texto, total, caminho
+
+
 MENU = """
 Que análise você quer deste caso?
 
@@ -402,17 +426,8 @@ def main(argv=None):
         return 3
     seg = (dt.datetime.now() - t0).total_seconds()
 
-    texto, total = formatar(estado, seg)
-    nome = re.sub(r"[^\w-]", "", thread) + ".md"
-    caminho = os.path.join(SAIDA, nome)
-    with open(caminho, "w", encoding="utf-8") as f:
-        f.write(texto)
+    texto, total, caminho = finalizar(thread, estado, seg)
     print(texto)
-
-    feedback.registrar_consulta(thread, caso, estado, total)
-    j = estado.get("julgamento") or {}
-    if j.get("media") is not None:
-        feedback.registrar_avaliacao(thread, "juiz", j["media"], j)
     print("\n>>> salvo em %s  —  US$ %.4f" % (caminho, total))
     print(">>> qualifique esta resposta:  qualificar.bat --thread %s" % thread)
     return 0

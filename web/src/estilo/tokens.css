@@ -1,0 +1,163 @@
+/* Referência: publicação jurídica, não SaaS. Ver web/DESIGN.md para a lista do
+   que é proibido e por quê. */
+
+:root {
+  /* --- papel e tinta */
+  --papel: #faf8f4;         /* fundo: papel quente, nunca #fff */
+  --papel-2: #f2efe8;       /* superfície secundária — sem sombra, sem elevação */
+  --papel-3: #eae5db;
+  --linha: #e2dcd1;         /* régua de 1px: é assim que se separa aqui */
+  --linha-forte: #cfc7b8;
+
+  --tinta: #1f1d1a;         /* texto principal, nunca #000 */
+  --tinta-2: #55504a;
+  --tinta-3: #8a8378;       /* metadados */
+
+  /* --- o único acento */
+  --selo: #2f4a3f;
+  --selo-claro: #e7ede9;
+  --selo-linha: #b9c9c0;
+
+  /* --- alerta: NÃO DECIDO, ressalvas do revisor. Não é erro, é ressalva. */
+  --alerta: #8c4a3f;
+  --alerta-claro: #f4e9e6;
+
+  /* --- resultado processual: cor de dado, não de marca */
+  --provido: #7a5c3e;       /* sépia */
+  --parcial: #a8875c;
+  --desprovido: #3e5566;    /* ardósia */
+  --processual: #9a958c;
+
+  /* --- tipografia.
+     Pilha de sistema de propósito: nenhuma fonte vem de CDN, porque as
+     consultas são confidenciais e não se vaza nem referrer. Para trocar por
+     Source Serif 4, ver web/DESIGN.md. */
+  --fonte-serif: Charter, "Bitstream Charter", "Sitka Text", Georgia,
+    "Times New Roman", serif;
+  --fonte-ui: "Segoe UI", Inter, -apple-system, BlinkMacSystemFont, Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+  --fonte-mono: "Cascadia Mono", "JetBrains Mono", Consolas, ui-monospace,
+    "SF Mono", Menlo, monospace;
+
+  --t-xs: 12px;
+  --t-sm: 13px;
+  --t-base: 14px;
+  --t-md: 16px;
+  --t-corpo: 18px;          /* texto jurídico */
+  --t-lg: 22px;
+  --t-xl: 28px;
+  --t-xxl: 36px;
+
+  /* --- espaço: base 4 */
+  --e1: 4px;
+  --e2: 8px;
+  --e3: 12px;
+  --e4: 16px;
+  --e6: 24px;
+  --e8: 32px;
+  --e12: 48px;
+  --e16: 64px;
+  --e24: 96px;
+
+  --raio: 2px;              /* o máximo. Ver DESIGN.md. */
+  --medida: 68ch;           /* medida de leitura do texto jurídico */
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#raiz {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--papel);
+  color: var(--tinta);
+  font-family: var(--fonte-ui);
+  font-size: var(--t-base);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-weight: 500;
+  line-height: 1.25;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+table {
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+  width: 100%;
+}
+
+th,
+td {
+  text-align: left;
+  padding: var(--e2) var(--e3);
+  border-bottom: 1px solid var(--linha);
+  vertical-align: top;
+}
+
+th {
+  font-size: var(--t-xs);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--tinta-3);
+  border-bottom-color: var(--linha-forte);
+}
+
+td.num,
+th.num {
+  text-align: right;
+}
+
+a {
+  color: var(--selo);
+  text-underline-offset: 2px;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+code,
+.mono {
+  font-family: var(--fonte-mono);
+  font-size: 0.92em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Só respeita quem pediu: nada aqui anima por decoração. */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* Impressão é requisito, não bônus: o teste do design é o PDF. */
+@media print {
+  body {
+    background: #fff;
+    font-size: 11pt;
+  }
+
+  .nao-imprime {
+    display: none !important;
+  }
+}

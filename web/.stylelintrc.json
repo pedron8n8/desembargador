@@ -1,0 +1,32 @@
+{
+  "rules": {
+    "declaration-property-value-disallowed-list": {
+      "/^border(-.*)?-radius$/": ["/^([3-9]|[1-9][0-9])px/", "/^(?!50%$)[0-9.]+%$/"],
+      "background": ["/gradient/i"],
+      "background-image": ["/(^|[^-])linear-gradient/i", "/radial-gradient/i", "/conic-gradient/i"],
+      "filter": ["/blur/i"],
+      "box-shadow": ["/.+/"],
+      "backdrop-filter": ["/.+/"],
+      "text-shadow": ["/.+/"]
+    },
+    "declaration-property-value-no-unknown": true
+  },
+  "overrides": [
+    {
+      "files": ["src/estilo/tokens.css"],
+      "rules": {
+        "declaration-property-value-disallowed-list": null
+      }
+    }
+  ],
+  "_por_que": [
+    "A lista de proibições de web/DESIGN.md, na parte que dá para automatizar.",
+    "box-shadow, backdrop-filter e text-shadow são banidos inteiros: aqui a",
+    "profundidade se faz com régua de 1px.",
+    "Duas exceções, ambas por serem MARCA DE DADO e não decoração:",
+    "  - repeating-linear-gradient continua permitido (o [^-] do regex o poupa):",
+    "    é a hachura da faixa NÃO DECIDO, que representa um intervalo.",
+    "  - border-radius: 50% continua permitido: é o círculo do nó da rede e do",
+    "    ponto da legenda. O que se proíbe é canto arredondado de painel."
+  ]
+}

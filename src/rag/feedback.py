@@ -79,10 +79,13 @@ def registrar_avaliacao(thread, fonte, nota, detalhe):
     c.close()
 
 
-def marcar_precedentes(thread, uteis=(), inuteis=()):
+def marcar_precedentes(thread, uteis=(), inuteis=(), limpar=()):
+    """`limpar` desfaz um veredito. A CLI so' marca, mas a interface web tem
+    controle de tres estados (útil / inútil / sem opinião) e precisa voltar ao
+    terceiro — sem isso um clique errado fica no boost para sempre."""
     c = db()
     with c:
-        for ids, v in ((uteis, "util"), (inuteis, "inutil")):
+        for ids, v in ((uteis, "util"), (inuteis, "inutil"), (limpar, None)):
             for i in ids:
                 c.execute("UPDATE precedente_uso SET veredito=? WHERE thread=? "
                           "AND decisao_id=?", (v, thread, int(i)))
@@ -278,6 +281,11 @@ if __name__ == "__main__":
     marcar_precedentes("t1", uteis=[10], inuteis=[11])
     b = boost()
     assert b[10] > 1.0 > b[11], b
+    # limpar devolve ao estado 'sem opiniao' — o clique errado nao pode ficar
+    # empurrando o ranking para sempre
+    marcar_precedentes("t1", limpar=[10, 11])
+    assert boost() == {}, boost()
+    marcar_precedentes("t1", uteis=[10], inuteis=[11])
     # o teto tem que segurar mesmo com muitos votos
     for t in range(20):
         registrar_consulta("t%d" % t, "c", {"precedentes": [{"id": 11, "numero": "B",

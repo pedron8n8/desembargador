@@ -222,6 +222,20 @@ if __name__ == "__main__":
         b_depois, e_depois = brier(cal), erro_max(depois)
         imprimir_curva("DEPOIS — mesmos casos, escala corrigida", depois)
 
+        # A curva de confiabilidade e' a evidencia de que o numero nao mente, e
+        # ate' aqui ela era impressa e jogada fora. Regenera-la custa minutos
+        # (pontos() roda o pipeline cego duas vezes), entao ela vai junto no
+        # .pkl — a interface web a mostra sem recalcular nada.
+        #
+        # Sao dois ajustar() porque a curva DEPOIS so' existe depois de ajustar:
+        # o primeiro fita para medir, o segundo salva com a medicao dentro. O
+        # refit e' uma isotonica sobre 1.200 pontos — milissegundos.
+        ajustar(pts_aj, meta={"ano_ajuste": ANO_AJUSTE,
+                              "ano_validacao": ANO_VALIDACAO,
+                              "curva_antes": antes, "curva_depois": depois,
+                              "brier_antes": b_antes, "brier_depois": b_depois,
+                              "erro_antes": e_antes, "erro_depois": e_depois})
+
         print("\n%-28s %8s %8s" % ("", "antes", "depois"))
         print("%-28s %8.4f %8.4f" % ("Brier (menor é melhor)", b_antes, b_depois))
         print("%-28s %7.1f%% %7.1f%%" % ("maior erro da diagonal",

@@ -9,3 +9,8 @@ output/
 *.db-shm
 *.db-wal
 *.pkl
+
+# fase 5 — web. O output/web.db (contas e sessoes) ja' cai no output/ acima.
+web/node_modules/
+web/dist/
+web/.vite/
