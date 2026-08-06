@@ -1,0 +1,46 @@
+{
+  "relator": "Rubens Schulz",
+  "data_inicio": "",
+  "data_fim": "",
+  "log_level": "INFO",
+
+  "fontes": {
+    "portal": true,
+    "datajud": true
+  },
+
+  "portal": {
+    "categorias": ["acordaos", "decmonos", "recurso", "acma", "despachos", "dmtrs"],
+    "ps": 50,
+    "limite_fatia": 500,
+    "ano_inicio": 1990,
+    "ano_fim": 0,
+    "baixar_inteiro_teor": true,
+    "baixar_documentos": true,
+    "falhas_seguidas_ate_desistir": 20,
+    "buscar_em_inteiro_teor": false,
+    "delay_segundos": 1.0,
+    "timeout_segundos": 90,
+    "max_retries": 5
+  },
+
+  "datajud": {
+    "endpoint": "https://api-publica.datajud.cnj.jus.br/api_publica_tjsc/_search",
+    "api_key": "cDZHYzlZa0JadVREZDJCendQbXY6SkJlTzNjLV9TRENyQk1RdnFKZGRQdw==",
+    "modo": "por_processo",
+    "orgao_julgador": "",
+    "grau": "G2",
+    "lote": 50,
+    "delay_segundos": 0.5,
+    "page_size": 100,
+    "timeout_segundos": 60,
+    "max_retries": 5
+  },
+
+  "saida": {
+    "db": "output/tjsc.db",
+    "exports": "output/exports",
+    "documentos": "output/documentos",
+    "logs": "output/logs"
+  }
+}

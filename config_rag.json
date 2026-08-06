@@ -1,0 +1,88 @@
+{
+  "_comentario": "Modelos por nó do grafo. Trocar aqui é a única mudança necessária para testar outro arranjo multi-agente. IDs e preços conferidos na API do OpenRouter.",
+
+  "modelos": {
+    "triagem":      "openai/gpt-5.6-luna",
+    "triar":        "google/gemini-3.5-flash-lite",
+    "redigir":      "deepseek/deepseek-v3.2",
+    "revisar":      "x-ai/grok-4.3",
+    "juiz":         "openai/gpt-5.6-terra",
+    "juiz_reserva": "google/gemini-3.6-flash"
+  },
+
+  "_por_que": {
+    "triagem": "$0,10/$0,60 por Mtok — extração de JSON curta, o mais barato que ainda escreve português direito",
+    "triar":   "$0,30/$2,50 — lê ~40 ementas (entrada grande) e devolve só notas (saída minúscula)",
+    "redigir": "$0,27/$0,40 — deepseek-v3.2. A troca foi feita por CUSTO (bench com prompts quebrados: 8 candidatos entre 2,10 e 2,65, apenas 0,9 sigma) e CONFIRMADA pela medição depois de corrigidos os prompts: deepseek lidera com 3,40 contra 3,35 do sonnet-5, que custa 3,2x mais, e mantém o melhor disp (3,50). O ranking passou a 2,2 sigma entre topo e cauda — o prompt quebrado estava mascarando a diferença entre modelos. RISCO MONITORADO: a fidelidade do deepseek despenca quando falta contexto (na consulta em que a triagem truncou e sobraram 0 precedentes, ele inventou a Súmula 610/STJ); com os 8 precedentes normais, fidelidade 5. Se aparecer citação inventada em uso real, olhe primeiro se a triagem entregou precedentes.",
+    "revisar": "$1,25/$2,50 — DE PROPÓSITO de outro fornecedor que o redator: crítica independente é o ponto do multi-agente",
+    "juiz":    "$1,00/$6,00 — é o instrumento de medida; fornecedor distinto de todos os outros nós. Cai no reserva se o redator julgado for do mesmo fornecedor (autopreferência)"
+  },
+
+  "_candidatos_redigir": {
+    "_nota": "CORRIGIDO com medição real (04/08/2026): o perfil não é 30k in / 4k out, é 30,9k in / 7,0k out. A saída é quase o dobro do que eu tinha estimado, e é ela que domina o preço. O sonnet-5 saiu a US$ 0,1317 medidos contra US$ 0,100 estimados. Nenhum candidato foi validado ainda — é isso que o bench decide.",
+    "anthropic/claude-sonnet-5":  { "in": 2.00, "out": 10.00, "por_chamada_usd": 0.132 },
+    "moonshotai/kimi-k2.5":       { "in": 0.57, "out": 2.85,  "por_chamada_usd": 0.038 },
+    "moonshotai/kimi-k2-thinking":{ "in": 0.60, "out": 2.50,  "por_chamada_usd": 0.036 },
+    "z-ai/glm-5":                 { "in": 0.95, "out": 2.55,  "por_chamada_usd": 0.047 },
+    "z-ai/glm-4.7":               { "in": 0.40, "out": 1.75,  "por_chamada_usd": 0.025 },
+    "qwen/qwen3.7-plus":          { "in": 0.32, "out": 1.28,  "por_chamada_usd": 0.019 },
+    "deepseek/deepseek-v3.2":     { "in": 0.27, "out": 0.40,  "por_chamada_usd": 0.011 },
+    "minimax/minimax-m2.5":       { "in": 0.15, "out": 0.90,  "por_chamada_usd": 0.011 }
+  },
+
+  "_candidatos_triar": {
+    "google/gemini-3.5-flash-lite": { "por_chamada_usd": 0.0082 },
+    "z-ai/glm-4.7-flash":           { "por_chamada_usd": 0.0015 },
+    "qwen/qwen3.7-flash":           { "por_chamada_usd": 0.0007 }
+  },
+
+  "temperatura": { "triagem": 0.0, "triar": 0.0, "redigir": 0.35, "revisar": 0.0, "juiz_efetivo": 0.0 },
+  "_max_tokens_por_que": "'redigir' subiu de 8000 para 16000 depois de medir: no bench, mais da METADE das minutas batia no teto de 8000 e disparava a refação com o dobro de espaço — e cada refação paga a chamada duas vezes. 'triar' subiu de 2000 para 6000 pelo mesmo motivo, mas com consequência pior: ele devolve UMA NOTA POR CANDIDATO, e no 2º ciclo de busca são 80 candidatos. Truncado, o JSON fica inválido, o parser devolve vazio e NENHUM precedente passa — o relatório sai sem evidência alguma. Aconteceu numa consulta real. O teto é limite, não meta: elevá-lo não gasta nada quando o modelo não precisa.",
+  "max_tokens":  { "triagem": 1200, "triar": 6000, "redigir": 16000, "revisar": 1500, "juiz_efetivo": 1500 },
+
+  "_rerank_por_que": "O BM25 só vê texto: para ele um acórdão de 2011 superado e um de 2025 ancorado em tema repetitivo empatam. Os fatores abaixo multiplicam o score do BM25 pelos sinais da ficha de procedência. Medido em 400 casos cegos: precisão de reforma 72,4% -> 73,9%, F1 58,1% -> 59,6%. Ganho pequeno mas consistente. 'ativo': false devolve o comportamento da fase 2.",
+
+  "rerank": {
+    "ativo": true,
+    "meia_vida_anos": 6.0,
+    "piso_recencia": 0.5,
+    "ancora": { "vinculante": 1.35, "persuasiva": 1.15, "estadual": 1.0 },
+    "nao_unanime": 0.85,
+    "transitou": 1.10,
+    "subiu_sem_transito": 0.90,
+    "sobrestado": 0.80
+  },
+
+  "_floresta_por_que": "Segundo estimador, independente da recuperação. Sozinha é fraca (precisão 39,3%), mas é quase cega para o lado contrário (recall 94,6%) — o oposto exato do k-NN (72,4% / 48,5%). Juntos: 71,2% / 68,5%, F1 58,1% -> 69,8%. Troca 1,2 pp de precisão por 18,5 pp de recall. peso_knn varrido nos mesmos 400 casos: 0,5 é o pico de F1. Suba para 0,7 se preferir precisão (77,0%) a recall (59,2%).",
+
+  "floresta": {
+    "peso_knn": 0.5
+  },
+
+  "_confianca_por_que": "O sistema só crava quando a margem é folgada. Medido em 400 casos cegos, JÁ NA ESCALA CALIBRADA: responder sempre dá 80,2%; |p-0,5| >= 0,35 dá 96,7%, respondendo em 37,8% das consultas. ATENÇÃO ao trocar este número: a calibração estica a escala, então o mesmo corte significa coisas diferentes com e sem calibrador (0,20 valia 37% de cobertura na escala bruta e vale 64% na calibrada). Os outros três limiares só REBAIXAM — sinal fraco não promove o que a margem reprovou. O desvio entre as árvores da floresta foi testado como barra de erro e descartado: mede o inverso (67,4% / 85,0% / 89,6% de acerto por tercil).",
+
+  "confianca": {
+    "corte_margem": 0.35,
+    "min_precedentes": 3,
+    "concordancia_minima": 0.55,
+    "desacordo_maximo": 0.45,
+    "reamostragens": 400
+  },
+
+  "_calibrador_por_que": "A escala bruta ordenava bem e mentia: o sistema dizia 20-40% em casos que reformavam 9,9%. Isotônica ajustada em 1.200 decisões de 2024 e validada em 1.092 de 2025 (corte temporal, por causa da deriva de época de ~11 pp entre anos). Maior erro da diagonal: 21,9 pp -> 5,0 pp; Brier 0,158 -> 0,138. Sem output/calibrador.pkl o sistema roda igual, só avisando que o número não é probabilidade.",
+
+  "busca": {
+    "candidatos": 40,
+    "precedentes": 8,
+    "nota_minima": 3,
+    "chars_por_precedente": 5000,
+    "max_ciclos_busca": 2,
+    "max_ciclos_revisao": 2,
+    "usar_feedback": true
+  },
+
+  "julgar_consultas": true,
+
+  "max_retries": 4,
+  "timeout_segundos": 240
+}

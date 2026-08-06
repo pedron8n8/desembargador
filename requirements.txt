@@ -1,0 +1,7 @@
+requests>=2.31
+langgraph>=1.2
+langgraph-checkpoint-sqlite>=3.1
+# Segundo estimador (src/rag/floresta.py). Opcional em runtime: sem sklearn o
+# grafo roda igual, so' com o k-NN. Wheels cp314 conferidos para win_amd64.
+scikit-learn>=1.9
+numpy>=2.5

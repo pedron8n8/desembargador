@@ -1,0 +1,39 @@
+APELAÇÃO CÍVEL — CASO FICTÍCIO PARA TESTE DO SISTEMA
+
+Ação de cobrança de seguro de vida em grupo ajuizada por João da Silva contra
+Seguradora Alfa S/A, na comarca de Chapecó.
+
+FATOS
+O autor, trabalhador rural de 54 anos, aderiu a seguro de vida em grupo
+contratado por sua cooperativa em 2016, com cobertura para invalidez permanente
+total ou parcial por doença (IPD). Em 2021 foi aposentado por invalidez pelo
+INSS em razão de espondilodiscoartrose lombar e síndrome do manguito rotador,
+com incapacidade total e permanente para a atividade habitual.
+
+Requereu administrativamente o pagamento da indenização, negado pela seguradora
+sob o argumento de que a apólice cobre apenas invalidez funcional permanente
+total por doença (IFPD), que exige perda da existência independente, e não a
+mera incapacidade laborativa.
+
+SENTENÇA
+O Juízo da 2ª Vara Cível de Chapecó julgou improcedente o pedido. Entendeu que
+a apólice é clara ao cobrir apenas a IFPD e que a aposentadoria previdenciária
+não vincula a seguradora, pois o conceito securitário de invalidez não se
+confunde com o previdenciário. Condenou o autor ao pagamento de custas e
+honorários de 10% sobre o valor da causa, suspensa a exigibilidade pela
+gratuidade da justiça.
+
+RECURSO DO AUTOR
+1. Nulidade da sentença por cerceamento de defesa: o pedido de perícia médica
+   foi indeferido e o julgamento foi antecipado.
+2. Abusividade da cláusula limitativa: alega que a distinção entre IPD e IFPD
+   não foi informada de forma destacada no momento da adesão, violando os
+   artigos 6º, III, e 54, § 4º, do Código de Defesa do Consumidor.
+3. Aplicação da Súmula 610 do STJ por analogia e do princípio da interpretação
+   mais favorável ao aderente.
+4. Subsidiariamente, pagamento proporcional ao grau de invalidez apurado.
+
+CONTRARRAZÕES
+A seguradora sustenta a validade da cláusula, a suficiência do laudo do INSS
+para demonstrar que não há perda da existência independente, e a
+desnecessidade de perícia. Pede a majoração dos honorários recursais.
