@@ -190,9 +190,17 @@ function Evidencias({ c }: { c: C }) {
       <section className="secao">
         <h2>Precedentes usados</h2>
         <p className="nota">
-          São estes que produziram o prognóstico. Marcar “não serviu” faz o precedente perder
-          posição nas próximas buscas — o ajuste é limitado a ±30%, porque o BM25 foi calibrado
-          em 400 casos cegos e um clique não vale mais que isso.
+          {c.tese === 'neutra' ? (
+            <>São estes que produziram o prognóstico.</>
+          ) : (
+            <>
+              São os que a triagem leu e considerou capazes de sustentar o lado que você pediu.
+              Por isso <b>não</b> há prognóstico nesta consulta.
+            </>
+          )}{' '}
+          Marcar “não serviu” faz o precedente perder posição nas próximas buscas — o ajuste é
+          limitado a ±30%, porque o BM25 foi calibrado em 400 casos cegos e um clique não vale
+          mais que isso.
         </p>
         {c.precedentes.map((p) => (
           <Precedente
@@ -207,27 +215,88 @@ function Evidencias({ c }: { c: C }) {
         )}
       </section>
 
-      {c.sustentacao.length > 0 && (
-        <section className="secao">
-          <h2>Precedentes de sustentação</h2>
-          <p className="nota">
-            Recuperados já filtrados pelo lado que você pediu. <b>Não</b> entram no prognóstico:
-            contar reforma numa amostra só de reformas daria 100%, e a calibração iria junto.
-            Servem de material para a fundamentação.
-          </p>
-          {c.sustentacao.map((p) => (
-            <Precedente
-              key={p.id}
-              p={p}
-              veredito={av?.vereditos?.[p.id]}
-              onVeredito={(v) => marcar(p.id, v)}
-            />
-          ))}
-        </section>
-      )}
-
+      <LinhaDeArgumentacao c={c} />
       <Procedencia c={c} />
     </>
+  )
+}
+
+const ROTULO_TESE: Record<string, string> = {
+  reformar: 'REFORMAR (dar provimento)',
+  manter: 'MANTER (negar provimento)',
+}
+
+/**
+ * O que a triagem descartou para chegar nos precedentes acima. É a evidência
+ * que o modo tese produz de novo: quantos análogos decidem CONTRA o lado
+ * pedido. Um `reformar` que descarta 63 e acha 3 está dizendo alguma coisa.
+ */
+function LinhaDeArgumentacao({ c }: { c: C }) {
+  if (!ROTULO_TESE[c.tese]) return null
+  const d = c.descartados ?? {}
+  const cm = c.comuns ?? {}
+  const grupos: [string, [string, number][] | undefined][] = [
+    ['Âncoras citadas por mais de um', cm.ancoras],
+    ['Câmaras', cm.orgaos],
+    ['Classes', cm.classes],
+  ]
+
+  return (
+    <section className="secao">
+      <h2>Linha de argumentação: {ROTULO_TESE[c.tese]}</h2>
+      <p className="aviso forte">
+        Os {c.precedentes.length} precedentes acima <b>não são uma amostra</b> — são o que sobrou
+        depois de a triagem ler cada candidato e manter só os que sustentam este lado.
+        Descartados: <b>{d.contra ?? 0}</b> que decidem contra e <b>{d.neutro ?? 0}</b> neutros.
+      </p>
+      <p className="nota">
+        O corte é semântico, não pelo rótulo <code>provido</code>/<code>desprovido</code>: esse
+        rótulo só diz que o <b>recorrente daquele processo</b> venceu, e o recorrente de lá pode
+        ser a parte contrária à sua. Um acórdão “provido” em que quem recorreu foi a seguradora é
+        material contra um segurado.
+      </p>
+
+      {c.precedentes.length === 0 ? (
+        <p className="aviso forte">
+          A triagem não achou precedente que sustente este lado. Isso é um achado, não uma falha:
+          no acervo deste relator, com estes termos de busca, não há material para essa linha.
+          Rode em modo neutro para ver o que existe.
+        </p>
+      ) : (
+        cm.n && (
+          <>
+            <h3>O que se repete entre eles</h3>
+            <ul>
+              {grupos.map(([rotulo, vs]) =>
+                vs && vs.length > 0 ? (
+                  <li key={rotulo}>
+                    <b>{rotulo}:</b> {vs.map(([v, n]) => `${v} (${n})`).join('; ')}
+                  </li>
+                ) : null,
+              )}
+              <li>
+                <b>
+                  {cm.unanimes} de {cm.n} unânimes
+                </b>
+                , {cm.transitaram} transitaram em julgado
+                {cm.anos && cm.anos.length > 0 && (
+                  <>
+                    , anos {cm.anos[0]}–{cm.anos[cm.anos.length - 1]}
+                  </>
+                )}
+              </li>
+            </ul>
+            {(!cm.ancoras || cm.ancoras.length === 0) && (
+              <p className="nota">
+                Nenhuma âncora aparece em mais de um deles: são decisões que chegaram ao mesmo
+                resultado por caminhos diferentes. O ponto comum, se existir, está nos fatos — não
+                há tese única para citar.
+              </p>
+            )}
+          </>
+        )
+      )}
+    </section>
   )
 }
 
@@ -340,7 +409,30 @@ function Prognostico({ c }: { c: C }) {
   return (
     <>
       <section className="secao">
-        {p.decide === false ? (
+        {p.enviesado ? (
+          <>
+            <h2 style={{ color: 'var(--alerta)', fontSize: 'var(--t-xl)' }}>
+              SEM PROGNÓSTICO — você pediu um lado
+            </h2>
+            <p className="nota">
+              Os precedentes foram escolhidos por sustentarem a linha que você pediu. Qualquer
+              percentual tirado deles mediria a própria escolha.
+            </p>
+            <p className="aviso forte">
+              Para o número calibrado, rode a mesma consulta em <b>modo neutro</b> — é a única em
+              que a amostra não foi escolhida por você.
+            </p>
+            {p.floresta && (
+              <p className="aviso">
+                Único estimador que sobrevive: a <b>floresta</b> aponta{' '}
+                {pct(100 * p.floresta.p_reforma)} de chance de reforma. Ela lê o caso, não a
+                busca, então o filtro não a contamina — mas sai <b>crua</b>: a calibração foi
+                ajustada sobre a escala do conjunto, que aqui não existe. Ordena, não é
+                probabilidade.
+              </p>
+            )}
+          </>
+        ) : p.decide === false ? (
           <>
             <h2 style={{ color: 'var(--alerta)', fontSize: 'var(--t-xl)' }}>NÃO DECIDO</h2>
             <p className="nota">Os dados não sustentam um prognóstico neste caso:</p>
@@ -396,6 +488,8 @@ function Prognostico({ c }: { c: C }) {
         </section>
       )}
 
+      {/* no modo tese a floresta já saiu sozinha lá em cima, e o k-NN nem existe */}
+      {!p.enviesado && (
       <section className="secao">
         <h2>Dois estimadores</h2>
         <div className="tabela-rolavel">
@@ -457,6 +551,7 @@ function Prognostico({ c }: { c: C }) {
           </p>
         )}
       </section>
+      )}
 
       <section className="secao nao-imprime">
         <h2>Sua avaliação</h2>

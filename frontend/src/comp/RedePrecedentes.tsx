@@ -161,12 +161,20 @@ export function RedePrecedentes({ r }: { r: Rede }) {
                 r={raio(n)}
                 fill={COR[n.resultado ?? ''] ?? '#9a958c'}
                 fillOpacity={n.nota ? 0.35 + 0.13 * n.nota : 0.4}
+                {...(n.lado === 'contra'
+                  ? // análogo que decide CONTRA a tese pedida. Fica visível sem
+                    // hover de propósito: é a evidência que o modo tese produz,
+                    // e evidência que só aparece no tooltip não é evidência.
+                    { stroke: 'var(--alerta)', strokeWidth: 1.5, strokeDasharray: '2 2' }
+                  : {})}
               />
               <title>
                 {n.numero} — {n.resultado} — {n.ano}
                 {n.nota ? ` · analogia ${n.nota}/5` : ''}
-                {n.precedente ? ' · usado no prognóstico' : ''}
-                {n.sustentacao ? ' · sustentação da tese' : ''}
+                {n.precedente ? ' · usado na minuta' : ''}
+                {n.lado === 'a_favor' ? ' · sustenta a tese pedida' : ''}
+                {n.lado === 'contra' ? ' · DECIDE CONTRA — descartado pela triagem' : ''}
+                {n.lado === 'neutro' ? ' · neutro — descartado pela triagem' : ''}
               </title>
             </g>
           )
@@ -190,7 +198,12 @@ export function RedePrecedentes({ r }: { r: Rede }) {
           <i style={{ background: '#9a958c' }} />
           processual
         </span>
-        <span>anel preto = entrou no prognóstico</span>
+        <span>anel preto = usado na minuta</span>
+        {r.nos.some((n) => n.lado === 'contra') && (
+          <span style={{ color: 'var(--alerta)' }}>
+            contorno tracejado vermelho = análogo que decide CONTRA a tese pedida
+          </span>
+        )}
         <span>tamanho = pontos do ranking</span>
         <span>caixa = âncora citada por 2+ decisões</span>
         <span>traço cheio = âncora · tracejado = ementas parecidas</span>

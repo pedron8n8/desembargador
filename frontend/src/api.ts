@@ -64,7 +64,8 @@ export type Precedente = {
   pontos: number | null
   nota: number | null
   por_que: string | null
-  neutro?: boolean
+  /** veredito da triagem no modo tese; vazio no modo neutro, onde não se pergunta */
+  lado?: 'a_favor' | 'contra' | 'neutro' | ''
   ementa: string
   ementa_truncada: boolean
   ancoras: string[]
@@ -74,8 +75,25 @@ export type Precedente = {
   explicacao_rank: string
 }
 
+/** O que se repete entre os precedentes que sustentam a tese (sinais.comuns). */
+export type Comuns = {
+  n?: number
+  ancoras?: [string, number][]
+  orgaos?: [string, number][]
+  classes?: [string, number][]
+  unanimes?: number
+  transitaram?: number
+  anos?: number[]
+}
+
 export type Prognostico = {
   decide?: boolean
+  /**
+   * true quando a consulta pediu um lado: a amostra foi escolhida por sustentar
+   * a tese, então NÃO sai percentual — contar resultado aqui mede a escolha.
+   */
+  enviesado?: boolean
+  tese?: string
   faixa?: string
   probabilidade_pct?: number | null
   intervalo_pct?: [number, number] | null
@@ -119,8 +137,11 @@ export type Consulta = {
   triagem: { classe?: string; materia?: string; tese?: string; pedidos?: string[]; termos?: string[] }
   consulta_fts: string
   precedentes: Precedente[]
+  /** @deprecated sempre vazio: no modo tese os `precedentes` JÁ são a sustentação */
   sustentacao: Precedente[]
-  comuns: Record<string, unknown>
+  /** quantos candidatos análogos a triagem descartou, e por quê */
+  descartados: { contra?: number; neutro?: number }
+  comuns: Comuns
   perfil: Record<string, any>
   contra: Record<string, any>
   n_candidatos: number
@@ -200,7 +221,7 @@ export type NoRede = {
   ancora?: string
   unanime?: number
   precedente?: boolean
-  sustentacao?: boolean
+  lado?: 'a_favor' | 'contra' | 'neutro' | ''
   ancoras?: string[]
   rotulo?: string
   chave?: string

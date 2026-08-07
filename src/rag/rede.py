@@ -162,7 +162,10 @@ def montar(candidatos, limiar=0.12, max_por_no=4, usar_texto=True):
             "pontos": c.get("pontos"), "ancora": c.get("ancora"),
             "unanime": c.get("unanime"),
             "precedente": bool(c.get("_precedente")),
-            "sustentacao": bool(c.get("_sustentacao")),
+            # veredito da triagem no modo tese: a_favor | contra | neutro. O que
+            # a rede mostra de novo e' justamente o 'contra' — os analogos que
+            # decidem do outro lado e por isso ficaram de fora da minuta.
+            "lado": c.get("_lado") or "",
             "ancoras": sorted(ancoras(c).values())}
            for c in cands]
 

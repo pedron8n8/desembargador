@@ -42,38 +42,48 @@ _cache = {}
 # ------------------------------------------------- selo do indice que gerou o .pkl
 
 def selo(banco=RAG):
-    """Identidade do rag.db no instante em que o artefato foi salvo.
+    """Identidade do CONTEUDO do rag.db no instante em que o artefato foi salvo.
 
     Um .pkl nao carrega vinculo nenhum com o indice que o gerou: depois de
     reindexar, o artefato velho continua sendo carregado em silencio e preve
-    pior — sem nenhum sinal de que envelheceu. mtime + tamanho bastam para
-    perceber isso no carregamento.
+    pior — sem nenhum sinal de que envelheceu.
+
+    Foi mtime + tamanho ate' descobrir que isso da' alarme falso: o lifespan da
+    API abre o rag.db (WAL) a cada boot, e o mtime anda sem uma linha ter
+    mudado. Alarme que dispara sozinho e' alarme que se aprende a ignorar — e o
+    dia em que o indice mudar de verdade ninguem le'. Contagem e maior id
+    mudam quando o acervo muda, e so' quando ele muda: reindexar o MESMO
+    tjsc.db devolve o mesmo selo, e o modelo continua valido de fato.
     """
     try:
-        st = os.stat(banco)
-        return {"indice_mtime": st.st_mtime, "indice_bytes": st.st_size}
-    except OSError:                     # sem banco: nada a selar, e nada a avisar
+        n, maior = sqlite3.connect(
+            "file:%s?mode=ro" % banco.replace("\\", "/"), uri=True).execute(
+            "SELECT count(*), max(id) FROM decisao").fetchone()
+        return {"indice_n": n, "indice_max_id": maior}
+    except (OSError, sqlite3.Error):    # sem banco: nada a selar, e nada a avisar
         return {}
 
 
 def conferir_selo(m, refazer, banco=RAG):
-    """Avisa em stderr quando o indice foi reconstruido DEPOIS do modelo.
+    """Avisa em stderr quando o indice MUDOU depois do modelo.
 
     Avisa e nao falha de proposito: um artefato defasado ainda responde, e
     derrubar a consulta inteira seria pior que o aviso. Artefato antigo, salvo
-    antes deste selo existir, passa calado — nao ha' com o que comparar.
+    antes deste selo existir (ou com o selo velho, por mtime), passa calado —
+    nao ha' com o que comparar.
     """
-    if not m or "indice_mtime" not in m:
+    if not m or "indice_n" not in m:
         return
-    try:
-        atual = os.stat(banco).st_mtime
-    except OSError:
+    atual = selo(banco)
+    if not atual:
         return
-    # folga de 1s: mtime em alguns sistemas de arquivos tem granularidade grossa
-    if atual > m["indice_mtime"] + 1:
-        print("AVISO: %s foi reconstruído depois deste modelo — as previsões\n"
-              "       podem estar piores que o medido. Rode: %s"
-              % (os.path.basename(banco), refazer), file=sys.stderr)
+    if (atual["indice_n"], atual["indice_max_id"]) != \
+            (m["indice_n"], m["indice_max_id"]):
+        print("AVISO: %s mudou depois deste modelo (%s decisões agora, %s no\n"
+              "       treino) — as previsões podem estar piores que o medido.\n"
+              "       Rode: %s"
+              % (os.path.basename(banco), atual["indice_n"], m["indice_n"],
+                 refazer), file=sys.stderr)
 
 
 def disponivel():
@@ -310,4 +320,25 @@ if __name__ == "__main__":
     print("\nexemplo: %s  (P(reforma)=%.2f)" % (d["resultado"], d["p_reforma"]))
     assert r["precisao_reforma"] > r["base_reforma"], \
         "a floresta nao bate nem a linha de base — nao serve como estimador"
-    print("\nself-check OK — a floresta bate a base em %.2fx" % r["ganho"])
+
+    # --- o selo. Ele existe para pegar reindexacao, e NAO pode gritar so'
+    # porque alguem abriu o banco: era o que o selo por mtime fazia, e o
+    # lifespan da API disparava o aviso a cada boot.
+    s = selo()
+    assert set(s) == {"indice_n", "indice_max_id"} and s["indice_n"] > 0, s
+    import io
+    from contextlib import redirect_stderr
+    for caso, meta in (("igual", dict(s)),
+                       ("artefato velho, sem selo", {"pipeline": 1}),
+                       ("sem meta", None)):
+        buf = io.StringIO()
+        with redirect_stderr(buf):
+            conferir_selo(meta, "refaz")
+        assert buf.getvalue() == "", "alarme falso em: %s" % caso
+    buf = io.StringIO()
+    with redirect_stderr(buf):
+        conferir_selo({**s, "indice_n": s["indice_n"] - 7}, "refaz")
+    assert "mudou depois deste modelo" in buf.getvalue(), buf.getvalue()
+
+    print("\nself-check OK — a floresta bate a base em %.2fx e o selo só grita "
+          "quando o índice muda de verdade" % r["ganho"])

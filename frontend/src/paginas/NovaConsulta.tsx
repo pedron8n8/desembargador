@@ -15,12 +15,12 @@ const TESES: { valor: string; titulo: string; texto: string }[] = [
     valor: 'reformar',
     titulo: 'Sustentar a reforma',
     texto:
-      'Puxa também os precedentes que deram provimento, para achar o que eles têm em comum.',
+      'A triagem lê cada candidato e mantém só os que sustentam dar provimento — e mostra quantos descartou por decidirem contra.',
   },
   {
     valor: 'manter',
     titulo: 'Sustentar a manutenção',
-    texto: 'O mesmo, do lado que negou provimento.',
+    texto: 'O mesmo, do lado de negar provimento e manter a sentença.',
   },
 ]
 
@@ -131,10 +131,11 @@ export function NovaConsulta() {
               </div>
             </label>
           ))}
-          <p className="aviso">
-            Em “sustentar”, o prognóstico continua sendo calculado na busca <b>neutra</b>: o
-            sistema monta a sustentação que você pediu, mas não mente sobre para que lado a
-            jurisprudência pende.
+          <p className="aviso forte">
+            Em “sustentar” <b>não sai prognóstico</b>. A amostra passa a ser escolhida por
+            sustentar o seu lado, e contar resultado nela mediria a escolha, não o tribunal. O que
+            o sistema entrega no lugar é mais útil: quantos precedentes análogos decidem{' '}
+            <b>contra</b> você. Para o percentual calibrado, rode a mesma peça em neutra.
           </p>
         </fieldset>
 

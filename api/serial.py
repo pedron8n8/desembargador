@@ -20,7 +20,10 @@ from src.rag.llm import config
 # `dispositivo` sao grandes e o estado tem 8 deles + ate' 88 candidatos.
 _PRECEDENTE = ("id", "numero", "tipo", "classe", "orgao", "comarca", "data",
                "ano", "url", "resultado", "confianca", "tem_teor", "ancora",
-               "unanime", "score", "pontos", "nota", "por_que", "neutro")
+               "unanime", "score", "pontos", "nota", "por_que",
+               # veredito da triagem no modo tese: a_favor | contra | neutro.
+               # Vazio no modo neutro, onde a pergunta nao e' feita.
+               "lado")
 
 
 def _json(v):
@@ -62,7 +65,12 @@ def consulta(thread, estado, segundos=None, markdown=None):
         "consulta_fts": estado.get("consulta") or "",
         # --- EVIDENCIAS (vem antes; ver o docstring)
         "precedentes": [precedente(d) for d in prec],
-        "sustentacao": [precedente(d) for d in (estado.get("sustentacao") or [])],
+        # No modo tese os PRECEDENTES ja' sao a sustentacao — a triagem so'
+        # deixou passar quem sustenta o lado pedido. Nao ha' mais duas listas.
+        # `descartados` e' a evidencia que sobrou dessa escolha: quantos
+        # candidatos analogos decidiam CONTRA e por isso ficaram de fora.
+        "sustentacao": [],   # mantido vazio: o front antigo espera a chave
+        "descartados": estado.get("descartados") or {},
         "comuns": estado.get("comuns") or {},
         "perfil": estado.get("perfil") or {},
         "contra": estado.get("contra") or {},

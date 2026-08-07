@@ -61,10 +61,7 @@ def registrar_consulta(thread, caso, estado, custo_total):
                    json.dumps(estado.get("prognostico") or {}, ensure_ascii=False),
                    estado.get("minuta") or "", custo_total,
                    json.dumps([x.get("modelo") for x in (estado.get("custos") or [])])))
-        # a sustentacao (--tese) entra junto: para "ja' usei esse processo?" o
-        # que conta e' ter chegado ao redator, nao por qual das duas buscas
-        for p in ((estado.get("precedentes") or [])
-                  + (estado.get("sustentacao") or [])):
+        for p in estado.get("precedentes") or []:
             c.execute("INSERT OR IGNORE INTO precedente_uso VALUES (?,?,?,?,NULL)",
                       (thread, p["id"], p["numero"], p.get("nota")))
     c.close()

@@ -35,16 +35,21 @@ TJSC = os.path.join(RAIZ, "output", "tjsc.db")
 PESO_CONFIANCA = {"dispositivo": 1.0, "texto completo": 0.7, "ementa": 0.5, "-": 0.2}
 
 
-# Linha de argumentacao pedida pelo usuario -> resultados que a sustentam.
-# NAO existe "condenar/absolver" neste acervo: 18 decisoes criminais em 20.363.
-# O eixo real do corpus e' reformar x manter, e e' nele que a busca opera.
-TESES = {
-    "reformar": ("provido", "parcialmente provido"),
-    "manter": ("desprovido",),
-    "neutra": (),
-}
-ROTULO_TESE = {"reformar": "reformar a decisão de origem (dar provimento)",
-               "manter": "manter a decisão de origem (negar provimento)"}
+# Linha de argumentacao pedida pelo usuario. NAO existe "condenar/absolver"
+# neste acervo: 18 decisoes criminais em 20.363. O eixo do corpus e' reformar x
+# manter a decisao de origem.
+#
+# QUEM FILTRA E' A TRIAGEM, NAO O SQL — e isso foi medido, nao suposto. Filtrar
+# por `resultado` traz decisoes em que o RECORRENTE venceu, que nao e' a mesma
+# coisa que decisoes que sustentam a SUA tese: num teste com o autor recorrendo,
+# os 8 precedentes "provido" eram todos casos em que quem recorreu foi a
+# seguradora, e a minuta pedida como "reformar" saiu negando provimento. Pior,
+# o filtro por resultado joga fora o melhor material: um "desprovido" em que a
+# parte contraria recorreu e perdeu e' exatamente o que a sua tese quer citar.
+# A pergunta "este precedente favorece o meu lado?" so' tem resposta lendo o
+# merito — e quem le' e' o triador.
+LADOS = {"reformar": "REFORMAR a decisão de origem (dar provimento ao recurso)",
+         "manter": "MANTER a decisão de origem (negar provimento ao recurso)"}
 
 
 class Estado(TypedDict, total=False):
@@ -56,6 +61,7 @@ class Estado(TypedDict, total=False):
     candidatos: list
     precedentes: list
     comuns: dict                        # o que se repete entre eles (so' com --tese)
+    descartados: dict                   # quantos o triador cortou por lado
     perfil: dict                        # historico do argumento (sinais.perfil)
     contra: dict                        # quem discorda, dentro do que veio
     ciclo_busca: int
@@ -118,11 +124,32 @@ Entre duas decisões de mesma analogia, dê a nota maior à mais bem ancorada e 
 recente. NÃO suba a nota de um precedente pouco análogo só porque a ficha é boa:
 âncora forte em questão jurídica diferente continua sendo 1 ou 2.
 
-Devolva SOMENTE um JSON: {{"notas": [{{"id": 123, "nota": 4, "por_que": "até 12 palavras"}}]}}
+{lado}
+Devolva SOMENTE um JSON: {{"notas": [{{"id": 123, "nota": 4, "por_que": "até 12 palavras"{campo}}}]}}
 Inclua todas as {n} decisões.
 
 DECISÕES:
 {lista}
+"""
+
+P_TRIAR_LADO = """
+ALÉM DA NOTA, diga de que lado cada decisão joga. O usuário quer sustentar:
+**{lado}**.
+
+CUIDADO — o rótulo "provido/desprovido" NÃO responde isso. Ele só diz que o
+RECORRENTE daquele processo venceu ou perdeu, e o recorrente de lá pode ser a
+parte contrária à do caso em análise. Um acórdão "provido" em que quem recorreu
+foi a seguradora é material CONTRA um segurado; um "desprovido" em que a
+seguradora recorreu e perdeu é material A FAVOR dele.
+
+Então leia o mérito: o que aquela decisão concluiu ajuda ou atrapalha a tese que
+o usuário quer sustentar NESTE caso? Responda no campo "lado":
+  "a_favor"  = o que ela decidiu no mérito sustenta a tese pedida
+  "contra"   = decidiu no sentido oposto
+  "neutro"   = não dá para dizer, ou trata de questão lateral (preliminar,
+               honorários, competência) sem tomar partido no mérito
+Na dúvida entre "a_favor" e "neutro", escolha "neutro" — precedente que não
+sustenta de verdade custa caro na sustentação oral.
 """
 
 P_REDIGIR = """Você redige uma minuta no estilo do Desembargador Rubens Schulz (TJSC),
@@ -274,15 +301,9 @@ def no_recuperar(estado):
     # Busca o dobro e reordena pela ficha de procedencia antes de cortar: o LLM
     # de triagem passa a ver os N melhores de 2N, e nao os 2N primeiros do BM25.
     # Custo de LLM identico — quem paga o dobro e' o SQLite, em milissegundos.
-    # LINHA DE ARGUMENTACAO: no extremo, a amostra ENCOLHE para a base daquele
-    # resultado — o sistema so' enxerga decisoes que terminaram do lado pedido.
-    # E' o que da' os pontos em comum. O preco esta' no no seguinte: sobre uma
-    # amostra assim nao existe prognostico, e o sistema para de dar um.
-    # Amostragem completa so' no modo neutro.
-    lado = TESES.get(estado.get("tese") or "neutra", ())
     cand = busca.buscar(consulta, limite=limite * 2, classe=classe,
                         ano_min=f.get("ano_min"), ano_max=f.get("ano_max"),
-                        excluir=f.get("excluir") or (), resultados=lado)
+                        excluir=f.get("excluir") or ())
     cand = rerank.ordenar(cand, limite=limite, boost=fb)
     return {"consulta": consulta, "candidatos": cand, "ciclo_busca": ciclo + 1,
             "perfil": sinais.perfil(consulta),
@@ -300,8 +321,11 @@ def no_triar(estado):
            sinais.resumir_ficha(c),
            (c["ementa"] or c["dispositivo"] or "")[:900])
         for c in cand)
+    tese = estado.get("tese") or "neutra"
     msg = [{"role": "user", "content": P_TRIAR.format(
-        caso=estado["caso"][:6000], n=len(cand), lista=lista)}]
+        caso=estado["caso"][:6000], n=len(cand), lista=lista,
+        lado=P_TRIAR_LADO.format(lado=LADOS[tese]) if tese in LADOS else "",
+        campo=', "lado": "a_favor|contra|neutro"' if tese in LADOS else "")}]
     txt, custo = chamar("triar", msg)
     custos = [custo]
     if custo["cortado"]:
@@ -319,11 +343,18 @@ def no_triar(estado):
             txt = txt2
     notas = {n.get("id"): n for n in json_da_resposta(txt, padrao={}).get("notas", [])
              if isinstance(n, dict)}
-    escolhidos = []
+    escolhidos, anotados = [], []
     for c in cand:
-        n = notas.get(c["id"])
-        if n and (n.get("nota") or 0) >= cfg["nota_minima"]:
-            escolhidos.append({**c, "nota": n["nota"], "por_que": n.get("por_que", "")})
+        n = notas.get(c["id"]) or {}
+        c = {**c, "nota": n.get("nota"), "por_que": n.get("por_que", ""),
+             "lado": (n.get("lado") or "").strip().lower()}
+        # o veredito volta para a LISTA INTEIRA de candidatos, nao so' para os
+        # aprovados: e' assim que a visualizacao de rede consegue mostrar os
+        # analogos que decidem CONTRA — que e' a evidencia que o modo tese
+        # produz. Sem isto o front recebe 80 nos sem lado nenhum.
+        anotados.append(c)
+        if (c["nota"] or 0) >= cfg["nota_minima"]:
+            escolhidos.append(c)
     # a nota do LLM manda (e' ela que veta o que nao e' analogo); o rerank so'
     # desempata dentro da mesma nota
     escolhidos.sort(key=lambda c: (-c["nota"], -c.get("pontos", 0.0)))
@@ -331,12 +362,29 @@ def no_triar(estado):
         print("  AVISO: a triagem não devolveu nota nenhuma para %d candidatos "
               "— o prognóstico vai sair vazio" % len(cand), flush=True)
 
-    prec = escolhidos[:cfg["precedentes"]]
-    # os pontos em comum so' fazem sentido num conjunto de um lado so'
-    enviesado = (estado.get("tese") or "neutra") != "neutra"
-    return {"precedentes": prec, "custos": custos,
-            "comuns": sinais.comuns(prec) if enviesado else {},
-            "contra": sinais.contra_argumentacao(prec)}
+    if tese not in LADOS:
+        return {"precedentes": escolhidos[:cfg["precedentes"]], "custos": custos,
+                "candidatos": anotados, "comuns": {},
+                "contra": sinais.contra_argumentacao(escolhidos)}
+
+    # AQUI a amostra encolhe: fica so' o que o triador leu e disse que sustenta a
+    # tese pedida. 'neutro' e 'contra' saem — inclusive precedentes de analogia 5,
+    # que no modo neutro entrariam. E' esse o corte que o modo extremo faz.
+    a_favor = [c for c in escolhidos if c["lado"] == "a_favor"]
+    prec = a_favor[:cfg["precedentes"]]
+    descartados = {"contra": sum(c["lado"] == "contra" for c in escolhidos),
+                   "neutro": sum(c["lado"] not in ("a_favor", "contra")
+                                 for c in escolhidos)}
+    print("  tese '%s': %d de %d precedentes sustentam o lado pedido "
+          "(%d contra, %d neutros)"
+          % (tese, len(a_favor), len(escolhidos),
+             descartados["contra"], descartados["neutro"]), flush=True)
+    return {"precedentes": prec, "custos": custos, "candidatos": anotados,
+            "comuns": sinais.comuns(prec), "descartados": descartados,
+            # a contra-argumentacao vem do conjunto INTEIRO, nao do filtrado:
+            # e' justamente o que o triador marcou como "contra" que o usuario
+            # vai ter de enfrentar no julgamento
+            "contra": sinais.contra_argumentacao(escolhidos)}
 
 
 def _suficiente(estado):
@@ -554,7 +602,7 @@ def no_redigir(estado):
     if prog.get("enviesado"):
         # P_SEM_DECISAO manda escrever dispositivo condicional nos dois cenarios
         # — o oposto do que se pediu aqui. No modo tese quem manda e' P_TESE.
-        aviso = P_TESE.format(lado=ROTULO_TESE[estado["tese"]],
+        aviso = P_TESE.format(lado=LADOS[estado["tese"]],
                               comuns=_bloco_comuns(estado.get("comuns") or {}))
     elif prog.get("decide") is False:
         aviso = P_SEM_DECISAO.format(
@@ -820,9 +868,52 @@ if __name__ == "__main__":
     assert c["n"] == 8 and c["ancoras"] == [("Tema 1059/STJ", 8)], c
     assert sinais.comuns([]) == {}
     assert "Tema 1059/STJ" in _bloco_comuns(c) and _bloco_comuns({}) == ""
-    assert TESES["neutra"] == () and set(TESES) == {"neutra", "reformar", "manter"}
-    # a busca so' filtra quando ha' lado; neutra passa tupla vazia = sem filtro
-    assert TESES.get("neutra") == () and len(TESES["reformar"]) == 2
+    assert set(LADOS) == {"reformar", "manter"} and "neutra" not in LADOS
+
+    # --- no_triar com a triagem dublada: sem rede, sem gastar.
+    # Prova as duas coisas que o teste real nao provou de graca: que o corte
+    # semantico manda (analogia 5 CONTRA a tese fica de fora, analogia 3 a favor
+    # entra) e que o veredito volta para TODOS os candidatos — sem isso a
+    # visualizacao de rede recebe 80 nos sem lado e o usuario nao ve quem
+    # decide contra ele.
+    _chamar_real = chamar
+    _dub = [{"id": 1, "nota": 5, "por_que": "x", "lado": "contra"},
+            {"id": 2, "nota": 3, "por_que": "y", "lado": "a_favor"},
+            {"id": 3, "nota": 5, "por_que": "z", "lado": "neutro"},
+            {"id": 4, "nota": 1, "por_que": "w", "lado": "contra"}]
+    chamar = lambda *a, **k: (  # noqa: E731,F811
+        json.dumps({"notas": _dub}),
+        {"no": "triar", "modelo": "dublê", "tokens_in": 0, "tokens_out": 0,
+         "custo_usd": 0.0, "cortado": False})
+    _cands = [{"id": i, "numero": "n%d" % i, "data": "2024-01-01",
+               "classe": "Apelação Cível", "resultado": "provido", "ementa": "e",
+               "dispositivo": "d", "pontos": 1.0, "ano": 2024, "unanime": 1,
+               "ancoras_json": "[]"} for i in (1, 2, 3, 4)]
+    _e = {"candidatos": _cands, "caso": "c", "tese": "reformar"}
+    r = no_triar(_e)
+    assert [p["id"] for p in r["precedentes"]] == [2], r["precedentes"]
+    assert r["descartados"] == {"contra": 1, "neutro": 1}, r["descartados"]
+    # id 4 tem nota 1: nao e' analogo, logo nao conta como descartado...
+    assert len(r["candidatos"]) == 4, "a rede precisa dos 4"
+    # ... mas o veredito dele volta assim mesmo, para a rede poder desenhar
+    assert {c["id"]: c["lado"] for c in r["candidatos"]} == {
+        1: "contra", 2: "a_favor", 3: "neutro", 4: "contra"}
+    # no modo neutro o campo nem e' pedido, e a nota manda sozinha
+    rn = no_triar({**_e, "tese": "neutra"})
+    assert [p["id"] for p in rn["precedentes"]] == [1, 3, 2], rn["precedentes"]
+    assert rn["comuns"] == {} and "descartados" not in rn
+    chamar = _chamar_real  # noqa: F811
+
+    # o prompt da triagem so' pede o campo "lado" quando ha' lado a pedir
+    assert "a_favor" in P_TRIAR_LADO
+    assert P_TRIAR.format(caso="c", n=1, lista="l", lado="", campo="").count(
+        '"lado"') == 0
+    com_lado = P_TRIAR.format(caso="c", n=1, lista="l",
+                              lado=P_TRIAR_LADO.format(lado=LADOS["reformar"]),
+                              campo=', "lado": "a_favor|contra|neutro"')
+    assert '"lado"' in com_lado and "REFORMAR" in com_lado
+    # e o alerta que o teste real motivou tem que estar la'
+    assert "provido/desprovido" in com_lado and "recorrente" in com_lado
 
     assert _suficiente({"precedentes": [1, 2, 3], "ciclo_busca": 1}) == "prognostico"
     assert _suficiente({"precedentes": [1], "ciclo_busca": 1}) == "recuperar"

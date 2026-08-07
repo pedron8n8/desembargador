@@ -4,7 +4,7 @@
     web.bat                                    (sobe isto + o vite)
 
 Em dev o Vite (5173) faz proxy de /api para ca'. Same-origin, entao nao ha' CORS
-nem cookie cross-site para configurar. Em producao o `web/dist` e' servido daqui
+nem cookie cross-site para configurar. Em producao o `frontend/dist` e' servido daqui
 mesmo: um processo, uma porta, um certificado.
 """
 import contextlib
@@ -27,7 +27,7 @@ from . import auth, esquema, execucao, serial
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TJSC = os.path.join(RAIZ, "output", "tjsc.db")
 RAG = os.path.join(RAIZ, "output", "rag.db")
-DIST = os.path.join(RAIZ, "web", "dist")
+DIST = os.path.join(RAIZ, "frontend", "dist")
 
 DEV = os.environ.get("WEB_DEV") == "1"
 COOKIE = "sessao"
@@ -40,7 +40,10 @@ CSRF = "x-requerido-por"
 @contextlib.asynccontextmanager
 async def lifespan(_app):
     esquema.db().close()
-    ligados = esquema.wal(execucao.RUNS, feedback.FB, esquema.WEB, RAG)
+    # RAG fora da lista de proposito: ninguem escreve no rag.db em execucao
+    # (busca, sinais e floresta abrem com mode=ro), entao WAL ali nao resolve
+    # lock nenhum — so' abria o arquivo de 70 MB em modo escrita a cada boot.
+    ligados = esquema.wal(execucao.RUNS, feedback.FB, esquema.WEB)
     # flush: sob uvicorn o stdout é bloco-bufferizado, e log de startup que
     # aparece só quando o buffer enche não é log de startup
     print("WAL: %s" % ", ".join("%s=%s" % x for x in ligados), flush=True)
@@ -159,7 +162,10 @@ def configuracao(_u=Depends(atual)):
         "calibrado": calibrar.calibrado(),
         "julgar_consultas": cfg.get("julgar_consultas"),
         "peso_confianca": grafo.PESO_CONFIANCA,
-        "teses": {k: list(v) for k, v in grafo.TESES.items()},
+        # o filtro deixou de ser por `resultado` e passou a ser semantico (a
+        # triagem le' o merito e diz se o precedente sustenta o lado pedido),
+        # entao aqui vai o rotulo, nao mais a lista de resultados
+        "teses": dict({"neutra": "sem lado — a única com prognóstico"}, **grafo.LADOS),
     }
 
 
@@ -265,7 +271,7 @@ async def rodar(request: Request, c=Depends(conexao), u=Depends(atual)):
     if not caso:
         raise HTTPException(400, "caso vazio")
     tese = corpo.get("tese") or "neutra"
-    if tese not in grafo.TESES:
+    if tese != "neutra" and tese not in grafo.LADOS:
         raise HTTPException(400, "tese inválida: %s" % tese)
     f = corpo.get("filtros") or {}
     thread = dt.datetime.now().strftime("%Y%m%d-%H%M%S")
@@ -367,16 +373,17 @@ def rede_da_consulta(thread: str, c=Depends(conexao), u=Depends(atual),
     if not estado:
         raise HTTPException(404, "consulta não encontrada")
     prec = {p["id"] for p in (estado.get("precedentes") or [])}
-    sust = {p["id"] for p in (estado.get("sustentacao") or [])}
-    cands = [dict(x, _precedente=x.get("id") in prec, _sustentacao=x.get("id") in sust)
+    # No modo tese nao ha' mais duas listas: os precedentes SAO a sustentacao —
+    # o que existe a mais e' o veredito por candidato ('lado'), que diz quem a
+    # triagem descartou por decidir contra. E' isso que a rede mostra.
+    cands = [dict(x, _precedente=x.get("id") in prec, _lado=x.get("lado") or "")
              for x in (estado.get("candidatos") or [])]
     # os precedentes escolhidos podem ter vindo do 1o ciclo e nao estar mais em
     # `candidatos`; sem isto o grafo esconderia justamente o que foi usado
     vistos = {x["id"] for x in cands}
-    for p in ((estado.get("precedentes") or []) + (estado.get("sustentacao") or [])):
+    for p in estado.get("precedentes") or []:
         if p["id"] not in vistos:
-            cands.append(dict(p, _precedente=p["id"] in prec,
-                              _sustentacao=p["id"] in sust))
+            cands.append(dict(p, _precedente=True, _lado=p.get("lado") or ""))
             vistos.add(p["id"])
     return rede.montar(cands, limiar=limiar, max_por_no=max_por_no)
 
@@ -742,4 +749,21 @@ def desativar(email: str, c=Depends(conexao), _a=Depends(admin)):
 # ------------------------------------------------------------- estáticos
 
 if os.path.isdir(DIST):
-    app.mount("/", StaticFiles(directory=DIST, html=True), name="web")
+    # StaticFiles(html=True) serve o index em "/", mas devolve 404 em qualquer
+    # rota funda: o roteamento e' do react-router, e /consultas/2026-08-06 nao
+    # existe como arquivo. Sem o fallback abaixo, F5 numa consulta aberta ou um
+    # link colado para outra pessoa cai em 404 — que e' como o usuario descobre
+    # que "a pagina quebrou". Os /api/* nunca chegam aqui: as rotas declaradas
+    # acima tem precedencia sobre o mount.
+    app.mount("/assets", StaticFiles(directory=os.path.join(DIST, "assets")),
+              name="assets")
+
+    @app.get("/{caminho:path}", include_in_schema=False)
+    def spa(caminho: str):
+        arquivo = os.path.normpath(os.path.join(DIST, caminho))
+        # normpath resolve ".." — sem esta checagem, /../../config.json sairia
+        if arquivo.startswith(DIST) and os.path.isfile(arquivo):
+            return FileResponse(arquivo)
+        if caminho.startswith("api/"):
+            raise HTTPException(404, "rota de API inexistente")
+        return FileResponse(os.path.join(DIST, "index.html"))

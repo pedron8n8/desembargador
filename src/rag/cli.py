@@ -102,19 +102,25 @@ def _procedencia(p, prec):
 
 
 def _sustentacao(estado):
-    """A linha de argumentação pedida: o material do lado escolhido, e o que se
-    repete nele. Fica em seção própria porque NÃO é amostra — é material."""
-    sust = estado.get("sustentacao") or []
+    """A linha de argumentação pedida: o que se repete no material do lado
+    escolhido, e quanto o triador teve de descartar para chegar nele."""
     tese = estado.get("tese")
-    if not sust or tese in (None, "neutra"):
+    if tese in (None, "neutra"):
         return []
     lado = {"reformar": "REFORMAR (dar provimento)",
             "manter": "MANTER (negar provimento)"}[tese]
+    d = estado.get("descartados") or {}
+    prec = estado.get("precedentes") or []
     out = ["---", "", "# Linha de argumentação pedida: %s" % lado, "",
-           "> Estes %d precedentes foram recuperados **já filtrados** pelo lado "
-           "que você pediu. Por isso eles não medem tendência nenhuma — quem "
-           "mede é a busca neutra, na seção anterior. Aqui é material de "
-           "sustentação." % len(sust), ""]
+           "> Os %d precedentes acima **não são uma amostra** — são o que sobrou "
+           "depois de a triagem ler cada candidato e manter só os que sustentam "
+           "este lado. Descartados: **%d** que decidem contra e **%d** neutros. "
+           "Por isso não há prognóstico nesta consulta: contar resultado aqui "
+           "mediria o filtro, não o tribunal."
+           % (len(prec), d.get("contra", 0), d.get("neutro", 0)), "",
+           "> O corte é semântico, não pelo rótulo `provido`/`desprovido`: esse "
+           "rótulo só diz que o **recorrente daquele processo** venceu, e o "
+           "recorrente de lá pode ser a parte contrária à sua.", ""]
     c = estado.get("comuns") or {}
     if c.get("n"):
         out += ["## O que se repete entre eles", ""]
@@ -131,15 +137,46 @@ def _sustentacao(estado):
                     "que chegaram ao mesmo resultado por caminhos diferentes. "
                     "O ponto comum, se existir, está nos fatos — não há tese "
                     "única para citar.", ""]
-    out += ["## Precedentes de sustentação", ""]
-    for d in sust:
-        out += ["**%s** — %s, %s — *%s* (analogia %d/5: %s)"
-                % (d["numero"], d["classe"], d["data"], d["resultado"],
-                   d["nota"], d["por_que"]),
-                "", "  Procedência: %s" % sinais.resumir_ficha(d), "",
-                "  " + (d["ementa"] or "(sem ementa)")[:300], "",
-                "  <%s>" % d["url"], ""]
+    if not prec:
+        out += ["**A triagem não achou precedente que sustente este lado.** Isso "
+                "é um achado, não uma falha: no acervo deste relator, com estes "
+                "termos de busca, não há material para essa linha. Rode em modo "
+                "neutro para ver o que existe.", ""]
     return out
+
+
+# Linguagem de tendencia: proibida quando a amostra foi filtrada pelo lado
+# pedido, porque ali a contagem mede o filtro. O revisor ja' aponta, mas ele
+# depende de sobrar ciclo de revisao — e no teste nao sobrou. Esta varredura
+# nao depende de modelo nenhum.
+_TENDENCIA = re.compile(
+    r"(?i)\b(un[íi]sson\w*|pac[íi]fic\w*|consolidad\w*|majorit[áa]ri\w*"
+    r"|iterativ\w*|remans\w*|torrencial|jurisprud[êe]ncia\s+(?:\w+\s+)?"
+    r"(?:firme|dominante|assente)|entendimento\s+(?:firme|dominante|assente)"
+    r"|reiterad\w+\s+decis|firmes?\s+em\s+afirmar)\b")
+
+
+# A secao de fragilidade e' o unico lugar da minuta onde falar de jurisprudencia
+# dominante e' legitimo — ela existe para dizer por onde a tese apanha ("...
+# vulneravel a recurso especial que apele para a jurisprudencia dominante do
+# STJ"). Sem esta excecao, TODA consulta no modo tese dispara o alerta, e alerta
+# que sempre dispara e' alerta que ninguem le'.
+_FRAGIL = re.compile(r"(?i)onde\s+esta\s+tese\s+[ée]\s+fr[áa]gil")
+
+
+def tendencia_no_texto(minuta, limite=6):
+    """Trechos da minuta que afirmam tendência jurisprudencial. [] se limpa."""
+    minuta = minuta or ""
+    corte = _FRAGIL.search(minuta)
+    if corte:
+        minuta = minuta[:corte.start()]
+    achados = []
+    for m in _TENDENCIA.finditer(minuta):
+        ini = max(0, m.start() - 70)
+        achados.append("…%s…" % " ".join(minuta[ini:m.end() + 70].split()))
+        if len(achados) >= limite:
+            break
+    return achados
 
 
 def formatar(estado, segundos, quando=None):
@@ -183,13 +220,24 @@ def formatar(estado, segundos, quando=None):
 def _veredito(p, tese=None):
     """O prognóstico — ou a recusa de dar um. Vem DEPOIS das evidências."""
     out = ["---", "", "# Prognóstico", ""]
-    if tese and tese != "neutra":
-        out += ["> Calculado na busca **neutra**, sem o filtro de lado que você "
-                "pediu. Se ele apontar contra a sua linha de argumentação, é "
-                "esse o recado: a sustentação existe, mas rema contra a "
-                "corrente do acervo.", ""]
 
-    if p.get("decide") is False:
+    if p.get("enviesado"):
+        out += ["## SEM PROGNÓSTICO — você pediu um lado", "",
+                "Os precedentes acima foram escolhidos por sustentarem a linha "
+                "que você pediu. Qualquer percentual tirado deles mediria a "
+                "própria escolha.", "",
+                "Para o número calibrado, rode a mesma consulta em **modo "
+                "neutro** — é a única em que a amostra não foi escolhida por "
+                "você.", ""]
+        rf = p.get("floresta")
+        if rf:
+            out += ["> Único estimador que sobrevive: a **floresta** aponta "
+                    "%.0f%% de chance de reforma. Ela lê o caso, não a busca, "
+                    "então o filtro não a contamina — mas sai **crua**: a "
+                    "calibração foi ajustada sobre a escala do conjunto, que "
+                    "aqui não existe. Ordena, não é probabilidade."
+                    % (100 * rf["p_reforma"]), ""]
+    elif p.get("decide") is False:
         out += ["## NÃO DECIDO", "",
                 "Os dados não sustentam um prognóstico neste caso:", ""]
         out += ["- " + m for m in (p.get("confianca") or {}).get("por_que", [])]
@@ -221,8 +269,9 @@ def _veredito(p, tese=None):
         out += ["| %s | %.1f%% |" % (r, w) for r, w in p["distribuicao"]]
         out.append("")
 
-    # --- os dois estimadores, lado a lado
-    rf = p.get("floresta")
+    # --- os dois estimadores, lado a lado (no modo tese a floresta ja' saiu
+    # sozinha lá em cima, e o k-NN nem existe)
+    rf = None if p.get("enviesado") else p.get("floresta")
     if rf or p.get("reforma_conjunta_pct") is not None:
         out += ["### Dois estimadores", "",
                 "| estimador | P(reforma) | o que é |", "|---|---:|---|"]
@@ -266,7 +315,21 @@ def _fechar(out, estado, prec, segundos):
     p = estado.get("prognostico") or {}
     if estado.get("minuta"):
         out += ["---", "", "# Minuta", ""]
-        if p.get("decide") is False:
+        if p.get("enviesado"):
+            # A trava fica ANTES do texto, e é regex: o revisor também pega
+            # isto, mas ele depende de sobrar ciclo de revisão — num teste real
+            # não sobrou e a minuta saiu com "os precedentes são uníssonos".
+            tend = tendencia_no_texto(estado["minuta"])
+            if tend:
+                out += ["> ⚠️ **A minuta afirma tendência jurisprudencial, e "
+                        "nesta consulta ela não pode.** A amostra foi escolhida "
+                        "por sustentar o seu lado — a contagem mede o filtro. "
+                        "Corrija estes trechos antes de usar:", ""]
+                out += ["> - `%s`" % t for t in tend]
+                out += [""]
+            else:
+                out += ["> Varredura de linguagem de tendência: **limpa**.", ""]
+        elif p.get("decide") is False:
             out += ["> Escrita sob a instrução de **não afirmar um desfecho como "
                     "provável**: ela expõe os dois caminhos e o ponto concreto de "
                     "que o caso depende.", ""]
@@ -434,4 +497,50 @@ def main(argv=None):
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    if len(sys.argv) > 1:
+        sys.exit(main())
+
+    # self-check offline da varredura de tendencia. As frases positivas sao
+    # trechos REAIS da minuta que passou pelo revisor e saiu com eles mesmo
+    # assim — foi esse teste que motivou a trava.
+    for frase in ("Os precedentes desta Corte são uníssonos em distinguir",
+                  "os precedentes são firmes em afirmar que",
+                  "trata-se de jurisprudência pacífica no tribunal",
+                  "o entendimento está consolidado nesta Câmara",
+                  "conforme a orientação majoritária da Segunda Câmara",
+                  "a jurisprudência é firme nesse sentido"):
+        assert tendencia_no_texto(frase), frase
+    for limpa in ("Ante o exposto, dou provimento ao recurso.",
+                  "O precedente 0002830-89.2013 tratou de caso análogo.",
+                  "A perícia judicial não constatou perda da existência "
+                  "independente, o que afasta a cobertura de IFPD.",
+                  # 'consolidação' de dívida nao e' tendencia jurisprudencial
+                  "houve consolidação da propriedade em nome do credor"):
+        assert not tendencia_no_texto(limpa), limpa
+    # o trecho volta com contexto dos dois lados, para dar para achar no texto
+    t = tendencia_no_texto("x" * 200 + " os julgados são uníssonos " + "y" * 200)
+    assert len(t) == 1 and "uníssonos" in t[0] and t[0].count("x") >= 40
+
+    # a secao de fragilidade nao conta: falar de jurisprudencia dominante ali e'
+    # o proposito dela. Trecho real da minuta de v2-manter.
+    assert not tendencia_no_texto(
+        "Dou provimento.\n**ONDE ESTA TESE É FRÁGIL**\n1. Âncora local, o que a "
+        "torna vulnerável a recurso especial que apele para a jurisprudência "
+        "dominante do STJ.")
+    # mas o que vem ANTES da seção continua contando
+    assert tendencia_no_texto(
+        "os precedentes são uníssonos.\nOnde esta tese é frágil\njurisprudência "
+        "dominante do STJ")
+
+    # o cabecalho da tese so' aparece no modo extremo
+    assert _sustentacao({"tese": "neutra"}) == [] and _sustentacao({}) == []
+    s = "\n".join(_sustentacao({"tese": "reformar", "precedentes": [1, 2],
+                                "descartados": {"contra": 5, "neutro": 3},
+                                "comuns": {"n": 2, "ancoras": [], "unanimes": 2,
+                                           "transitaram": 1, "anos": [2020, 2024]}}))
+    assert "REFORMAR" in s and "**5**" in s and "**3**" in s, s
+    assert "caminhos diferentes" in s, "sem âncora comum, tem que dizer isso"
+    vazio = "\n".join(_sustentacao({"tese": "manter", "precedentes": [],
+                                    "descartados": {"contra": 9, "neutro": 2}}))
+    assert "não achou precedente que sustente" in vazio
+    print("self-check OK — varredura de tendência e cabeçalho da tese")
