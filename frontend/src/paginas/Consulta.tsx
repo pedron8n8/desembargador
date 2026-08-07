@@ -13,7 +13,7 @@ import { pct, usd, useEventos } from '../hooks'
 
 // A ordem NÃO é estética: quem lê o percentual primeiro ancora nele e lê o resto
 // procurando confirmação. É a mesma ordem de cli.formatar — evidência antes de
-// veredito. Ver web/DESIGN.md antes de reordenar por conveniência de layout.
+// veredito. Ver frontend/DESIGN.md antes de reordenar por conveniência de layout.
 const ABAS = [
   ['evidencias', 'Evidências'],
   ['prognostico', 'Prognóstico'],

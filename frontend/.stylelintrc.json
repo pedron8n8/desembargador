@@ -20,7 +20,7 @@
     }
   ],
   "_por_que": [
-    "A lista de proibições de web/DESIGN.md, na parte que dá para automatizar.",
+    "A lista de proibições de frontend/DESIGN.md, na parte que dá para automatizar.",
     "box-shadow, backdrop-filter e text-shadow são banidos inteiros: aqui a",
     "profundidade se faz com régua de 1px.",
     "Duas exceções, ambas por serem MARCA DE DADO e não decoração:",

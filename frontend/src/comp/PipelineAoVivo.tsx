@@ -143,7 +143,7 @@ export function PipelineAoVivo({
         <p className="aviso" style={{ marginTop: 'var(--e3)' }}>
           O grafo do servidor tem nós que este desenho não conhece:{' '}
           <strong>{extras.join(', ')}</strong>. Atualize <code>NOS</code> em{' '}
-          <code>web/src/hooks.ts</code>.
+          <code>frontend/src/hooks.ts</code>.
         </p>
       )}
 

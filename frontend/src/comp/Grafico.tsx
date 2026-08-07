@@ -3,7 +3,7 @@
  *
  * Sem Recharts/Nivo/ECharts de propósito: os três impõem os próprios defaults
  * visuais — tooltip arredondado, sombra, animação de entrada — que são
- * exatamente o que web/DESIGN.md proíbe, e nenhum deles desenha a rede de
+ * exatamente o que frontend/DESIGN.md proíbe, e nenhum deles desenha a rede de
  * força. Uma escala linear é `(v-min)/(max-min)*h`; um caminho é um join. Não
  * vale uma dependência.
  */

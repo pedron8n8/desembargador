@@ -10,7 +10,7 @@ output/
 *.db-wal
 *.pkl
 
-# fase 5 — web. O output/web.db (contas e sessoes) ja' cai no output/ acima.
-web/node_modules/
-web/dist/
-web/.vite/
+# fase 6 — frontend. O output/web.db (contas e sessoes) ja' cai no output/ acima.
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/

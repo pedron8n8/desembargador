@@ -1,4 +1,4 @@
-/* Referência: publicação jurídica, não SaaS. Ver web/DESIGN.md para a lista do
+/* Referência: publicação jurídica, não SaaS. Ver frontend/DESIGN.md para a lista do
    que é proibido e por quê. */
 
 :root {
@@ -31,7 +31,7 @@
   /* --- tipografia.
      Pilha de sistema de propósito: nenhuma fonte vem de CDN, porque as
      consultas são confidenciais e não se vaza nem referrer. Para trocar por
-     Source Serif 4, ver web/DESIGN.md. */
+     Source Serif 4, ver frontend/DESIGN.md. */
   --fonte-serif: Charter, "Bitstream Charter", "Sitka Text", Georgia,
     "Times New Roman", serif;
   --fonte-ui: "Segoe UI", Inter, -apple-system, BlinkMacSystemFont, Roboto,

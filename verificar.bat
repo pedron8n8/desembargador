@@ -21,14 +21,14 @@ for %%m in (esquema auth serial execucao smoke) do (
 )
 
 echo.
-echo === frontend (web/) ===
-if exist "web\node_modules" (
-  pushd web
+echo === frontend (frontend/) ===
+if exist "frontend\node_modules" (
+  pushd frontend
   call npx tsc --noEmit || set FALHOU=1
   call npx stylelint "src/**/*.css" || set FALHOU=1
   popd
 ) else (
-  echo   pulado: rode "npm install" em web\ primeiro
+  echo   pulado: rode "npm install" em frontend\ primeiro
 )
 
 echo.

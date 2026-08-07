@@ -24,9 +24,9 @@ if errorlevel 1 (
   pause & exit /b 1
 )
 
-if not exist "web\node_modules" (
+if not exist "frontend\node_modules" (
   echo Instalando dependencias do frontend...
-  pushd web && call npm install || (popd & pause & exit /b 1)
+  pushd frontend && call npm install || (popd & pause & exit /b 1)
   popd
 )
 
@@ -37,7 +37,7 @@ REM --reload NAO: no Windows ele mata as threads de consulta em voo, e uma
 REM consulta em voo e' dinheiro ja' gasto. Reinicie a mao quando mexer na API.
 start "API - segundo cerebro" cmd /k "%VPY% -m uvicorn api.app:app --host 127.0.0.1 --port 8000"
 timeout /t 2 >nul
-start "Web - segundo cerebro" cmd /k "cd web && npm run dev"
+start "Web - segundo cerebro" cmd /k "cd frontend && npm run dev"
 timeout /t 4 >nul
 start http://localhost:5173
 
