@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 
 import { get, type Precedente as P } from '../api'
+import { qs, useCerebro, useCerebroEfetivo } from '../cerebro'
 import { Precedente } from '../comp/Precedente'
 
 type Resposta = {
@@ -15,6 +16,9 @@ type Resposta = {
 export function Acervo() {
   const [params, setParams] = useSearchParams()
   const [q, setQ] = useState(params.get('q') ?? '')
+  const [slug] = useCerebro()
+  const [efetivo, lista] = useCerebroEfetivo()
+  const quem = lista?.itens.find((c) => c.slug === efetivo)
 
   const filtros = {
     q: params.get('q') ?? '',
@@ -33,17 +37,18 @@ export function Acervo() {
   ).toString()
 
   const { data, isLoading } = useQuery({
-    queryKey: ['corpus', consulta],
-    queryFn: () => get<Resposta>(`/api/corpus?${consulta}`),
+    queryKey: ['corpus', efetivo, consulta],
+    queryFn: () => get<Resposta>(`/api/corpus?${consulta}${qs(slug, '&')}`),
   })
   const { data: facetas } = useQuery({
-    queryKey: ['facetas'],
-    queryFn: () => get<Record<string, { valor: string; n: number }[]>>('/api/corpus/facetas'),
+    queryKey: ['facetas', efetivo],
+    queryFn: () =>
+      get<Record<string, { valor: string; n: number }[]>>(`/api/corpus/facetas${qs(slug)}`),
     staleTime: Infinity,
   })
   const { data: est } = useQuery({
-    queryKey: ['est-documentos'],
-    queryFn: () => get<any>('/api/estatisticas/documentos'),
+    queryKey: ['est-documentos', efetivo],
+    queryFn: () => get<any>(`/api/estatisticas/documentos${qs(slug)}`),
     staleTime: Infinity,
   })
 
@@ -60,7 +65,7 @@ export function Acervo() {
     <>
       <header className="cabecalho">
         <div>
-          <h1>Acervo</h1>
+          <h1>Acervo de {quem ? `${quem.titulo} ${quem.nome}` : '—'}</h1>
           <p className="sub">
             {est
               ? `${est.indexadas.toLocaleString('pt-BR')} decisões indexadas · ${est.com_inteiro_teor.toLocaleString('pt-BR')} com inteiro teor · ${(est.rtf ?? 0).toLocaleString('pt-BR')} documentos em disco`

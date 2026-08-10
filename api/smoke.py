@@ -20,6 +20,8 @@ os.environ["WEB_DEV"] = "1"
 
 from fastapi.testclient import TestClient          # noqa: E402
 
+from src import cerebros                           # noqa: E402
+
 from . import app as modulo_app                    # noqa: E402
 from . import auth                                 # noqa: E402
 
@@ -31,13 +33,15 @@ def main():
     c = esquema.db()
     auth.criar_usuario(c, "adv@teste.com", SENHA)
     auth.criar_usuario(c, "chefe@teste.com", SENHA, papel="admin")
+    auth.criar_usuario(c, "dono@teste.com", SENHA, papel="superadmin")
     auth.criar_usuario(c, "outro@teste.com", SENHA)
     c.close()
 
     with TestClient(modulo_app.app) as cli:
         # --- sem sessao, tudo que e' privado responde 401
         for rota in ("/api/eu", "/api/config", "/api/consultas", "/api/grafo",
-                     "/api/corpus", "/api/estatisticas/corpus"):
+                     "/api/corpus", "/api/estatisticas/corpus",
+                     "/api/cerebros", "/api/comparacoes"):
             assert cli.get(rota).status_code == 401, rota
         assert cli.post("/api/consultas", json={"caso": "x"},
                         headers=CAB).status_code == 401
@@ -88,12 +92,30 @@ def main():
         assert buscado["consulta_fts"] and buscado["ordenado_por"] == "bm25+rerank"
         assert buscado["itens"], "a busca do acervo não devolveu nada"
 
-        d = cli.get("/api/corpus/%d" % item["id"]).json()
+        # o cerebro vai no CAMINHO: link auto-contido, sem risco de abrir a
+        # decisao de mesmo id no acervo errado
+        pad = cli.get("/api/cerebros").json()["padrao"]
+        d = cli.get("/api/corpus/%s/%d" % (pad, item["id"])).json()
         assert d["numero"] == item["numero"] and "usos" in d
-        assert cli.get("/api/corpus/999999999").status_code == 404
+        assert d["cerebro"] == pad
+        assert cli.get("/api/corpus/%s/999999999" % pad).status_code == 404
+        assert cli.get("/api/corpus/nao-existe/1").status_code == 404
 
         f = cli.get("/api/corpus/facetas").json()
         assert f["classe"] and f["resultado"], f
+
+        # --- doc_path guardado em OUTRA maquina (deploy: coleta no Windows,
+        # servidor no Linux). Sem remontar, todo documento vira 404 calado.
+        cam = cerebros.caminhos(pad)
+        esperado = os.path.join(cam["documentos"], "x.rtf")
+        for guardado in (r"D:\projetos\scrapping desembargador\output\documentos\x.rtf",
+                         "/srv/cerebro/output/documentos/x.rtf",
+                         os.path.join("output", "documentos", "x.rtf"),
+                         "x.rtf"):
+            assert modulo_app._remontar_doc(guardado, cam) == esperado, guardado
+        # travessia nao sai do diretorio do cerebro
+        assert modulo_app._remontar_doc(r"..\..\..\etc\passwd", cam) == \
+            os.path.join(cam["documentos"], "passwd")
 
         # --- estatisticas
         ec = cli.get("/api/estatisticas/corpus").json()
@@ -113,9 +135,12 @@ def main():
         c = esquema.db()
         with c:
             c.execute("INSERT INTO dono VALUES ('t-do-outro','outro@teste.com')")
-            c.execute("INSERT INTO execucao VALUES "
-                      "('t-do-outro','outro@teste.com','pronto','2026-01-01',"
-                      " NULL,NULL,NULL,0)")
+            # colunas NOMEADAS: a versao posicional quebrou quando execucao
+            # ganhou cerebro/comparacao, e e' o que este smoke tem de pegar
+            c.execute("INSERT INTO execucao (thread, email, estado, criado_em, "
+                      "so_prognostico, cerebro) VALUES (?,?,?,?,?,?)",
+                      ("t-do-outro", "outro@teste.com", "pronto", "2026-01-01",
+                       0, "rubens-schulz"))
         c.close()
         threads = {x["thread"] for x in cli.get("/api/consultas").json()["itens"]}
         assert "t-do-outro" not in threads, "vazou consulta de outro usuário"
@@ -123,6 +148,30 @@ def main():
         assert cli.get("/api/consultas/t-do-outro/markdown").status_code == 404
         assert cli.post("/api/consultas/t-do-outro/avaliacao", json={"nota": 5},
                         headers=CAB).status_code == 404
+
+        # --- cerebros: todos veem os ativos; so' o superadmin ve os inativos
+        cb = cli.get("/api/cerebros").json()
+        assert cb["itens"] and all(x["ativo"] for x in cb["itens"]), cb
+        assert cb["padrao"] in {x["slug"] for x in cb["itens"]}
+        assert all("n_merito" in x and "crava" in x for x in cb["itens"])
+        assert cli.get("/api/cerebros?todos=1").status_code == 403
+        assert cli.patch("/api/cerebros/%s" % cb["padrao"], json={"ativo": True},
+                         headers=CAB).status_code == 403
+
+        # rodar num cerebro que nao existe e' 404, e nao consulta no acervo errado
+        assert cli.post("/api/consultas",
+                        json={"caso": "x", "cerebro": "nao-existe"},
+                        headers=CAB).status_code == 404
+
+        # --- comparacao: precisa de 2+ cerebros distintos e existentes
+        assert cli.post("/api/comparacoes",
+                        json={"caso": "x", "cerebros": [cb["padrao"]]},
+                        headers=CAB).status_code == 400
+        assert cli.post("/api/comparacoes",
+                        json={"caso": "x", "cerebros": [cb["padrao"], cb["padrao"]]},
+                        headers=CAB).status_code == 400
+        assert cli.get("/api/comparacoes").json()["itens"] == []
+        assert cli.get("/api/comparacoes/cmp-nao-existe").status_code == 404
 
         # --- so' admin entra no /api/admin
         assert cli.get("/api/admin/usuarios").status_code == 403
@@ -150,6 +199,26 @@ def main():
         assert cli.get("/api/admin/usuarios").json()["itens"]
         threads = {x["thread"] for x in cli.get("/api/consultas").json()["itens"]}
         assert "t-do-outro" in threads, "o admin tem que ver tudo"
+        # e toda linha da lista diz de qual cerebro e'
+        assert all(x["cerebro"] for x in cli.get("/api/consultas").json()["itens"])
+
+        # --- superadmin: ve os inativos e e' o unico que liga/desliga cerebro
+        cli.delete("/api/sessao", headers=CAB)
+        cli.post("/api/sessao", json={"email": "dono@teste.com", "senha": SENHA},
+                 headers=CAB)
+        todos = cli.get("/api/cerebros?todos=1").json()
+        assert len(todos["itens"]) >= len(cb["itens"])
+        # o superadmin tambem manda no escritorio (nao so' nos cerebros)
+        assert cli.get("/api/admin/usuarios").json()["itens"]
+        assert "t-do-outro" in {x["thread"] for x in
+                                cli.get("/api/consultas").json()["itens"]}
+        # ativar cerebro sem indice e' 409, e nao um acervo vazio no seletor
+        sem_indice = [x for x in todos["itens"] if not x["tem_indice"]]
+        if sem_indice:
+            assert cli.patch("/api/cerebros/%s" % sem_indice[0]["slug"],
+                             json={"ativo": True}, headers=CAB).status_code == 409
+        assert cli.patch("/api/cerebros/nao-existe", json={"ativo": False},
+                         headers=CAB).status_code == 404
 
         # --- rate limit no login
         cli.delete("/api/sessao", headers=CAB)
@@ -160,8 +229,8 @@ def main():
                      headers=CAB)
         assert r.status_code == 429, r.status_code
 
-    print("self-check OK — auth, CSRF, isolamento entre usuários, acervo e "
-          "estatísticas")
+    print("self-check OK — auth, CSRF, papéis (advogado/admin/superadmin), "
+          "isolamento entre usuários, cérebros, acervo e estatísticas")
     return 0
 
 

@@ -13,6 +13,7 @@ confirmacao.
 """
 import json
 
+from src import cerebros
 from src.rag import calibrar, confianca, feedback, grafo, rerank, sinais
 from src.rag.llm import config
 
@@ -50,6 +51,18 @@ def precedente(d, ementa_chars=1200):
     return p
 
 
+def _cerebro(estado):
+    """Quem julgou. Checkpoint anterior a esta fase nao tem a chave: cai no
+    padrao, que e' o unico acervo que existia quando ele foi gravado."""
+    try:
+        c = cerebros.caminhos(estado.get("cerebro"))
+    except cerebros.Desconhecido:
+        return {"cerebro": estado.get("cerebro"), "cerebro_nome": "(desconhecido)",
+                "cerebro_titulo": "", "cerebro_tribunal": ""}
+    return {"cerebro": c["slug"], "cerebro_nome": c["nome"],
+            "cerebro_titulo": c["titulo"], "cerebro_tribunal": c["tribunal"]}
+
+
 def consulta(thread, estado, segundos=None, markdown=None):
     """O relatorio inteiro, na ordem do cli.formatar."""
     prec = estado.get("precedentes") or []
@@ -59,6 +72,7 @@ def consulta(thread, estado, segundos=None, markdown=None):
         "segundos": segundos,
         "caso": estado.get("caso") or "",
         "tese": estado.get("tese") or "neutra",
+        **_cerebro(estado),
         "filtros": estado.get("filtros") or {},
         # --- leitura do caso
         "triagem": estado.get("triagem") or {},
@@ -97,6 +111,7 @@ def resumo(estado, thread=None):
         "materia": t.get("materia") or "",
         "classe": t.get("classe") or "",
         "tese": estado.get("tese") or "neutra",
+        **_cerebro(estado),
         "decide": p.get("decide"),
         "probabilidade_pct": p.get("probabilidade_pct"),
         "resultado_provavel": p.get("resultado_provavel"),
@@ -152,7 +167,10 @@ def pesos(estado):
             "peso_confianca": grafo.PESO_CONFIANCA,
             "peso_knn": cfg.get("floresta", {}).get("peso_knn"),
             "confianca": confianca._cfg(),
-            "calibrado": calibrar.calibrado(),
+            # o calibrador e' por cerebro: quem tem calibrador nao e' o sistema,
+            # e' o acervo. Cerebro novo roda sem, e o painel precisa dizer isso.
+            "calibrado": calibrar.calibrado(
+                cerebros.caminhos(estado.get("cerebro"))["calibrador"]),
         },
         "precedentes": linhas,
         "agregacao": {

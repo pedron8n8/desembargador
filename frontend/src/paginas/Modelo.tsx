@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 
 import { get, type Config } from '../api'
+import { qs, useCerebro, useCerebroEfetivo } from '../cerebro'
 
 type Topologia = {
   nos: { id: string }[]
@@ -8,19 +9,24 @@ type Topologia = {
 }
 
 export function Modelo() {
-  const { data: cfg } = useQuery({ queryKey: ['config'], queryFn: () => get<Config>('/api/config') })
+  const [slug] = useCerebro()
+  const [efetivo] = useCerebroEfetivo()
+  const { data: cfg } = useQuery({
+    queryKey: ['config', efetivo],
+    queryFn: () => get<Config>(`/api/config${qs(slug)}`),
+  })
   const { data: topo } = useQuery({
     queryKey: ['grafo'],
     queryFn: () => get<Topologia>('/api/grafo'),
     staleTime: Infinity,
   })
   const { data: boost } = useQuery({
-    queryKey: ['boost'],
-    queryFn: () => get<any>('/api/feedback/boost'),
+    queryKey: ['boost', efetivo],
+    queryFn: () => get<any>(`/api/feedback/boost${qs(slug)}`),
   })
   const { data: docs } = useQuery({
-    queryKey: ['est-documentos'],
-    queryFn: () => get<any>('/api/estatisticas/documentos'),
+    queryKey: ['est-documentos', efetivo],
+    queryFn: () => get<any>(`/api/estatisticas/documentos${qs(slug)}`),
   })
 
   if (!cfg) return <p className="vazio">carregando…</p>

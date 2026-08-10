@@ -5,3 +5,6 @@ langgraph-checkpoint-sqlite>=3.1
 # grafo roda igual, so' com o k-NN. Wheels cp314 conferidos para win_amd64.
 scikit-learn>=1.9
 numpy>=2.5
+# Le' o texto de PDF nativo (src/rag/extrair.py). Puro Python, sem binario de
+# sistema. PDF escaneado nao passa por aqui: vai para o OCR do OpenRouter.
+pypdf>=6

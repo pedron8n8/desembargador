@@ -7,7 +7,7 @@ export class ErroApi extends Error {
   }
 }
 
-async function req<T>(rota: string, init?: RequestInit): Promise<T> {
+export async function req<T>(rota: string, init?: RequestInit): Promise<T> {
   const mutante = init?.method && init.method !== 'GET'
   const r = await fetch(rota, {
     ...init,
@@ -39,12 +39,119 @@ export const post = <T,>(rota: string, corpo?: unknown) =>
   req<T>(rota, { method: 'POST', body: JSON.stringify(corpo ?? {}) })
 export const del = <T,>(rota: string) => req<T>(rota, { method: 'DELETE' })
 
+/** Extensões que o servidor sabe ler. Só filtro do diálogo — quem decide o
+ *  formato de verdade é o magic byte, no servidor (src/rag/extrair.py). */
+export const ACEITA = '.txt,.md,.pdf,.docx'
+
+/**
+ * Arquivo -> texto, pelo servidor: PDF sai pelo pypdf, DOCX pelo zipfile, e
+ * PDF escaneado passa por OCR — coisas que o navegador não faz. Vai em base64
+ * no JSON de sempre, então `req()` acima continua servindo, com CSRF e tudo.
+ */
+export async function extrairArquivo(f: File) {
+  const dados = await new Promise<string>((ok, falha) => {
+    const leitor = new FileReader()
+    // readAsDataURL em vez de btoa(String.fromCharCode(...)): o segundo estoura
+    // a pilha em arquivo grande, que é justamente o caso de um PDF de peça
+    leitor.onload = () => ok(String(leitor.result).split(',')[1] ?? '')
+    leitor.onerror = () => falha(new Error('não foi possível ler o arquivo'))
+    leitor.readAsDataURL(f)
+  })
+  return post<{ texto: string; chars: number; custo_usd: number }>('/api/extrair', {
+    nome: f.name,
+    dados,
+  })
+}
+
 // --------------------------------------------------------------- tipos
+
+/**
+ * 'superadmin' manda nos CÉREBROS (quem fica disponível para julgar); 'admin'
+ * manda nas contas do escritório. Quem manda em consulta alheia são os dois —
+ * use `manda()`, nunca `papel === 'admin'`.
+ */
+export type Papel = 'advogado' | 'admin' | 'superadmin'
+
+export const manda = (u?: { papel: Papel }) =>
+  u?.papel === 'admin' || u?.papel === 'superadmin'
+
+export const ROTULO_PAPEL: Record<Papel, string> = {
+  advogado: 'advogado',
+  admin: 'administrador',
+  superadmin: 'superadministrador',
+}
 
 export type Usuario = {
   email: string
-  papel: 'advogado' | 'admin'
+  papel: Papel
   sessoes: { criado_em: string; expira_em: string; ip: string; agente: string }[]
+}
+
+/** Um "segundo cérebro": o acervo de um desembargador, com seus artefatos. */
+export type Cerebro = {
+  slug: string
+  nome: string
+  titulo: string
+  tribunal: string
+  ativo: boolean
+  n_decisoes: number
+  n_merito: number
+  tem_indice: boolean
+  tem_floresta: boolean
+  calibrado: boolean
+  /** false = acervo pequeno demais; o sistema recusa o percentual de propósito */
+  crava: boolean
+}
+
+export type ListaCerebros = {
+  padrao: string
+  minimo_para_cravar: number
+  itens: Cerebro[]
+}
+
+export type ItemComparacao = {
+  thread: string
+  cerebro: string
+  cerebro_nome: string
+  cerebro_titulo: string
+  estado: string
+  erro: string | null
+  segundos: number | null
+  so_prognostico: boolean
+  custo_usd: number | null
+  tem_minuta: boolean
+  prognostico: Prognostico
+  n_precedentes: number | null
+  decide: boolean | null
+  calibrado: boolean | null
+  probabilidade_pct: number | null
+  resultado_provavel: string | null
+}
+
+export type Comparacao = {
+  comparacao: string
+  caso: string
+  criado_em: string
+  itens: ItemComparacao[]
+  /**
+   * Diferença em pontos percentuais — só quando os dois lados são comparáveis.
+   * Quem decide é o servidor: comparar um número calibrado com um cru, ou com
+   * um lado que se recusou a cravar, fabricaria precisão que ninguém mediu.
+   */
+  delta_pp: number | null
+  por_que_sem_delta: string | null
+}
+
+/** uma linha da lista de comparações — sem abrir checkpoint, ver /api/comparacoes */
+export type ItemListaComparacao = {
+  comparacao: string
+  criado_em: string
+  cerebros: string[]
+  estados: string[]
+  resumo: string
+  custo_usd: number
+  delta_pp: number | null
+  por_que_sem_delta: string | null
 }
 
 export type Precedente = {
@@ -95,6 +202,11 @@ export type Prognostico = {
   enviesado?: boolean
   tese?: string
   faixa?: string
+  /** quem julgou; sai do próprio prognóstico para o .md e a lista não divergirem */
+  cerebro?: string
+  cerebro_nome?: string
+  /** decisões de mérito no acervo — abaixo do mínimo, o sistema não crava */
+  n_merito_acervo?: number
   probabilidade_pct?: number | null
   intervalo_pct?: [number, number] | null
   calibrado?: boolean
@@ -133,6 +245,11 @@ export type Consulta = {
   segundos: number | null
   caso: string
   tese: string
+  /** quem julgou. NÃO confundir com `perfil`, que é o perfil do ARGUMENTO. */
+  cerebro: string
+  cerebro_nome: string
+  cerebro_titulo: string
+  cerebro_tribunal: string
   filtros: Record<string, unknown>
   triagem: { classe?: string; materia?: string; tese?: string; pedidos?: string[]; termos?: string[] }
   consulta_fts: string
@@ -158,6 +275,10 @@ export type ItemLista = {
   thread: string
   criado_em: string
   resumo: string
+  cerebro: string
+  cerebro_nome: string
+  /** id do grupo quando esta consulta faz parte de uma comparação */
+  comparacao: string | null
   custo_usd: number | null
   nota_humano: number | null
   nota_juiz: number | null
@@ -244,6 +365,9 @@ export type Rede = {
 }
 
 export type Config = {
+  /** os modelos são do sistema; floresta/calibrado são deste CÉREBRO */
+  cerebro: string
+  cerebro_nome: string
   modelos: Record<string, string>
   temperatura: Record<string, number>
   max_tokens: Record<string, number>
@@ -252,6 +376,8 @@ export type Config = {
   floresta: { peso_knn: number | null; disponivel: boolean; treinado_ate: number | null; n_treino: number | null }
   confianca: Record<string, number>
   calibrado: boolean
+  n_merito: number
+  minimo_para_cravar: number
   julgar_consultas: boolean
   peso_confianca: Record<string, number>
   teses: Record<string, string[]>

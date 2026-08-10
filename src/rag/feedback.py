@@ -46,31 +46,78 @@ CREATE INDEX IF NOT EXISTS ix_uso_dec ON precedente_uso(decisao_id);
 """
 
 
+def _coluna(c, tabela, nome, ddl):
+    """ALTER TABLE ADD COLUMN idempotente. No SQLite e' O(1) e a coluna nasce NULL.
+
+    Duplicado de api/esquema.py de proposito: a CLI roda sem a camada web
+    instalada, e importar api/ daqui a amarraria ao fastapi.
+    """
+    if nome not in {r[1] for r in c.execute("PRAGMA table_info(%s)" % tabela)}:
+        c.execute("ALTER TABLE %s ADD COLUMN %s" % (tabela, ddl))
+        return True
+    return False
+
+
+def _migrar(c):
+    """De mono-cerebro para multi. O que ja' existia e' do cerebro legado por
+    definicao — todo o feedback anterior a esta fase foi dado sobre aquele
+    acervo."""
+    from .. import cerebros
+
+    mudou = _coluna(c, "consulta", "cerebro", "cerebro TEXT")
+    mudou |= _coluna(c, "precedente_uso", "cerebro", "cerebro TEXT")
+    if mudou:
+        for t in ("consulta", "precedente_uso"):
+            c.execute("UPDATE %s SET cerebro=? WHERE cerebro IS NULL" % t,
+                      (cerebros.CEREBRO_LEGADO,))
+    # decisao_id so' e' unico DENTRO de um cerebro: o id 4712 do rubens e o do
+    # dacol sao decisoes sem relacao nenhuma
+    c.execute("CREATE INDEX IF NOT EXISTS ix_uso_cerebro "
+              "ON precedente_uso(cerebro, decisao_id)")
+    return mudou
+
+
 def db():
     os.makedirs(os.path.dirname(FB), exist_ok=True)
     c = sqlite3.connect(FB)
     c.executescript(ESQUEMA)
+    with c:
+        _migrar(c)
     return c
 
 
 def registrar_consulta(thread, caso, estado, custo_total):
+    # o cerebro ja' vem dentro do estado (src/rag/grafo.py), entao a assinatura
+    # nao muda e cli.finalizar continua igual
+    from .. import cerebros
+
+    cerebro = estado.get("cerebro") or cerebros.padrao()
     c = db()
     with c:
-        c.execute("INSERT OR REPLACE INTO consulta VALUES (?,?,?,?,?,?,?)",
+        # colunas nomeadas: a versao posicional quebrava calada a cada coluna nova
+        c.execute("INSERT OR REPLACE INTO consulta "
+                  "(thread, criado_em, caso, prognostico_json, minuta, custo_usd, "
+                  " modelos_json, cerebro) VALUES (?,?,?,?,?,?,?,?)",
                   (thread, dt.datetime.now().isoformat(timespec="seconds"), caso,
                    json.dumps(estado.get("prognostico") or {}, ensure_ascii=False),
                    estado.get("minuta") or "", custo_total,
-                   json.dumps([x.get("modelo") for x in (estado.get("custos") or [])])))
+                   json.dumps([x.get("modelo") for x in (estado.get("custos") or [])]),
+                   cerebro))
         for p in estado.get("precedentes") or []:
-            c.execute("INSERT OR IGNORE INTO precedente_uso VALUES (?,?,?,?,NULL)",
-                      (thread, p["id"], p["numero"], p.get("nota")))
+            c.execute("INSERT OR IGNORE INTO precedente_uso "
+                      "(thread, decisao_id, numero, nota_triagem, veredito, cerebro) "
+                      "VALUES (?,?,?,?,NULL,?)",
+                      (thread, p["id"], p["numero"], p.get("nota"), cerebro))
     c.close()
 
 
 def registrar_avaliacao(thread, fonte, nota, detalhe):
+    # sem coluna de cerebro aqui de proposito: a avaliacao e' por thread, e a
+    # thread ja' sabe de qual cerebro e' pela tabela `consulta`
     c = db()
     with c:
-        c.execute("INSERT OR REPLACE INTO avaliacao VALUES (?,?,?,?,?)",
+        c.execute("INSERT OR REPLACE INTO avaliacao "
+                  "(thread, fonte, criado_em, nota, detalhe_json) VALUES (?,?,?,?,?)",
                   (thread, fonte, dt.datetime.now().isoformat(timespec="seconds"),
                    nota, json.dumps(detalhe, ensure_ascii=False)))
     c.close()
@@ -89,19 +136,26 @@ def marcar_precedentes(thread, uteis=(), inuteis=(), limpar=()):
     c.close()
 
 
-def boost():
-    """{decisao_id: fator multiplicativo}, só para os que já receberam veredito."""
+def boost(cerebro=None):
+    """{decisao_id: fator multiplicativo}, só para os que já receberam veredito.
+
+    SEMPRE passe o cerebro nas consultas. `decisao_id` so' e' unico dentro de um
+    acervo: sem o filtro, marcar um precedente do rubens como inutil rebaixaria
+    um precedente ALEATORIO do dacol, e o unico sintoma seria o ranking ficar um
+    pouco pior. `None` soma todos os cerebros e existe so' para relatorio.
+    """
     if not os.path.exists(FB):
         return {}
     c = db()
     linhas = c.execute(
         "SELECT decisao_id, sum(veredito='util') - sum(veredito='inutil') "
-        "FROM precedente_uso WHERE veredito IS NOT NULL GROUP BY 1").fetchall()
+        "FROM precedente_uso WHERE veredito IS NOT NULL "
+        "AND (?1 IS NULL OR cerebro = ?1) GROUP BY 1", (cerebro,)).fetchall()
     c.close()
     return {i: 1.0 + max(-TETO, min(TETO, saldo * POR_VOTO)) for i, saldo in linhas}
 
 
-def historico(termo=None, n=20):
+def historico(termo=None, n=20, cerebro=None):
     """O que voce ja' usou: consultas passadas e os processos que entraram nelas.
 
     `termo` casa com o numero do processo, com o texto do caso ou com o id da
@@ -114,15 +168,19 @@ def historico(termo=None, n=20):
     c = db()
     consultas = c.execute(
         "SELECT thread, criado_em, substr(replace(caso,char(10),' '),1,70), custo_usd "
-        "FROM consulta WHERE ?1 IS NULL OR caso LIKE ?1 OR thread LIKE ?1 "
-        "ORDER BY criado_em DESC LIMIT ?2", (like, n)).fetchall()
+        "FROM consulta WHERE (?1 IS NULL OR caso LIKE ?1 OR thread LIKE ?1) "
+        "AND (?3 IS NULL OR cerebro = ?3) "
+        "ORDER BY criado_em DESC LIMIT ?2", (like, n, cerebro)).fetchall()
+    # agrupa por (cerebro, decisao_id): o mesmo id em dois acervos sao decisoes
+    # diferentes e somar as duas contagens seria inventar historico
     precedentes = c.execute(
         "SELECT p.numero, p.decisao_id, count(*), max(c.criado_em), "
         "       sum(p.veredito='util'), sum(p.veredito='inutil') "
         "FROM precedente_uso p JOIN consulta c USING (thread) "
-        "WHERE ?1 IS NULL OR p.numero LIKE ?1 OR c.caso LIKE ?1 "
-        "GROUP BY p.decisao_id ORDER BY count(*) DESC, max(c.criado_em) DESC "
-        "LIMIT ?2", (like, n)).fetchall()
+        "WHERE (?1 IS NULL OR p.numero LIKE ?1 OR c.caso LIKE ?1) "
+        "AND (?3 IS NULL OR p.cerebro = ?3) "
+        "GROUP BY p.cerebro, p.decisao_id ORDER BY count(*) DESC, max(c.criado_em) DESC "
+        "LIMIT ?2", (like, n, cerebro)).fetchall()
     c.close()
     return {"consultas": consultas, "precedentes": precedentes}
 
@@ -268,6 +326,9 @@ if __name__ == "__main__":
         sys.exit(main())
     # self-check: usa um banco temporario, nao encosta no de verdade
     import tempfile
+
+    from .. import cerebros
+
     FB = os.path.join(tempfile.mkdtemp(), "fb.db")
     registrar_consulta("t1", "caso", {
         "prognostico": {"resultado_provavel": "desprovido"}, "minuta": "m",
@@ -306,4 +367,45 @@ if __name__ == "__main__":
     assert historico("B")["precedentes"][0][2] == 20, historico("B")["precedentes"]
     assert historico("nao-existe") == {"consultas": [], "precedentes": []}
     assert len(historico()["precedentes"]) == 2, "sem termo, lista tudo"
-    print("self-check OK")
+
+    # --- COLISAO DE IDS ENTRE CEREBROS. `decisao_id` so' e' unico dentro de um
+    # acervo: sem o filtro, o veredito dado sobre a decisao 10 do rubens
+    # rebaixaria a decisao 10 do dacol — que nao tem relacao nenhuma com ela.
+    # Este e' o assert que pega isso.
+    registrar_consulta("tb1", "outro caso", {
+        "cerebro": "cerebro-b",
+        "precedentes": [{"id": 10, "numero": "Z", "nota": 5}]}, 0.1)
+    marcar_precedentes("tb1", inuteis=[10])
+    ba = boost(cerebro=cerebros.CEREBRO_LEGADO)
+    bb = boost(cerebro="cerebro-b")
+    assert ba[10] > 1.0, "o veredito do cérebro legado sumiu: %s" % ba
+    assert bb[10] < 1.0, "o veredito do cérebro b sumiu: %s" % bb
+    assert 11 in ba and 11 not in bb, "veredito vazou entre cérebros: %s" % bb
+    # sem filtro os dois se somam — e' por isso que a consulta nunca chama assim
+    assert abs(boost()[10] - 1.0) < 1e-9, boost()[10]
+
+    # historico tambem separa
+    assert historico(cerebro="cerebro-b")["precedentes"] == [
+        p for p in historico(cerebro="cerebro-b")["precedentes"] if p[0] == "Z"]
+    assert len(historico(cerebro="cerebro-b")["consultas"]) == 1
+
+    # --- a migracao roda sozinha sobre um banco do esquema ANTIGO
+    antigo = os.path.join(tempfile.mkdtemp(), "velho.db")
+    v = sqlite3.connect(antigo)
+    # ESQUEMA *e'* o esquema antigo: a coluna nova entra por ALTER, em _migrar
+    v.executescript(ESQUEMA)
+    v.execute("INSERT INTO consulta (thread, caso) VALUES ('velha','caso antigo')")
+    v.execute("INSERT INTO precedente_uso (thread, decisao_id, veredito) "
+              "VALUES ('velha', 77, 'util')")
+    v.commit()
+    v.close()
+    FB = antigo
+    b = boost(cerebro=cerebros.CEREBRO_LEGADO)
+    assert b.get(77, 0) > 1.0, \
+        "o feedback anterior a esta fase tinha que sobreviver como do cérebro legado"
+    c_ = db()
+    assert c_.execute("SELECT caso FROM consulta WHERE thread='velha'"
+                      ).fetchone()[0] == "caso antigo", "a migração perdeu dado"
+    c_.close()
+
+    print("self-check OK — feedback separado por cérebro e migração preserva o antigo")

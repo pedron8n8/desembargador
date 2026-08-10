@@ -2,15 +2,42 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 
-import { get, post, type Consulta, type Mensagem } from '../api'
+import { ACEITA, extrairArquivo, get, post, type Consulta, type Mensagem } from '../api'
 import { Markdown } from '../comp/Markdown'
 import { usd } from '../hooks'
+
+// O anexo vai grudado na pergunta, num campo só: a mensagem continua sendo uma
+// string, então histórico, banco e prompt não mudam. Esta linha é o que separa
+// os dois de novo — para a tela e para o modelo, que a recebe como marcação.
+const MARCA = '--- documento anexado'
+
+/** Pergunta em cima, documento dobrado embaixo: um anexo de 10 mil caracteres
+ *  não pode empurrar a conversa inteira para fora da tela. */
+function TurnoUsuario({ texto }: { texto: string }) {
+  const corte = texto.indexOf(MARCA)
+  const corpo = { margin: 0, whiteSpace: 'pre-wrap' } as const
+  if (corte < 0) return <p style={corpo}>{texto}</p>
+  return (
+    <>
+      <p style={corpo}>{texto.slice(0, corte).trim() || '(sem pergunta, só o documento)'}</p>
+      <details style={{ marginTop: 'var(--e2)' }}>
+        <summary style={{ cursor: 'pointer', color: 'var(--tinta-3)', fontSize: 'var(--t-xs)' }}>
+          documento anexado — {(texto.length - corte).toLocaleString('pt-BR')} caracteres
+        </summary>
+        <p style={{ ...corpo, color: 'var(--tinta-2)', fontSize: 'var(--t-sm)' }}>
+          {texto.slice(corte)}
+        </p>
+      </details>
+    </>
+  )
+}
 
 export function Conversa() {
   const { thread } = useParams()
   const qc = useQueryClient()
   const [texto, setTexto] = useState('')
   const [ocupado, setOcupado] = useState(false)
+  const [lendo, setLendo] = useState(false)
   const [erro, setErro] = useState('')
 
   const { data: c } = useQuery({
@@ -24,6 +51,24 @@ export function Conversa() {
 
   const itens = msgs?.itens ?? []
   const gasto = itens.reduce((s, m) => s + (m.custo_usd ?? 0), 0)
+
+  async function anexar(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0]
+    if (!f) return
+    setErro('')
+    setLendo(true)
+    try {
+      // o servidor é quem lê o arquivo: PDF escaneado passa por OCR lá
+      const { texto: conteudo } = await extrairArquivo(f)
+      // acrescenta, não substitui: o que você já escreveu é a pergunta sobre o anexo
+      setTexto((x) => `${x}\n\n${MARCA}: ${f.name} ---\n${conteudo}`.trim())
+    } catch (x: any) {
+      setErro(x.message ?? 'não foi possível ler o arquivo')
+    } finally {
+      setLendo(false)
+      e.target.value = '' // deixa reanexar o mesmo arquivo depois de editado
+    }
+  }
 
   async function enviar(e: React.FormEvent) {
     e.preventDefault()
@@ -58,9 +103,11 @@ export function Conversa() {
 
       <div className="aviso" style={{ marginBottom: 'var(--e8)' }}>
         Aqui <b>não há busca nova</b>. As respostas saem dos {c?.precedentes.length ?? 0}{' '}
-        precedentes que esta consulta já recuperou, do prognóstico e da minuta — uma chamada de
-        modelo, centavos, segundos. Para trazer precedentes novos é preciso{' '}
-        <Link to="/consulta/nova">rodar uma consulta completa</Link>, que custa ~US$ 0,20 e leva
+        precedentes que esta consulta já recuperou, do prognóstico, da minuta — e do documento
+        que você anexar, se anexar. Uma chamada de modelo, centavos, segundos. O anexo é material
+        seu, não do acervo: serve para confrontar a análise, não vira precedente. Para trazer
+        precedentes novos é preciso{' '}
+        <Link to="/consulta/nova">rodar uma consulta completa</Link>, que custa ~US$ 0,04 e leva
         minutos.
       </div>
 
@@ -87,7 +134,7 @@ export function Conversa() {
             {m.papel === 'assistente' ? (
               <Markdown texto={m.texto} />
             ) : (
-              <p style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{m.texto}</p>
+              <TurnoUsuario texto={m.texto} />
             )}
           </div>
         ))}
@@ -109,7 +156,15 @@ export function Conversa() {
             disabled={ocupado}
           />
         </label>
-        <button className="botao" type="submit" disabled={ocupado || !texto.trim()}>
+        <p style={{ marginTop: 'calc(var(--e4) * -1)', marginBottom: 'var(--e4)' }}>
+          <input type="file" accept={ACEITA} onChange={anexar} disabled={ocupado || lendo} />
+          <span className="prec-meta">
+            {lendo
+              ? ' extraindo o texto…'
+              : ' anexar .pdf, .docx, .txt ou .md — vai junto com a pergunta'}
+          </span>
+        </p>
+        <button className="botao" type="submit" disabled={ocupado || lendo || !texto.trim()}>
           {ocupado ? 'pensando…' : 'perguntar'}
         </button>
       </form>

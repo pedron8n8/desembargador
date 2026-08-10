@@ -136,10 +136,10 @@ Ele pergunta a senha duas vezes (mínimo 10 caracteres). Para depois:
 Sobe a API e o Vite **em primeiro plano, no terminal em que você está**, com o
 log dos dois prefixado (`[api]` / `[web]`). **Ctrl+C para parar os dois.**
 
-|     | onde                  | o que é                                   |
+|     | onde                  | o que é                                  |
 | --- | --------------------- | ----------------------------------------- |
 | API | http://127.0.0.1:8000 | FastAPI (uvicorn)                         |
-| Web | http://localhost:5173 | Vite em modo dev, com recarga automática  |
+| Web | http://localhost:5173 | Vite em modo dev, com recarga automática |
 
 Abra a **5173** — é ela que faz proxy de `/api` para a 8000, mantendo tudo
 same-origin (sem CORS e sem cookie cross-site para configurar).
@@ -181,6 +181,9 @@ Em `--prod` o `WEB_DEV` **não** é ligado, e o cookie de sessão vai como
 `Secure` — ou seja, **você precisa de HTTPS**, senão o navegador descarta o
 cookie e o login não gruda. Para testar sem TLS em `http://localhost`, use
 `python -m api.servir --api` (que liga `WEB_DEV=1`).
+
+Para pôr no ar de verdade, num servidor Linux com HTTPS, o documento é o
+[`DEPLOY.md`](DEPLOY.md) — Docker + Caddy, e a lista dos arquivos que vão por FTP.
 
 ---
 

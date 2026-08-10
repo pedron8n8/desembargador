@@ -31,7 +31,7 @@ CRITERIOS = {
 }
 
 P_COM_REF = """Você avalia uma minuta gerada por IA contra a decisão REAL que o
-Desembargador Rubens Schulz proferiu no mesmo caso. Não julgue qual texto é mais
+{titulo} {relator} proferiu no mesmo caso. Não julgue qual texto é mais
 bonito — julgue o quanto a minuta chegou onde ele chegou.
 
 Dê nota 0 a 5 em cada critério:
@@ -104,16 +104,20 @@ def juiz_para(modelo_redator):
 
 
 def avaliar(minuta, numeros, caso=None, decisao_real=None, modelo_redator=None,
-            absteve=False):
+            absteve=False, titulo="Desembargador", relator=None):
     """Devolve (dict de notas, custo). Com `decisao_real`, usa o modo forte.
 
     `absteve` avisa que a minuta foi escrita sob instrucao de NAO cravar um
     desfecho — sem isso o juiz desconta nota pelo dispositivo condicional, que
     e' justamente o que se pediu.
+
+    `relator` e' de quem e' o gabarito. Sem ele o juiz do cerebro B avaliaria a
+    minuta contra o estilo do cerebro A — nome errado no criterio "estilo".
     """
     modelo = juiz_para(modelo_redator)
     if decisao_real:
         p = P_COM_REF.format(
+            titulo=titulo, relator=relator or "relator",
             criterios="\n".join("- %s: %s" % (k, v) for k, v in CRITERIOS.items()),
             numeros=", ".join(numeros) or "(nenhum)",
             real=decisao_real[:30000], minuta=minuta[:30000])

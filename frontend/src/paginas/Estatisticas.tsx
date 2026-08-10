@@ -1,24 +1,31 @@
 import { useQuery } from '@tanstack/react-query'
 
 import { get } from '../api'
+import { qs, useCerebro, useCerebroEfetivo } from '../cerebro'
 import { Barras, Confiabilidade, Serie } from '../comp/Grafico'
 import { pct, usd } from '../hooks'
 
-const q = <T,>(chave: string, rota: string) => ({
-  queryKey: [chave],
-  queryFn: () => get<T>(rota),
+// O slug entra na queryKey E na URL. Só na URL não bastaria: o React Query
+// serviria o cache do cérebro anterior ao trocar, e a tela mostraria as
+// estatísticas de um acervo com o nome do outro no topo.
+const q = <T,>(chave: string, rota: string, slug: string, efetivo: string) => ({
+  queryKey: [chave, efetivo],
+  queryFn: () => get<T>(rota + qs(slug)),
   staleTime: 5 * 60_000,
 })
 
 export function Estatisticas() {
-  const { data: corpus } = useQuery(q<any>('est-corpus', '/api/estatisticas/corpus'))
-  const { data: deriva } = useQuery(q<any>('est-deriva', '/api/estatisticas/deriva'))
-  const { data: classes } = useQuery(q<any>('est-classes', '/api/estatisticas/classes'))
-  const { data: orgaos } = useQuery(q<any>('est-orgaos', '/api/estatisticas/orgaos'))
-  const { data: cal } = useQuery(q<any>('calibracao', '/api/estatisticas/calibracao'))
-  const { data: abst } = useQuery(q<any>('est-abstencao', '/api/estatisticas/abstencao'))
-  const { data: conc } = useQuery(q<any>('est-concordancia', '/api/estatisticas/concordancia'))
-  const { data: custos } = useQuery(q<any>('custos', '/api/estatisticas/custos'))
+  const [slug] = useCerebro()
+  const [efetivo, lista] = useCerebroEfetivo()
+  const quem = lista?.itens.find((c) => c.slug === efetivo)
+  const { data: corpus } = useQuery(q<any>('est-corpus', '/api/estatisticas/corpus', slug, efetivo))
+  const { data: deriva } = useQuery(q<any>('est-deriva', '/api/estatisticas/deriva', slug, efetivo))
+  const { data: classes } = useQuery(q<any>('est-classes', '/api/estatisticas/classes', slug, efetivo))
+  const { data: orgaos } = useQuery(q<any>('est-orgaos', '/api/estatisticas/orgaos', slug, efetivo))
+  const { data: cal } = useQuery(q<any>('calibracao', '/api/estatisticas/calibracao', slug, efetivo))
+  const { data: abst } = useQuery(q<any>('est-abstencao', '/api/estatisticas/abstencao', slug, efetivo))
+  const { data: conc } = useQuery(q<any>('est-concordancia', '/api/estatisticas/concordancia', slug, efetivo))
+  const { data: custos } = useQuery(q<any>('custos', '/api/estatisticas/custos', slug, efetivo))
 
   if (!corpus) return <p className="vazio">carregando…</p>
 
@@ -37,8 +44,10 @@ export function Estatisticas() {
         <div>
           <h1>Estatísticas</h1>
           <p className="sub">
+            {quem ? `${quem.titulo} ${quem.nome} · ` : ''}
             {corpus.total.toLocaleString('pt-BR')} decisões, {corpus.primeiro_ano}–
             {corpus.ultimo_ano}
+            {quem && !quem.crava && ' · acervo pequeno: sem prognóstico'}
           </p>
         </div>
       </header>

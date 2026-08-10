@@ -23,6 +23,7 @@ import sqlite3
 import statistics
 import sys
 
+from .. import cerebros
 from . import grafo
 from .classificador import normaliza
 from .llm import SemCredito, config
@@ -30,6 +31,7 @@ from .llm import SemCredito, config
 RAIZ = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 TJSC = os.path.join(RAIZ, "output", "tjsc.db")
 RAG = os.path.join(RAIZ, "output", "rag.db")
+CEREBRO = None          # preenchido pelo --cerebro; None = o padrao
 
 _INICIO = re.compile(r"RELAT[ÓO]RIO")
 _FIM = re.compile(r"(?i)[ée]\s+o\s+relat[óo]rio|\bVOTO\b")
@@ -133,6 +135,7 @@ def rodar(modelo, casos_, verboso=True, feitos=None, ao_salvar=None):
             e = app.invoke(
                 {"caso": c["relatorio"], "custos": [], "criticas": [],
                  "ciclo_revisao": 0, "decisao_real": c["teor"],
+                 "cerebro": CEREBRO or cerebros.padrao(),
                  "filtros": {"excluir": (c["id"],)}},
                 config={"recursion_limit": 30})
             j = e.get("julgamento") or {}
@@ -186,8 +189,15 @@ def main(argv=None):
                     help="aproveita output/bench.json e só mede o que falta")
     ap.add_argument("--confirmar", action="store_true",
                     help="obrigatório: sem isso não gasta nada")
+    cerebros.argumento(ap, "acervo do qual tirar os casos com gabarito")
     a = ap.parse_args(argv)
     modelos = a.modelos or cands
+
+    # o bench le' gabarito do acervo: os dois bancos e a persona vem do cerebro
+    global TJSC, RAG, CEREBRO
+    cam = cerebros.caminhos(a.cerebro)
+    TJSC, RAG, CEREBRO = cam["tjsc"], cam["rag"], cam["slug"]
+    print("cérebro: %s\n" % cam["nome"])
 
     # Custo do resto do grafo por caso, MEDIDO — nao estimado. Um caso real do
     # bench custou US$ 0,0495 no total com US$ 0,0031 de 'redigir': o resto sao

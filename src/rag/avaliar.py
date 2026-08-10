@@ -14,6 +14,7 @@ import random
 import sqlite3
 from collections import Counter
 
+from .. import cerebros
 from . import busca, calibrar, confianca, floresta, rerank
 from .classificador import MERITO, REFORMA, sem_vazamento
 from .grafo import PESO_CONFIANCA
@@ -24,11 +25,13 @@ from .grafo import PESO_CONFIANCA
 termos_sem_vazamento = lambda ementa, maximo=10: sem_vazamento(ementa, limite=maximo)
 
 
-def prognostico_bm25(termos, alvo_id, classe=None, k=8, usar_rerank=False):
+def prognostico_bm25(termos, alvo_id, classe=None, k=8, usar_rerank=False, cam=None):
     """Mesma ponderacao do no de prognostico do grafo, sem a nota da triagem
     (que exige LLM). Devolve (rotulo_mais_pesado, fracao_de_reforma_no_merito)."""
+    cam = cam or cerebros.caminhos()
     q = busca.montar_consulta(termos)
-    cand = busca.buscar(q, limite=k * 3, classe=classe, excluir=(alvo_id,))
+    cand = busca.buscar(q, limite=k * 3, classe=classe, excluir=(alvo_id,),
+                        banco=cam["rag"])
     if usar_rerank:
         cand = rerank.ordenar(cand, limite=k)
     else:
@@ -45,7 +48,8 @@ def prognostico_bm25(termos, alvo_id, classe=None, k=8, usar_rerank=False):
     return max(pesos, key=pesos.get), (reforma / merito if merito else 0.0)
 
 
-def amostra(n, ano_min, seed, banco=busca.RAG):
+def amostra(n, ano_min, seed, banco=None):
+    banco = banco or cerebros.caminhos()["rag"]
     db = sqlite3.connect("file:%s?mode=ro" % banco.replace("\\", "/"), uri=True)
     linhas = db.execute(
         "SELECT id, numero, classe, resultado, confianca, ementa FROM decisao "
@@ -56,7 +60,7 @@ def amostra(n, ano_min, seed, banco=busca.RAG):
     return random.sample(linhas, min(n, len(linhas)))
 
 
-def rodar_offline(casos, k=8, classe=False, arranjo="knn", corte=None):
+def rodar_offline(casos, k=8, classe=False, arranjo="knn", corte=None, cam=None):
     """arranjo: knn | knn+rerank | floresta | conjunto | conjunto+rerank
 
     O caso avaliado sai do indice (`excluir`), e a consulta e' montada so' com
@@ -66,6 +70,7 @@ def rodar_offline(casos, k=8, classe=False, arranjo="knn", corte=None):
     `corte` liga a abstencao: o sistema so' e' cobrado nos casos em que a margem
     |p-0,5| passa do corte. `cobertura` diz em quantos ele respondeu.
     """
+    cam = cam or cerebros.caminhos()
     usar_rr = arranjo.endswith("+rerank")
     usa_knn = arranjo != "floresta"
     usa_rf = arranjo.startswith(("floresta", "conjunto"))
@@ -77,15 +82,16 @@ def rodar_offline(casos, k=8, classe=False, arranjo="knn", corte=None):
         prev = frac = None
         if usa_knn:
             prev, frac = prognostico_bm25(termos, id_, cls if classe else None,
-                                          k, usar_rerank=usar_rr)
-        rf = floresta.prever(" ".join(termos), classe=cls) if usa_rf else None
+                                          k, usar_rerank=usar_rr, cam=cam)
+        rf = (floresta.prever(" ".join(termos), classe=cls, caminho=cam["floresta"])
+              if usa_rf else None)
         p, _acordo, fonte = floresta.combinar(frac, rf["p_reforma"] if rf else None)
         if p is None:
             vazios += 1
             continue
         if corte is not None:
             # a margem e' medida na escala CALIBRADA: e' a que o usuario ve'
-            pc = calibrar.aplicar(p)
+            pc = calibrar.aplicar(p, caminho=cam["calibrador"])
             if abs(pc - 0.5) >= corte:
                 decididos += 1
                 acertos_decididos += (pc >= 0.5) == (real in REFORMA)
@@ -149,7 +155,10 @@ if __name__ == "__main__":
                     help="sem LLM: termos vem da propria ementa (custo zero)")
     ap.add_argument("--comparar", action="store_true",
                     help="os cinco arranjos nos MESMOS casos (k-NN, rerank, floresta, conjunto)")
+    cerebros.argumento(ap)
     a = ap.parse_args()
+    cam = cerebros.caminhos(a.cerebro)
+    print("cérebro: %s" % cam["nome"])
 
     if not a.offline:
         print("So' existe o modo --offline aqui: e' ele que mede a espinha do RAG\n"
@@ -157,7 +166,7 @@ if __name__ == "__main__":
               "com o grafo completo:  python -m src.rag.cli caso.txt --so-prognostico")
         raise SystemExit(1)
 
-    casos = amostra(a.n, a.ano_min, a.seed)
+    casos = amostra(a.n, a.ano_min, a.seed, banco=cam["rag"])
     print("amostra: %d decisoes de merito de %d em diante, todas classificadas "
           "pelo dispositivo" % (len(casos), a.ano_min))
 
@@ -167,14 +176,14 @@ if __name__ == "__main__":
     base_ref = sum(1 for x in casos if x[3] in REFORMA) / len(casos)
 
     if not a.comparar:
-        r = rodar_offline(casos, k=a.k, classe=a.com_classe)
+        r = rodar_offline(casos, k=a.k, classe=a.com_classe, cam=cam)
         imprimir(r, base, base_ref)
         assert r["precisao_reforma"] > base_ref * 1.5, \
             "o prognostico deixou de bater a linha de base — algo regrediu"
         print("\nOK: a precisao da previsao de reforma bate a linha de base com folga.")
         raise SystemExit(0)
 
-    if not floresta.carregar():
+    if not floresta.carregar(cam["floresta"]):
         print("floresta nao treinada — rode: python -m src.rag.floresta --treinar")
         raise SystemExit(1)
 
@@ -185,7 +194,8 @@ if __name__ == "__main__":
           % ("arranjo", "n", "exato", "precisão", "recall", "F1", "ganho"))
     res = {}
     for arr in ARRANJOS:
-        r = res[arr] = rodar_offline(casos, k=a.k, classe=a.com_classe, arranjo=arr)
+        r = res[arr] = rodar_offline(casos, k=a.k, classe=a.com_classe, arranjo=arr,
+                                     cam=cam)
         print("%-18s %5d %5.1f%% %7.1f%% %7.1f%% %5.1f%% %6.2fx"
               % (arr, r["n"], 100 * r["exato"], 100 * r["precisao_reforma"],
                  100 * r["recall_reforma"], 100 * r["f1_reforma"],
@@ -208,7 +218,7 @@ if __name__ == "__main__":
         if corte == corte_efetivo:
             rotulo += "  <- efetivo"
         d = rodar_offline(casos, k=a.k, classe=a.com_classe,
-                          arranjo="conjunto+rerank", corte=corte)
+                          arranjo="conjunto+rerank", corte=corte, cam=cam)
         print("%-34s %9.1f%% %8.1f%%"
               % (rotulo, 100 * d["cobertura"], 100 * d["acerto_quando_decide"]))
         if corte == corte_efetivo:

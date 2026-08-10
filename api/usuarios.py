@@ -2,9 +2,16 @@
 
     python -m api.usuarios --criar advogado@escritorio.com
     python -m api.usuarios --criar chefe@escritorio.com --papel admin
+    python -m api.usuarios --promover chefe@escritorio.com --papel superadmin
     python -m api.usuarios --senha advogado@escritorio.com
     python -m api.usuarios --desativar advogado@escritorio.com
     python -m api.usuarios --listar
+
+Papéis: 'advogado' usa; 'admin' vê as consultas de todos e cria contas;
+'superadmin' faz tudo isso e ainda decide QUAIS CÉREBROS ficam disponíveis para
+julgar (ver cerebros.json). São poderes separados de propósito: administrar o
+escritório não é a mesma coisa que escolher de quem o escritório tem um segundo
+cérebro.
 """
 import argparse
 import getpass
@@ -28,7 +35,13 @@ def main(argv=None):
     ap.add_argument("--criar", metavar="EMAIL")
     ap.add_argument("--senha", metavar="EMAIL", help="troca a senha")
     ap.add_argument("--desativar", metavar="EMAIL")
-    ap.add_argument("--papel", default="advogado", choices=("advogado", "admin"))
+    ap.add_argument("--papel", default="advogado",
+                    choices=("advogado", "admin", "superadmin"),
+                    help="advogado: usa. admin: vê tudo e cria contas. "
+                         "superadmin: além disso, decide quais cérebros "
+                         "(desembargadores) ficam disponíveis para julgar.")
+    ap.add_argument("--promover", metavar="EMAIL",
+                    help="troca o papel de uma conta existente (use com --papel)")
     ap.add_argument("--listar", action="store_true")
     a = ap.parse_args(argv)
 
@@ -46,6 +59,15 @@ def main(argv=None):
                 print(e, file=sys.stderr)
                 return 2
             print("criado: %s (%s)" % (email, a.papel))
+        elif a.promover:
+            alvo = a.promover.lower()
+            with c:
+                n = c.execute("UPDATE usuario SET papel=? WHERE email=?",
+                              (a.papel, alvo)).rowcount
+            if not n:
+                print("não existe: %s" % a.promover, file=sys.stderr)
+                return 2
+            print("%s agora é %s" % (alvo, a.papel))
         elif a.senha:
             if not auth.trocar_senha(c, a.senha, _pedir_senha()):
                 print("não existe: %s" % a.senha, file=sys.stderr)

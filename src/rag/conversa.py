@@ -16,6 +16,13 @@ from .llm import chamar, config
 MAX_HISTORICO = 8          # turnos que voltam no contexto
 MAX_EMENTA = 700
 MAX_MINUTA = 12000
+# A pergunta pode vir com um documento anexado grudado nela (a web junta os dois
+# num texto so'). Cortar em 4.000 como antes engolia a peca inteira em silencio e
+# o modelo respondia sobre meia peca achando que tinha a peca toda. Depois que o
+# anexo passou a aceitar PDF e DOCX, 12.000 tambem ficou apertado: uma peticao de
+# 30 paginas tem ~60.000 caracteres e o modelo lia um quinto dela. 50.000 sao
+# ~15k tokens no gemini-flash-lite — meio centavo a mais por pergunta.
+MAX_PERGUNTA = 50000
 
 P_CONVERSA = """Você responde perguntas sobre uma análise já feita, para um
 advogado que está lendo o relatório. Seja direto e curto: ele já leu o material.
@@ -30,6 +37,11 @@ REGRAS DURAS — as mesmas do redator, e valem aqui igual:
 - O prognóstico é interno ao sistema. Você PODE explicá-lo aqui (o usuário está
   perguntando sobre a análise), mas não o apresente como se fosse a posição do
   desembargador.
+- O advogado pode anexar um documento junto com a pergunta. Quando isso acontecer,
+  responda usando OS DOIS: a pergunta diz o que ele quer, o documento é o material
+  dele. Mas o documento NÃO é do acervo — não o cite como precedente do relator,
+  não o misture com a lista abaixo, e diga com todas as letras quando ele
+  contradisser o que a análise concluiu.
 {abstencao}
 CASO ANALISADO:
 {caso}
@@ -87,6 +99,17 @@ def _bloco_prognostico(estado):
     return "; ".join(partes) or "(não calculado)"
 
 
+def _cortar_pergunta(pergunta):
+    """Corte visivel. Se o documento anexado nao coube, quem tem de avisar o
+    advogado e' o modelo — cortar calado faz a resposta parecer completa."""
+    if len(pergunta) <= MAX_PERGUNTA:
+        return pergunta
+    return pergunta[:MAX_PERGUNTA] + (
+        "\n\n[CORTADO AQUI: o texto acima passou de %d caracteres e o resto não "
+        "chegou até você. AVISE o advogado disso na resposta, e não responda como "
+        "se tivesse lido o documento inteiro.]" % MAX_PERGUNTA)
+
+
 def montar_prompt(estado, pergunta, historico=()):
     p = estado.get("prognostico") or {}
     minuta = estado.get("minuta") or ""
@@ -103,7 +126,7 @@ def montar_prompt(estado, pergunta, historico=()):
         precedentes=_bloco_precedentes(estado),
         minuta=("\nMINUTA GERADA:\n%s\n" % minuta[:MAX_MINUTA]) if minuta else "",
         historico=hist,
-        pergunta=pergunta[:4000])
+        pergunta=_cortar_pergunta(pergunta))
 
 
 def responder(estado, pergunta, historico=()):
@@ -145,6 +168,20 @@ if __name__ == "__main__":
     assert len(p) < 30000, len(p)
     assert "E" * MAX_EMENTA in p and "E" * (MAX_EMENTA + 1) not in p
     assert "M" * MAX_MINUTA in p and "M" * (MAX_MINUTA + 1) not in p
+
+    # --- documento anexado: chega junto com a pergunta, nao no lugar dela
+    doc = ("Isto contradiz o precedente 0301234?\n"
+           "--- documento anexado: contrarrazoes.txt ---\n" + "D" * 3000)
+    pd = montar_prompt(estado, doc)
+    assert "contradiz o precedente" in pd and "D" * 3000 in pd, \
+        "a pergunta E o documento tem que chegar — os dois, inteiros"
+    assert "anexar um documento" in pd, "falta a regra de como tratar o anexo"
+
+    # e quando nao couber, o corte tem que se anunciar: cortar calado faz a
+    # resposta parecer completa quando o modelo leu meia peca
+    pg = montar_prompt(estado, "P" * (MAX_PERGUNTA + 5000))
+    assert "P" * MAX_PERGUNTA in pg and "P" * (MAX_PERGUNTA + 1) not in pg
+    assert "CORTADO AQUI" in pg and "AVISE o advogado" in pg
 
     # --- abstencao: o aviso entra e o modelo e' proibido de cravar
     abst = dict(estado, prognostico={"decide": False,

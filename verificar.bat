@@ -4,6 +4,12 @@ cd /d "%~dp0"
 set VPY=.venv\Scripts\python.exe
 set FALHOU=0
 
+echo === cerebros (quem julga) ===
+echo.
+echo --- src.cerebros
+%VPY% -X utf8 -m src.cerebros || set FALHOU=1
+
+echo.
 echo === modulos de dominio (src/rag) ===
 REM 'indexar' NAO entra: nao e' self-check, e' o construtor do indice. Rodar
 REM aqui apagaria output/rag.db e o reconstruiria em ~4,5 min.

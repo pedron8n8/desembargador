@@ -1,0 +1,70 @@
+{
+  "_comentario": "Quem julga o caso. Um cerebro = um acervo (tjsc.db + rag.db) + uma persona (o nome que entra nos prompts) + seus artefatos (floresta.pkl, calibrador.pkl). Ver src/cerebros.py.",
+  "_dir": "Relativo a' raiz do projeto. O rubens-schulz aponta para 'output' porque o acervo dele ja' estava la' antes desta fase e mover 1,4 GB nao compraria nada. Cerebro novo omite o campo e cai em output/cerebros/<slug>/.",
+  "_modelo": "Janelas de treino. floresta.ano_corte separa treino de teste; calibrar ajusta em ano_ajuste e valida em ano_validacao (>= 300 casos em cada, ver calibrar.py). Um acervo de 2015->2026 nao tem a mesma janela de um de 1990->2026 — corte unico seria errado por construcao.",
+  "_esperado": "Contagem conferida na ultima coleta completa. So' serve para o indexar avisar quando uma coleta sai truncada. Cerebro sem o campo nao recebe aviso nenhum.",
+  "padrao": "rubens-schulz",
+  "cerebros": [
+    {
+      "slug": "rubens-schulz",
+      "nome": "Rubens Schulz",
+      "titulo": "Desembargador",
+      "tribunal": "TJSC",
+      "dir": "output",
+      "ativo": 1,
+      "coleta": {
+        "relator": "Rubens Schulz",
+        "ano_inicio": 1990
+      },
+      "modelo": {
+        "ano_corte": 2023,
+        "ano_ajuste": 2024,
+        "ano_validacao": 2025
+      },
+      "esperado": {
+        "decisoes": 20363
+      }
+    },
+    {
+      "slug": "andre-luiz-dacol",
+      "nome": "André Luiz Dacol",
+      "titulo": "Desembargador",
+      "tribunal": "TJSC",
+      "ativo": 1,
+      "_ativo_por_que": "Nasce inativo e so' o superadmin liga. Acervo sem coleta/indice nao pode aparecer no seletor de ninguem: responderia com zero precedente e pareceria defeito do sistema.",
+      "coleta": {
+        "relator": "Dacol",
+        "ano_inicio": 2015
+      },
+      "_relator_por_que": "SONDADO EM 08/08/2026, NAO SUPOSTO. 'André Luiz Dacol' devolve ZERO no portal — e 'Andre Luiz Dacol' e 'ANDRÉ LUIZ DACOL' tambem. O parametro `relator` da querystring nao casa a string cheia deste desembargador. 'Dacol' devolve 16.311 (9.320 acordaos + 6.991 decmonos) e e' inequivoco: 200 de 200 resultados amostrados entre 2017 e 2025 tem Relator = 'ANDRÉ LUIZ DACOL'. O `nome` acima continua sendo o nome de verdade — e' ele que entra nos prompts e na tela; este campo e' so' a chave de busca do portal.",
+      "_coleta_por_que": "Recorte recente na 1a rodada: valida o pipeline em horas em vez de dias, e a coleta e' retomavel — completar o historico depois nao refaz nada. CONFIRA o nome contra o portal antes de largar a coleta: se nao casar, a listagem volta vazia e o processo segue calado.",
+      "modelo": {
+        "ano_corte": 2022,
+        "ano_ajuste": 2023,
+        "ano_validacao": 2024
+      }
+    },
+    {
+      "slug": "joao-henrique-blasi",
+      "nome": "João Henrique Blasi",
+      "titulo": "Desembargador",
+      "tribunal": "TJSC",
+      "ativo": 1,
+      "coleta": {
+        "relator": "Blasi",
+        "ano_inicio": 2015
+      },
+      "_relator_por_que": "SONDADO EM 08/08/2026. Mesmo padrao do dacol: 'João Henrique Blasi' e 'JOÃO HENRIQUE BLASI' devolvem ZERO — o parametro `relator` do portal nao casa a string cheia. 'Blasi' devolve 31.143 (24.457 acordaos + 6.686 decmonos) e e' inequivoco: 250 de 250 amostrados entre 2004 e 2026 sao dele (o portal grafa ora 'JOÃO HENRIQUE BLASI', ora sem acento).",
+      "_coleta_por_que": "ano_inicio 2015 pelo mesmo criterio do dacol — o acervo dele vai a 2004, e coletar 22 anos na primeira rodada custaria dias. A coleta e' retomavel: baixar ano_inicio depois completa o historico sem refazer nada do que ja' veio.",
+      "modelo": {
+        "ano_corte": 2022,
+        "ano_ajuste": 2024,
+        "ano_validacao": 2025
+      },
+      "_modelo_por_que": "ajuste em 2024 e nao em 2023 porque o acervo dele tem um BURACO de 2020 a 2023 (merito com ementa>500: 268 em 2020, 157 em 2021, 28 em 2022, 65 em 2023 — contra 886 em 2024 e 800 em 2025). Calibrar em 2023 abortaria por amostra, e forcar seria pior: a curva de confiabilidade nao teria faixa com n>=15 e o erro da diagonal sairia 0,0% por falta de medicao, parecendo calibracao perfeita.",
+      "esperado": {
+        "decisoes": 14342
+      }
+    }
+  ]
+}

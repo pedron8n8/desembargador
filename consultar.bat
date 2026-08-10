@@ -1,7 +1,7 @@
 @echo off
 setlocal
 cd /d "%~dp0"
-title Segundo Cerebro - Des. Rubens Schulz
+title Segundo Cerebro - TJSC
 
 REM ---------- 1) Ambiente ----------
 if not exist ".venv\Scripts\python.exe" (
@@ -31,7 +31,9 @@ if errorlevel 1 (
     exit /b 1
 )
 
-REM ---------- 3) Indice (so' constroi se faltar) ----------
+REM ---------- 3) Indice e floresta do cerebro PADRAO (so' constroi se faltar) --
+REM So' o padrao: preparar cerebro novo e' passo deliberado, com --cerebro, e
+REM nao efeito colateral de abrir uma consulta. Ver: python -m src.cerebros
 if not exist "output\rag.db" (
     echo [SETUP] Construindo o indice de busca... leva uns 3 minutos, e' so' uma vez.
     %VPY% -X utf8 -m src.rag.indexar || (echo [ERRO] Falha ao indexar & pause & exit /b 1)
@@ -49,6 +51,8 @@ REM Sem argumento: cola o texto no terminal e termina com uma linha FIM.
 REM O sistema pergunta a linha de analise (neutra / reformar / manter); para
 REM pular a pergunta:            consultar.bat caso.txt --tese reformar
 REM Ver o que voce ja' usou:     consultar.bat --historico [termo]
+REM Outro desembargador:         consultar.bat caso.txt --cerebro SLUG
+REM Quais existem:               .venv\Scripts\python -m src.cerebros
 echo.
 %VPY% -X utf8 -m src.rag.cli %*
 

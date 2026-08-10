@@ -7,6 +7,8 @@ Em dev o Vite (5173) faz proxy de /api para ca'. Same-origin, entao nao ha' CORS
 nem cookie cross-site para configurar. Em producao o `frontend/dist` e' servido daqui
 mesmo: um processo, uma porta, um certificado.
 """
+import base64
+import binascii
 import contextlib
 import datetime as dt
 import json
@@ -18,15 +20,14 @@ from fastapi import Depends, FastAPI, HTTPException, Query, Request, Response
 from fastapi.responses import FileResponse, PlainTextResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 
+from src import cerebros
 from src.rag import (busca, calibrar, cli, conversa, deriva, estatisticas,
-                     feedback, floresta, grafo, rede, rerank)
+                     extrair, feedback, floresta, grafo, rede, rerank)
 from src.rag.llm import config
 
 from . import auth, esquema, execucao, serial
 
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-TJSC = os.path.join(RAIZ, "output", "tjsc.db")
-RAG = os.path.join(RAIZ, "output", "rag.db")
 DIST = os.path.join(RAIZ, "frontend", "dist")
 
 DEV = os.environ.get("WEB_DEV") == "1"
@@ -48,10 +49,12 @@ async def lifespan(_app):
     # aparece só quando o buffer enche não é log de startup
     print("WAL: %s" % ", ".join("%s=%s" % x for x in ligados), flush=True)
     execucao.instalar_roteador()
-    # os dois tem cache de modulo: carregar aqui tira 40 MB do caminho critico
-    # da primeira consulta
-    floresta.carregar()
-    calibrar.carregar()
+    # Os dois tem cache POR CAMINHO: aquecer aqui tira 40 MB do caminho critico
+    # da primeira consulta. So' o cerebro PADRAO — cada floresta sao ~40 MB, e
+    # pre-aquecer cinco cerebros deixaria 200 MB residentes para nada.
+    _cam_padrao = cerebros.caminhos()
+    floresta.carregar(_cam_padrao["floresta"])
+    calibrar.carregar(_cam_padrao["calibrador"])
     pendentes = execucao.reconciliar()
     if pendentes:
         print("reconciliadas %d execuções interrompidas: %s"
@@ -83,10 +86,44 @@ def atual(request: Request, c=Depends(conexao)):
     return u
 
 
+def manda(u):
+    """Vê o que é dos outros: consultas alheias, custos globais, contas.
+
+    O superadmin PRECISA entrar aqui. Sem isto ele teria mais poder sobre os
+    cérebros e menos sobre o escritório que o próprio admin — e as sete
+    comparações espalhadas com "admin" eram fáceis de deixar pela metade.
+    """
+    return u["papel"] in ("admin", "superadmin")
+
+
 def admin(u=Depends(atual)):
-    if u["papel"] != "admin":
+    if not manda(u):
         raise HTTPException(403, "só para administrador")
     return u
+
+
+def superadmin(u=Depends(atual)):
+    """Manda nos CÉREBROS: quem pode julgar, e quem aparece no seletor.
+
+    Poder separado do admin de propósito: administrar as contas do escritório
+    não é a mesma coisa que decidir de quais desembargadores o escritório tem
+    um segundo cérebro.
+    """
+    if u["papel"] != "superadmin":
+        raise HTTPException(403, "só para o superadministrador")
+    return u
+
+
+def cerebro_atual(cerebro: str = Query(None)):
+    """Sobre qual acervo esta rota responde. Sem `?cerebro=`, o padrão.
+
+    Slug inválido é 404 e não silêncio: responder com o acervo errado é o único
+    erro daqui que ninguém detecta olhando a tela.
+    """
+    try:
+        return cerebros.caminhos(cerebro)
+    except cerebros.Desconhecido as e:
+        raise HTTPException(404, str(e))
 
 
 @app.post("/api/sessao", status_code=204)
@@ -129,24 +166,74 @@ def eu(u=Depends(atual), c=Depends(conexao)):
 # ------------------------------------------------------- config e grafo
 
 @app.get("/api/saude")
-def saude():
-    return {"ok": True, "bancos": {
+def saude(cam=Depends(cerebro_atual)):
+    return {"ok": True, "cerebro": cam["slug"], "bancos": {
         n: os.path.exists(p) for n, p in
-        (("rag", RAG), ("tjsc", TJSC), ("runs", execucao.RUNS),
+        (("rag", cam["rag"]), ("tjsc", cam["tjsc"]), ("runs", execucao.RUNS),
          ("feedback", feedback.FB), ("web", esquema.WEB))}}
 
 
+# ------------------------------------------------------------- cérebros
+
+@app.get("/api/cerebros")
+def listar_cerebros(u=Depends(atual), todos: bool = Query(False)):
+    """Quem pode julgar. Todo mundo vê os ativos; só o superadmin vê os inativos.
+
+    Um cérebro sem coleta responderia com zero precedente e pareceria defeito do
+    sistema — por isso ele nasce inativo e alguém tem de ligá-lo de propósito.
+    """
+    if todos and u["papel"] != "superadmin":
+        raise HTTPException(403, "só o superadministrador vê os cérebros inativos")
+    saida = []
+    for c in cerebros.listar(incluir_inativos=todos):
+        s = cerebros.saude(c["slug"])
+        saida.append({
+            "slug": c["slug"], "nome": c["nome"], "titulo": c["titulo"],
+            "tribunal": c["tribunal"], "ativo": bool(c["ativo"]),
+            "n_decisoes": s["n_decisoes"], "n_merito": s["n_merito"],
+            "tem_indice": s["tem_rag"], "tem_floresta": s["tem_floresta"],
+            "calibrado": s["tem_calibrador"],
+            # o front usa isto para avisar que o percentual não vale, em vez de
+            # mostrar um número que ninguém mediu
+            "crava": s["n_merito"] >= grafo.MIN_MERITO_PARA_CRAVAR,
+        })
+    return {"padrao": cerebros.padrao(), "minimo_para_cravar":
+            grafo.MIN_MERITO_PARA_CRAVAR, "itens": saida}
+
+
+@app.patch("/api/cerebros/{slug}")
+async def ativar_cerebro(slug: str, request: Request, _s=Depends(superadmin)):
+    corpo = await request.json()
+    if "ativo" not in corpo:
+        raise HTTPException(400, "informe 'ativo'")
+    ativo = bool(corpo["ativo"])
+    try:
+        cerebros.obter(slug)          # valida ANTES de olhar o disco
+        if ativo and not cerebros.saude(slug)["tem_rag"]:
+            raise HTTPException(409, "esse cérebro ainda não tem índice — rode a "
+                                     "coleta e o indexar antes de ativá-lo")
+        c = cerebros.ativar(slug, ativo)
+    except cerebros.Desconhecido as e:
+        raise HTTPException(404, str(e))
+    return {"slug": c["slug"], "nome": c["nome"], "ativo": bool(c["ativo"])}
+
+
 @app.get("/api/config")
-def configuracao(_u=Depends(atual)):
+def configuracao(_u=Depends(atual), cam=Depends(cerebro_atual)):
     """O que está CARREGADO no processo, não o que está no arquivo.
 
     llm.config() cacheia num global: mexer no config_rag.json com o servidor de
     pé não muda nada até reiniciar. A interface tem de mostrar o que está
     valendo, senão vira um painel que mente com boa intenção.
+
+    Os modelos são do sistema; a floresta e o calibrador são do CÉREBRO — daí o
+    `?cerebro=`. Sem ele o painel mostraria a calibração de um acervo enquanto a
+    consulta roda em outro.
     """
     cfg = config()
-    rf = floresta.carregar()
+    rf = floresta.carregar(cam["floresta"])
     return {
+        "cerebro": cam["slug"], "cerebro_nome": cam["nome"],
         "modelos": cfg.get("modelos", {}),
         "temperatura": cfg.get("temperatura", {}),
         "max_tokens": cfg.get("max_tokens", {}),
@@ -159,7 +246,9 @@ def configuracao(_u=Depends(atual)):
             "n_treino": rf.get("n_treino") if rf else None,
         },
         "confianca": cfg.get("confianca", {}),
-        "calibrado": calibrar.calibrado(),
+        "calibrado": calibrar.calibrado(cam["calibrador"]),
+        "n_merito": cerebros.saude(cam["slug"])["n_merito"],
+        "minimo_para_cravar": grafo.MIN_MERITO_PARA_CRAVAR,
         "julgar_consultas": cfg.get("julgar_consultas"),
         "peso_confianca": grafo.PESO_CONFIANCA,
         # o filtro deixou de ser por `resultado` e passou a ser semantico (a
@@ -198,15 +287,15 @@ def _dono_ou_403(c, thread, u):
     d = c.execute("SELECT email FROM dono WHERE thread=?", (thread,)).fetchone()
     if d is None:
         # thread da CLI: sem dono. So' o admin ve — a consulta pode ser de outro.
-        if u["papel"] != "admin":
+        if not manda(u):
             raise HTTPException(404, "consulta não encontrada")
-    elif d["email"] != u["email"] and u["papel"] != "admin":
+    elif d["email"] != u["email"] and not manda(u):
         raise HTTPException(404, "consulta não encontrada")
 
 
 @app.get("/api/consultas")
 def listar(c=Depends(conexao), u=Depends(atual), pagina: int = 0,
-           por_pagina: int = Query(25, le=100)):
+           por_pagina: int = Query(25, le=100), cerebro: str = Query(None)):
     fb = sqlite3.connect("file:%s?mode=ro" % feedback.FB.replace("\\", "/"), uri=True)
     fb.row_factory = sqlite3.Row
     try:
@@ -221,18 +310,24 @@ def listar(c=Depends(conexao), u=Depends(atual), pagina: int = 0,
 
     meus = {r["thread"]: r["email"] for r in c.execute("SELECT thread, email FROM dono")}
     estados = {r["thread"]: r for r in c.execute(
-        "SELECT thread, estado, erro, segundos FROM execucao")}
+        "SELECT thread, estado, erro, segundos, cerebro, comparacao FROM execucao")}
+    # nome legivel sem uma consulta por linha
+    nomes = {x["slug"]: x["nome"] for x in cerebros.listar(incluir_inativos=True)}
 
     saida = []
     for l in linhas:
         d = meus.get(l["thread"])
-        if u["papel"] != "admin" and d != u["email"]:
+        if not manda(u) and d != u["email"]:
             continue
         try:
             p = json.loads(l["prognostico_json"] or "{}")
         except ValueError:
             p = {}
         e = estados.get(l["thread"])
+        # o cerebro sai do prognostico gravado (consulta da CLI) ou da execucao
+        slug = p.get("cerebro") or (e["cerebro"] if e else None)             or cerebros.CEREBRO_LEGADO
+        if cerebro and slug != cerebro:
+            continue
         saida.append({
             "thread": l["thread"], "criado_em": l["criado_em"],
             "resumo": (l["resumo"] or "").strip(),
@@ -243,6 +338,8 @@ def listar(c=Depends(conexao), u=Depends(atual), pagina: int = 0,
             "estado": e["estado"] if e else "pronto",
             "erro": e["erro"] if e else None,
             "da_cli": d is None,
+            "cerebro": slug, "cerebro_nome": nomes.get(slug, slug),
+            "comparacao": e["comparacao"] if e else None,
         })
 
     # Execuções que ainda não chegaram ao feedback.db. Normalmente são as que
@@ -252,21 +349,46 @@ def listar(c=Depends(conexao), u=Depends(atual), pagina: int = 0,
     for r in c.execute("SELECT * FROM execucao ORDER BY criado_em DESC"):
         if r["thread"] in ja:
             continue
-        if u["papel"] != "admin" and r["email"] != u["email"]:
+        if not manda(u) and r["email"] != u["email"]:
+            continue
+        slug = r["cerebro"] or cerebros.CEREBRO_LEGADO
+        if cerebro and slug != cerebro:
             continue
         saida.append({"thread": r["thread"], "criado_em": r["criado_em"],
                       "resumo": "", "custo_usd": None, "nota_humano": None,
                       "nota_juiz": None, "decide": None, "probabilidade_pct": None,
                       "resultado_provavel": None, "estado": r["estado"],
-                      "erro": r["erro"], "da_cli": False})
+                      "erro": r["erro"], "da_cli": False,
+                      "cerebro": slug, "cerebro_nome": nomes.get(slug, slug),
+                      "comparacao": r["comparacao"]})
     saida.sort(key=lambda x: x["criado_em"] or "", reverse=True)
     return {"total": len(saida),
             "itens": saida[pagina * por_pagina:(pagina + 1) * por_pagina]}
 
 
-@app.post("/api/consultas", status_code=202)
-async def rodar(request: Request, c=Depends(conexao), u=Depends(atual)):
+@app.post("/api/extrair")
+async def extrair_arquivo(request: Request, _u=Depends(atual)):
+    """Arquivo -> texto, para a caixa do lado de la'. O arquivo vem em base64
+    dentro do JSON de sempre: multipart custaria a dependencia python-multipart
+    e um segundo caminho no cliente, para transportar o mesmo byte."""
     corpo = await request.json()
+    nome = (corpo.get("nome") or "arquivo")[:200]
+    try:
+        dados = base64.b64decode(corpo.get("dados") or "", validate=True)
+    except (binascii.Error, ValueError):
+        raise HTTPException(400, "conteúdo do arquivo veio corrompido")
+    if len(dados) > extrair.LIMITE_BYTES:
+        raise HTTPException(413, "arquivo passa de %d MB"
+                            % (extrair.LIMITE_BYTES // 1048576))
+    try:
+        texto, custo = extrair.extrair(nome, dados)
+    except extrair.NaoSuportado as e:
+        raise HTTPException(415, str(e))
+    return {"texto": texto, "chars": len(texto), "custo_usd": custo}
+
+
+def _pedido(corpo):
+    """Valida o que é comum a uma consulta e a uma comparação."""
     caso = (corpo.get("caso") or "").strip()
     if not caso:
         raise HTTPException(400, "caso vazio")
@@ -274,16 +396,227 @@ async def rodar(request: Request, c=Depends(conexao), u=Depends(atual)):
     if tese != "neutra" and tese not in grafo.LADOS:
         raise HTTPException(400, "tese inválida: %s" % tese)
     f = corpo.get("filtros") or {}
-    thread = dt.datetime.now().strftime("%Y%m%d-%H%M%S")
+    return caso, tese, {"classe": f.get("classe") or None,
+                        "ano_min": f.get("ano_min"), "ano_max": f.get("ano_max"),
+                        "excluir": tuple(f.get("excluir") or ())}
+
+
+def _novo_thread(c, sufixo=""):
+    thread = dt.datetime.now().strftime("%Y%m%d-%H%M%S") + sufixo
     if c.execute("SELECT 1 FROM execucao WHERE thread=?", (thread,)).fetchone():
         thread += "-%s" % os.urandom(2).hex()
-    execucao.iniciar(
-        thread, u["email"], caso, tese=tese,
-        filtros={"classe": f.get("classe") or None,
-                 "ano_min": f.get("ano_min"), "ano_max": f.get("ano_max"),
-                 "excluir": tuple(f.get("excluir") or ())},
-        so_prognostico=bool(corpo.get("so_prognostico")))
-    return {"thread": thread}
+    return thread
+
+
+def _cerebro_para_rodar(slug):
+    """Só cérebro ATIVO e com índice pode receber consulta.
+
+    Um inativo é um acervo que ainda não existe de fato: responderia com zero
+    precedente e pareceria defeito do sistema, não recusa deliberada.
+    """
+    try:
+        c = cerebros.obter(cerebros.resolver(slug))
+    except cerebros.Desconhecido as e:
+        raise HTTPException(404, str(e))
+    if not c["ativo"]:
+        raise HTTPException(409, "o cérebro %s está inativo" % c["nome"])
+    if not cerebros.saude(c["slug"])["tem_rag"]:
+        raise HTTPException(409, "o cérebro %s ainda não tem índice" % c["nome"])
+    return c["slug"]
+
+
+@app.post("/api/consultas", status_code=202)
+async def rodar(request: Request, c=Depends(conexao), u=Depends(atual)):
+    corpo = await request.json()
+    caso, tese, filtros = _pedido(corpo)
+    cerebro = _cerebro_para_rodar(corpo.get("cerebro"))
+    thread = _novo_thread(c)
+    execucao.iniciar(thread, u["email"], caso, tese=tese, filtros=filtros,
+                     so_prognostico=bool(corpo.get("so_prognostico")),
+                     cerebro=cerebro)
+    return {"thread": thread, "cerebro": cerebro}
+
+
+# ------------------------------------------------------------ comparações
+
+MAX_CEREBROS_POR_COMPARACAO = 3
+
+
+@app.post("/api/comparacoes", status_code=202)
+async def comparar(request: Request, c=Depends(conexao), u=Depends(atual)):
+    """A mesma peça, lida por vários cérebros. Uma execução independente cada.
+
+    São threads separadas ligadas por um id de grupo, e não um par simétrico:
+    cada uma nasce com o `comparacao` já no INSERT, então o grupo é consistente
+    mesmo se o processo morrer entre uma e outra. Retomada, custo e feedback
+    continuam sendo por thread — nada no grafo muda.
+    """
+    corpo = await request.json()
+    caso, tese, filtros = _pedido(corpo)
+    pedidos = corpo.get("cerebros") or []
+    if len(pedidos) < 2:
+        raise HTTPException(400, "uma comparação precisa de pelo menos 2 cérebros")
+    if len(pedidos) > MAX_CEREBROS_POR_COMPARACAO:
+        raise HTTPException(400, "no máximo %d cérebros por comparação — cada um "
+                                 "custa uma consulta inteira"
+                            % MAX_CEREBROS_POR_COMPARACAO)
+    slugs = [_cerebro_para_rodar(s) for s in pedidos]
+    if len(set(slugs)) != len(slugs):
+        raise HTTPException(400, "cérebro repetido na comparação")
+
+    comparacao = "cmp-" + dt.datetime.now().strftime("%Y%m%d-%H%M%S")
+    threads = []
+    for i, slug in enumerate(slugs):
+        thread = _novo_thread(c, sufixo="-%d" % i)
+        execucao.iniciar(thread, u["email"], caso, tese=tese, filtros=filtros,
+                         so_prognostico=bool(corpo.get("so_prognostico")),
+                         cerebro=slug, comparacao=comparacao)
+        threads.append({"cerebro": slug, "thread": thread})
+    return {"comparacao": comparacao, "threads": threads}
+
+
+@app.get("/api/comparacoes")
+def listar_comparacoes(c=Depends(conexao), u=Depends(atual)):
+    onde, args = ["comparacao IS NOT NULL"], []
+    if not manda(u):
+        onde.append("email = ?")
+        args.append(u["email"])
+    linhas = c.execute("SELECT comparacao, thread, cerebro, estado, criado_em "
+                       "FROM execucao WHERE %s ORDER BY criado_em DESC"
+                       % " AND ".join(onde), args).fetchall()
+    if not linhas:
+        return {"itens": []}
+
+    # o resumo do caso e o prognostico de cada lado saem do feedback.db, do
+    # mesmo jeito que em /api/consultas — sem abrir checkpoint nenhum: uma
+    # LISTA nao pode pagar a leitura do LangGraph por linha
+    fb = sqlite3.connect("file:%s?mode=ro" % feedback.FB.replace("\\", "/"), uri=True)
+    fb.row_factory = sqlite3.Row
+    try:
+        pronto = {r["thread"]: r for r in fb.execute(
+            "SELECT thread, custo_usd, prognostico_json, "
+            "  substr(replace(caso,char(10),' '),1,160) AS resumo "
+            "FROM consulta WHERE thread IN (%s)" % ",".join("?" * len(linhas)),
+            [r["thread"] for r in linhas])}
+    finally:
+        fb.close()
+
+    nomes = {x["slug"]: x["nome"] for x in cerebros.listar(incluir_inativos=True)}
+    grupos = {}
+    for r in linhas:
+        g = grupos.setdefault(r["comparacao"], {
+            "comparacao": r["comparacao"], "criado_em": r["criado_em"],
+            "cerebros": [], "estados": [], "resumo": "", "custo_usd": 0.0,
+            "_itens": []})
+        slug = r["cerebro"] or cerebros.CEREBRO_LEGADO
+        g["cerebros"].append(nomes.get(slug, slug))
+        g["estados"].append(r["estado"])
+        f = pronto.get(r["thread"])
+        if f is None:
+            # ainda rodando (ou morreu antes de fechar a conta): sem resumo.
+            # As chaves vao mesmo assim — _comparavel lê `probabilidade_pct` de
+            # todos ANTES de olhar o estado
+            g["_itens"].append({"estado": r["estado"], "decide": None,
+                                "calibrado": None, "probabilidade_pct": None})
+            continue
+        g["custo_usd"] += f["custo_usd"] or 0.0
+        g["resumo"] = g["resumo"] or (f["resumo"] or "").strip()
+        try:
+            p = json.loads(f["prognostico_json"] or "{}")
+        except ValueError:
+            p = {}
+        g["_itens"].append({"estado": r["estado"], "decide": p.get("decide"),
+                            "calibrado": p.get("calibrado"),
+                            "probabilidade_pct": p.get("probabilidade_pct")})
+    # o Δ obedece a mesma regra da tela da comparacao — quem decide se dois
+    # percentuais podem ser subtraidos e' o servidor, num lugar so'
+    return {"itens": [{**{k: v for k, v in g.items() if k != "_itens"},
+                       **_comparavel(g["_itens"])} for g in grupos.values()]}
+
+
+@app.get("/api/comparacoes/{comparacao}")
+def ver_comparacao(comparacao: str, c=Depends(conexao), u=Depends(atual)):
+    linhas = c.execute("SELECT * FROM execucao WHERE comparacao=? "
+                       "ORDER BY thread", (comparacao,)).fetchall()
+    if not linhas:
+        raise HTTPException(404, "comparação não encontrada")
+    for r in linhas:
+        _dono_ou_403(c, r["thread"], u)
+
+    nomes = {x["slug"]: x for x in cerebros.listar(incluir_inativos=True)}
+    # o resumo dos que já terminaram sai do feedback.db; só quem ainda roda
+    # obriga a abrir o checkpoint do LangGraph
+    fb = sqlite3.connect("file:%s?mode=ro" % feedback.FB.replace("\\", "/"), uri=True)
+    fb.row_factory = sqlite3.Row
+    try:
+        prontos = {r["thread"]: r for r in fb.execute(
+            "SELECT thread, prognostico_json, custo_usd, minuta FROM consulta "
+            "WHERE thread IN (%s)" % ",".join("?" * len(linhas)),
+            [r["thread"] for r in linhas])}
+    finally:
+        fb.close()
+
+    itens, caso = [], ""
+    for r in linhas:
+        slug = r["cerebro"] or cerebros.CEREBRO_LEGADO
+        info = nomes.get(slug, {})
+        fila = prontos.get(r["thread"])
+        prog, custo, tem_minuta = {}, None, False
+        if fila is not None:
+            try:
+                prog = json.loads(fila["prognostico_json"] or "{}")
+            except ValueError:
+                prog = {}
+            custo, tem_minuta = fila["custo_usd"], bool(fila["minuta"])
+        else:
+            estado, _ = _estado(r["thread"], bool(r["so_prognostico"]))
+            prog = estado.get("prognostico") or {}
+            tem_minuta = bool(estado.get("minuta"))
+            caso = caso or (estado.get("caso") or "")
+        itens.append({
+            "thread": r["thread"], "cerebro": slug,
+            "cerebro_nome": info.get("nome", slug),
+            "cerebro_titulo": info.get("titulo", ""),
+            "estado": r["estado"], "erro": r["erro"], "segundos": r["segundos"],
+            "so_prognostico": bool(r["so_prognostico"]),
+            "custo_usd": custo, "tem_minuta": tem_minuta,
+            "prognostico": prog,
+            "n_precedentes": prog.get("n_precedentes"),
+            # o front usa os dois para decidir se pode mostrar um Δ
+            "decide": prog.get("decide"),
+            "calibrado": prog.get("calibrado"),
+            "probabilidade_pct": prog.get("probabilidade_pct"),
+            "resultado_provavel": prog.get("resultado_provavel"),
+        })
+    if not caso:
+        estado, _ = _estado(linhas[0]["thread"], bool(linhas[0]["so_prognostico"]))
+        caso = estado.get("caso") or ""
+    return {"comparacao": comparacao, "caso": caso,
+            "criado_em": linhas[0]["criado_em"], "itens": itens,
+            **_comparavel(itens)}
+
+
+def _comparavel(itens):
+    """Pode-se subtrair um percentual do outro?
+
+    NÃO quando algum lado se recusou a cravar, e NÃO quando um é calibrado e o
+    outro não: 62% calibrado ao lado de 62% cru são números de escalas
+    diferentes, e a subtração fabricaria precisão que ninguém mediu. É o erro
+    mais fácil de cometer nesta tela, por isso a resposta vem do servidor.
+    """
+    pcts = [i["probabilidade_pct"] for i in itens]
+    if any(i["estado"] != "pronto" for i in itens):
+        return {"delta_pp": None, "por_que_sem_delta": "ainda rodando"}
+    if any(i["decide"] is False for i in itens):
+        return {"delta_pp": None,
+                "por_que_sem_delta": "um dos cérebros não cravou um prognóstico"}
+    if any(p is None for p in pcts):
+        return {"delta_pp": None, "por_que_sem_delta": "algum lado não tem percentual"}
+    if len({bool(i["calibrado"]) for i in itens}) > 1:
+        return {"delta_pp": None,
+                "por_que_sem_delta": "um lado é calibrado e o outro não — as duas "
+                                     "escalas não se comparam"}
+    return {"delta_pp": round(max(pcts) - min(pcts), 1), "por_que_sem_delta": None}
 
 
 @app.post("/api/consultas/{thread}/retomar", status_code=202)
@@ -425,7 +758,8 @@ async def falar(thread: str, request: Request, c=Depends(conexao), u=Depends(atu
                   " VALUES (?,'assistente',?,?,?,?)",
                   (thread, resposta, custo["modelo"], custo["custo_usd"],
                    dt.datetime.now().isoformat(timespec="seconds")))
-        c.execute("INSERT INTO custo VALUES (?,?,?,?,?,?,?)",
+        c.execute("INSERT INTO custo (thread, no, modelo, tokens_in, tokens_out, "
+                  "custo_usd, quando) VALUES (?,?,?,?,?,?,?)",
                   (thread, "conversa", custo["modelo"], custo["tokens_in"],
                    custo["tokens_out"], custo["custo_usd"], agora))
     return {"texto": resposta, "modelo": custo["modelo"],
@@ -483,11 +817,12 @@ def ler_avaliacao(thread: str, c=Depends(conexao), u=Depends(atual)):
 
 
 @app.get("/api/feedback/boost")
-def ver_boost(_u=Depends(atual)):
-    b = feedback.boost()
+def ver_boost(_u=Depends(atual), cam=Depends(cerebro_atual)):
+    # por cerebro: decisao_id so' e' unico dentro de um acervo
+    b = feedback.boost(cerebro=cam["slug"])
     if not b:
         return {"itens": [], "teto": feedback.TETO}
-    db = busca._db(RAG)
+    db = busca._db(cam["rag"])
     linhas = db.execute(
         "SELECT id, numero, classe, ano, resultado FROM decisao WHERE id IN (%s)"
         % ",".join("?" * len(b)), list(b)).fetchall()
@@ -500,7 +835,8 @@ def ver_boost(_u=Depends(atual)):
 # --------------------------------------------------------------- acervo
 
 @app.get("/api/corpus")
-def corpus(_u=Depends(atual), q: str = "", classe: str = "", ano_min: int = 0,
+def corpus(_u=Depends(atual), cam=Depends(cerebro_atual), q: str = "",
+           classe: str = "", ano_min: int = 0,
            ano_max: int = 0, ancora: str = "", resultado: str = "",
            pagina: int = 0, por_pagina: int = Query(25, le=100)):
     filtros = []
@@ -525,18 +861,20 @@ def corpus(_u=Depends(atual), q: str = "", classe: str = "", ano_min: int = 0,
                                          or [q])
         itens = busca.buscar(consulta, limite=400, classe=classe or None,
                              ano_min=ano_min or None, ano_max=ano_max or None,
-                             resultados=(resultado,) if resultado else ())
+                             resultados=(resultado,) if resultado else (),
+                             banco=cam["rag"])
         if ancora:
             itens = [x for x in itens if x.get("ancora") == ancora]
         itens = rerank.ordenar(itens)
         total = len(itens)
         pagina_itens = itens[pagina * por_pagina:(pagina + 1) * por_pagina]
         return {"total": total, "consulta_fts": consulta, "ordenado_por": "bm25+rerank",
+                "cerebro": cam["slug"],
                 "itens": [serial.precedente(x, ementa_chars=400) for x in pagina_itens]}
 
     # busca vazia: FTS5 exige MATCH, entao aqui e' um SELECT direto por data
     where = ("WHERE " + " AND ".join(filtros)) if filtros else ""
-    db = busca._db(RAG)
+    db = busca._db(cam["rag"])
     total = db.execute("SELECT count(*) FROM decisao d %s" % where, args).fetchone()[0]
     linhas = db.execute(
         "SELECT %s FROM decisao d %s ORDER BY d.data DESC, d.id DESC LIMIT ? OFFSET ?"
@@ -544,21 +882,27 @@ def corpus(_u=Depends(atual), q: str = "", classe: str = "", ano_min: int = 0,
         args + [por_pagina, pagina * por_pagina]).fetchall()
     itens = [dict(zip(busca.CAMPOS, l)) for l in linhas]
     return {"total": total, "consulta_fts": None, "ordenado_por": "data",
+            "cerebro": cam["slug"],
             "itens": [serial.precedente(x, ementa_chars=400) for x in itens]}
 
 
 @app.get("/api/corpus/facetas")
-def facetas(_u=Depends(atual)):
-    db = busca._db(RAG)
+def facetas(_u=Depends(atual), cam=Depends(cerebro_atual)):
+    db = busca._db(cam["rag"])
     return {c: [{"valor": v, "n": n} for v, n in db.execute(
         "SELECT %s, count(*) x FROM decisao WHERE %s IS NOT NULL AND %s <> '' "
         "GROUP BY 1 ORDER BY x DESC LIMIT 40" % (c, c, c))]
         for c in ("classe", "orgao", "comarca", "ancora", "resultado")}
 
 
-@app.get("/api/corpus/{decisao_id}")
-def decisao(decisao_id: int, c=Depends(conexao), u=Depends(atual)):
-    db = busca._db(RAG)
+# O CEREBRO VAI NO CAMINHO, e nao em ?cerebro=. `decisao_id` so' e' unico dentro
+# de um acervo: um link colado por quem estava num cerebro abriria a decisao de
+# mesmo id no OUTRO, com aparencia perfeitamente normal. Assim o link e'
+# auto-contido.
+@app.get("/api/corpus/{cerebro}/{decisao_id}")
+def decisao(cerebro: str, decisao_id: int, c=Depends(conexao), u=Depends(atual)):
+    cam = cerebro_atual(cerebro)
+    db = busca._db(cam["rag"])
     linha = db.execute(
         "SELECT %s FROM decisao d WHERE d.id = ?" % ",".join("d." + x
                                                              for x in busca.CAMPOS),
@@ -572,26 +916,44 @@ def decisao(decisao_id: int, c=Depends(conexao), u=Depends(atual)):
     # onde ela já foi usada — só as consultas que este usuário pode ver
     fb = sqlite3.connect("file:%s?mode=ro" % feedback.FB.replace("\\", "/"), uri=True)
     try:
+        # AND cerebro=?: sem isso a pagina de uma decisao do dacol listaria as
+        # consultas do rubens que por acaso tinham o mesmo id — plausivel e
+        # invisivel
         usos = fb.execute(
             "SELECT thread, nota_triagem, veredito FROM precedente_uso "
-            "WHERE decisao_id=?", (decisao_id,)).fetchall()
+            "WHERE decisao_id=? AND cerebro=?", (decisao_id, cam["slug"])).fetchall()
     finally:
         fb.close()
     meus = {r["thread"] for r in c.execute("SELECT thread FROM dono WHERE email=?",
                                            (u["email"],))}
+    saida["cerebro"] = cam["slug"]
+    saida["cerebro_nome"] = cam["nome"]
     saida["usos"] = [{"thread": t, "nota_triagem": n, "veredito": v}
                      for t, n, v in usos
-                     if u["papel"] == "admin" or t in meus]
+                     if manda(u) or t in meus]
     saida["usos_totais"] = len(usos)
-    saida["boost"] = feedback.boost().get(decisao_id)
-    saida["tem_documento"] = bool(_doc_path(decisao_id))
+    saida["boost"] = feedback.boost(cerebro=cam["slug"]).get(decisao_id)
+    saida["tem_documento"] = bool(_doc_path(decisao_id, cam))
     return saida
 
 
-def _doc_path(decisao_id):
-    if not os.path.exists(TJSC):
+def _remontar_doc(guardado, cam):
+    """O caminho DESTE servidor para um doc_path guardado em outro.
+
+    So' o nome do arquivo e' portavel. O doc_path foi gravado onde a coleta
+    rodou — no Windows sai "D:\\...\\output\\documentos\\x.rtf", e no Linux isso
+    nao e' isabs(): cairia num join com a RAIZ, a validacao do chamador
+    rejeitaria e TODO documento viraria 404 calado. O arquivo mora sempre em
+    <dir do cerebro>/documentos/, entao e' de la' que remontamos.
+    """
+    return os.path.join(cam["documentos"],
+                        os.path.basename(guardado.replace("\\", "/")))
+
+
+def _doc_path(decisao_id, cam):
+    if not os.path.exists(cam["tjsc"]):
         return None
-    db = sqlite3.connect("file:%s?mode=ro" % TJSC.replace("\\", "/"), uri=True)
+    db = sqlite3.connect("file:%s?mode=ro" % cam["tjsc"].replace("\\", "/"), uri=True)
     try:
         r = db.execute("SELECT doc_path FROM decisoes WHERE id=?",
                        (decisao_id,)).fetchone()
@@ -599,20 +961,24 @@ def _doc_path(decisao_id):
         db.close()
     if not r or not r[0]:
         return None
-    caminho = r[0] if os.path.isabs(r[0]) else os.path.join(RAIZ, r[0])
-    # o doc_path vem do banco: normalizar e conferir que nao saiu de output/
+    caminho = _remontar_doc(r[0], cam)
+    # Cinto e suspensorio: o basename ja' mata travessia, mas a conferencia fica
+    # porque e' ela que garante que o arquivo e' DESTE cerebro. Comparar contra
+    # RAIZ/output rejeitaria em silencio (404 "sem documento") qualquer cerebro
+    # configurado com `dir` fora de output/ — que e' para o que o campo existe.
     caminho = os.path.realpath(caminho)
-    raiz_docs = os.path.realpath(os.path.join(RAIZ, "output"))
+    raiz_docs = os.path.realpath(cam["dir"])
     if not caminho.startswith(raiz_docs + os.sep) or not os.path.exists(caminho):
         return None
     return caminho
 
 
-@app.get("/api/corpus/{decisao_id}/teor", response_class=PlainTextResponse)
-def teor(decisao_id: int, _u=Depends(atual)):
-    if not os.path.exists(TJSC):
+@app.get("/api/corpus/{cerebro}/{decisao_id}/teor", response_class=PlainTextResponse)
+def teor(cerebro: str, decisao_id: int, _u=Depends(atual)):
+    cam = cerebro_atual(cerebro)
+    if not os.path.exists(cam["tjsc"]):
         raise HTTPException(404, "tjsc.db indisponível")
-    db = sqlite3.connect("file:%s?mode=ro" % TJSC.replace("\\", "/"), uri=True)
+    db = sqlite3.connect("file:%s?mode=ro" % cam["tjsc"].replace("\\", "/"), uri=True)
     try:
         r = db.execute("SELECT inteiro_teor FROM decisoes WHERE id=?",
                        (decisao_id,)).fetchone()
@@ -623,9 +989,9 @@ def teor(decisao_id: int, _u=Depends(atual)):
     return r[0]
 
 
-@app.get("/api/corpus/{decisao_id}/documento")
-def documento(decisao_id: int, _u=Depends(atual)):
-    caminho = _doc_path(decisao_id)
+@app.get("/api/corpus/{cerebro}/{decisao_id}/documento")
+def documento(cerebro: str, decisao_id: int, _u=Depends(atual)):
+    caminho = _doc_path(decisao_id, cerebro_atual(cerebro))
     if not caminho:
         raise HTTPException(404, "sem documento em disco")
     return FileResponse(caminho, media_type="application/rtf",
@@ -635,45 +1001,47 @@ def documento(decisao_id: int, _u=Depends(atual)):
 # ----------------------------------------------------------- estatísticas
 
 @app.get("/api/estatisticas/corpus")
-def est_corpus(_u=Depends(atual)):
-    return estatisticas.corpus()
+def est_corpus(_u=Depends(atual), cam=Depends(cerebro_atual)):
+    return dict(estatisticas.corpus(cam["rag"]), cerebro=cam["slug"],
+                cerebro_nome=cam["nome"])
 
 
 @app.get("/api/estatisticas/documentos")
-def est_documentos(_u=Depends(atual)):
-    return estatisticas.documentos(tjsc=TJSC)
+def est_documentos(_u=Depends(atual), cam=Depends(cerebro_atual)):
+    return estatisticas.documentos(banco=cam["rag"], tjsc=cam["tjsc"])
 
 
 @app.get("/api/estatisticas/classes")
-def est_classes(_u=Depends(atual), minimo: int = 300):
-    return {"minimo": minimo, "itens": estatisticas.classes(minimo)}
+def est_classes(_u=Depends(atual), cam=Depends(cerebro_atual), minimo: int = 300):
+    return {"minimo": minimo, "itens": estatisticas.classes(minimo, cam["rag"])}
 
 
 @app.get("/api/estatisticas/orgaos")
-def est_orgaos(_u=Depends(atual), minimo: int = 300):
-    return {"minimo": minimo, "itens": estatisticas.orgaos(minimo)}
+def est_orgaos(_u=Depends(atual), cam=Depends(cerebro_atual), minimo: int = 300):
+    return {"minimo": minimo, "itens": estatisticas.orgaos(minimo, cam["rag"])}
 
 
 @app.get("/api/estatisticas/deriva")
-def est_deriva(_u=Depends(atual)):
+def est_deriva(_u=Depends(atual), cam=Depends(cerebro_atual)):
     def t(linhas):
         return [{"rotulo": str(r), "n": n, "reforma_pct": round(p, 1) if p else None}
                 for r, n, p in linhas]
-    return {"por_ano": t(deriva.por_ano()),
-            "por_dia_semana": t(deriva.por_dia_semana()),
-            "por_carga": t(deriva.por_carga()),
-            "por_carga_controlada": t(deriva.por_carga_controlada()),
-            "por_ancora": t(deriva.por_ancora())}
+    b = cam["rag"]
+    return {"por_ano": t(deriva.por_ano(b)),
+            "por_dia_semana": t(deriva.por_dia_semana(b)),
+            "por_carga": t(deriva.por_carga(b)),
+            "por_carga_controlada": t(deriva.por_carga_controlada(b)),
+            "por_ancora": t(deriva.por_ancora(b))}
 
 
 @app.get("/api/estatisticas/calibracao")
-def est_calibracao(_u=Depends(atual)):
-    return estatisticas.calibracao()
+def est_calibracao(_u=Depends(atual), cam=Depends(cerebro_atual)):
+    return estatisticas.calibracao(cam["calibrador"])
 
 
 @app.get("/api/estatisticas/abstencao")
-def est_abstencao(_u=Depends(atual)):
-    return estatisticas.abstencao()
+def est_abstencao(_u=Depends(atual), cam=Depends(cerebro_atual)):
+    return estatisticas.abstencao(cerebro=cam["slug"])
 
 
 @app.get("/api/estatisticas/concordancia")
@@ -684,7 +1052,7 @@ def est_concordancia(_u=Depends(atual)):
 @app.get("/api/estatisticas/custos")
 def est_custos(c=Depends(conexao), u=Depends(atual), de: str = "", ate: str = ""):
     onde, args = [], []
-    if u["papel"] != "admin":
+    if not manda(u):
         onde.append("thread IN (SELECT thread FROM dono WHERE email=?)")
         args.append(u["email"])
     if de:

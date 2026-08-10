@@ -47,7 +47,9 @@ def criar_usuario(conn, email, senha, papel="advogado"):
         raise ValueError("senha curta demais: mínimo 10 caracteres")
     salt = os.urandom(16)
     with conn:
-        conn.execute("INSERT OR REPLACE INTO usuario VALUES (?,?,?,?,?,1)",
+        conn.execute("INSERT OR REPLACE INTO usuario "
+                     "(email, senha_hash, salt, papel, criado_em, ativo) "
+                     "VALUES (?,?,?,?,?,1)",
                      (email, derivar(senha, salt), salt, papel, _iso(_agora())))
     return email
 
@@ -72,7 +74,7 @@ def bloqueado(conn, email, ip):
 
 def _registrar_tentativa(conn, email, ip):
     with conn:
-        conn.execute("INSERT INTO tentativa VALUES (?,?,?)",
+        conn.execute("INSERT INTO tentativa (email, ip, quando) VALUES (?,?,?)",
                      (email.strip().lower(), ip or "", _iso(_agora())))
         # limpeza oportunista: a tabela nao precisa guardar historico
         conn.execute("DELETE FROM tentativa WHERE quando < ?",
@@ -100,7 +102,9 @@ def abrir_sessao(conn, email, ip=None, agente=None):
     """Devolve o token em claro — e' a unica vez que ele existe do lado do servidor."""
     token = secrets.token_urlsafe(32)
     with conn:
-        conn.execute("INSERT INTO sessao VALUES (?,?,?,?,?,?)",
+        conn.execute("INSERT INTO sessao "
+                     "(token_hash, email, criado_em, expira_em, ip, agente) "
+                     "VALUES (?,?,?,?,?,?)",
                      (hashlib.sha256(token.encode()).hexdigest(), email,
                       _iso(_agora()),
                       _iso(_agora() + dt.timedelta(days=VALIDADE_DIAS)),

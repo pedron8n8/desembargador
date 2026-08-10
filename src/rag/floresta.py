@@ -41,6 +41,18 @@ _cache = {}
 
 # ------------------------------------------------- selo do indice que gerou o .pkl
 
+def banco_do_artefato(caminho):
+    """O rag.db que mora ao lado deste .pkl.
+
+    Cada cerebro guarda rag.db, floresta.pkl e calibrador.pkl no MESMO
+    diretorio, entao o artefato sabe sozinho contra qual indice se comparar.
+    Derivar em vez de aceitar um default e' o que impede o bug silencioso de
+    conferir o .pkl de um cerebro contra o indice de outro: o selo nunca bateria
+    e o aviso dispararia para sempre, ate' alguem aprender a ignora-lo.
+    """
+    return os.path.join(os.path.dirname(os.path.abspath(caminho)), "rag.db")
+
+
 def selo(banco=RAG):
     """Identidade do CONTEUDO do rag.db no instante em que o artefato foi salvo.
 
@@ -97,12 +109,30 @@ def disponivel():
 
 # ------------------------------------------------------------------ dados
 
+# De onde o rotulo pode ter saido para servir de treino.
+#
+# Era so' 'dispositivo'. MEDIDO em 09/08/2026, treinando as duas versoes nos
+# dois acervos: incluir 'texto completo' melhora os DOIS, e muito o segundo —
+#
+#   rubens  1,61x -> 1,87x  (F1 64,5% -> 71,1%)   treino 7.545 -> 10.383
+#   blasi   1,06x -> 1,70x  (F1 48,3% -> 69,5%)   treino 1.337 ->  5.930
+#
+# O filtro estreito era calibrado sem querer para um acervo so': o blasi tem
+# 5.658 decisoes com dispositivo identificado contra 14.776 do rubens — eles
+# escrevem diferente — e a floresta dele nascia com 1.337 linhas, sem sinal
+# nenhum. E' coerente com o resto do sistema: PESO_CONFIANCA (src/rag/grafo.py)
+# ja' trata 'texto completo' como 0,7 contra 1,0 do dispositivo, ou seja, sinal
+# bom e nao ruido. 'ementa' fica de fora: ali o rotulo vem do mesmo texto que
+# vira feature, e e' vazamento.
+CONFIANCA_TREINO = ("dispositivo", "texto completo")
+
+
 def _linhas(banco=RAG, ano_max=None, ano_min=None):
     db = sqlite3.connect("file:%s?mode=ro" % banco.replace("\\", "/"), uri=True)
     sql = ("SELECT ementa, classe, orgao, comarca, ano, ancora, unanime, resultado "
-           "FROM decisao WHERE confianca='dispositivo' AND resultado IN (?,?,?) "
-           "AND length(ementa) > 200")
-    args = list(MERITO)
+           "FROM decisao WHERE confianca IN (%s) AND resultado IN (?,?,?) "
+           "AND length(ementa) > 200" % ",".join("?" * len(CONFIANCA_TREINO)))
+    args = list(CONFIANCA_TREINO) + list(MERITO)
     if ano_max:
         sql += " AND ano <= ?"
         args.append(ano_max)
@@ -178,8 +208,16 @@ def treinar(banco=RAG, destino=MODELO, ano_corte=ANO_CORTE, verboso=True):
     return p, (Xte, yte)
 
 
-def carregar(caminho=MODELO):
-    """None se sklearn nao estiver instalado ou o modelo nao tiver sido treinado."""
+def carregar(caminho=None):
+    """None se sklearn nao estiver instalado ou o modelo nao tiver sido treinado.
+
+    `caminho` sem default: cada cerebro tem a sua floresta, e carregar a do
+    vizinho devolve uma previsao perfeitamente plausivel sobre o acervo errado.
+    Ver o comentario de busca._exigir.
+    """
+    if not caminho:
+        raise ValueError("floresta sem caminho: passe "
+                         "caminho=cerebros.caminhos(slug)['floresta']")
     if caminho in _cache:
         return _cache[caminho]
     m = None
@@ -189,7 +227,8 @@ def carregar(caminho=MODELO):
             m = joblib.load(caminho)
         except Exception as e:                      # modelo de outra versao etc.
             print("floresta ignorada (%s)" % e, file=sys.stderr)
-        conferir_selo(m, "python -m src.rag.floresta --treinar")
+        conferir_selo(m, "python -m src.rag.floresta --treinar",
+                      banco_do_artefato(caminho))
     _cache[caminho] = m
     return m
 
@@ -197,7 +236,7 @@ def carregar(caminho=MODELO):
 # -------------------------------------------------------------------- uso
 
 def prever(texto, classe=None, orgao=None, comarca=None, ancora=None,
-           caminho=MODELO):
+           caminho=None):
     """{'resultado','p_reforma','probabilidades'} ou None se nao houver modelo.
 
     Fraqueza declarada: treinado em EMENTA, aplicado a texto de caso novo. E'
@@ -273,15 +312,39 @@ def metricas(p, Xte, yte):
 
 
 if __name__ == "__main__":
+    from .. import cerebros
+
     ap = argparse.ArgumentParser(description="Random Forest — segundo estimador")
     ap.add_argument("--treinar", action="store_true")
-    ap.add_argument("--ano-corte", type=int, default=ANO_CORTE)
+    ap.add_argument("--ano-corte", type=int,
+                    help="default: o do cérebro em cerebros.json, ou %d" % ANO_CORTE)
+    cerebros.argumento(ap)
     a = ap.parse_args()
 
+    cam = cerebros.caminhos(a.cerebro)
+    # a janela de treino e' por cerebro: um acervo de 2015->2026 nao tem a mesma
+    # de um de 1990->2026, e um corte unico seria errado por construcao
+    ano_corte = a.ano_corte or cerebros.modelo(cam["slug"]).get("ano_corte", ANO_CORTE)
+    print("cérebro: %s | corte temporal: %d\n" % (cam["nome"], ano_corte))
+
     if not disponivel():
-        print("scikit-learn nao instalado. O sistema roda sem ele (so' sem a\n"
-              "floresta). Para ter o segundo estimador:\n"
-              "  .venv\\Scripts\\pip install scikit-learn", file=sys.stderr)
+        # DIZER QUAL python: quase sempre a causa nao e' falta de instalacao, e
+        # sim ter rodado com o interpretador global em vez do da .venv. A
+        # mensagem antiga mandava instalar o que ja' estava instalado, e a pessoa
+        # ficava presa nela.
+        venv = os.path.join(RAIZ, ".venv", "Scripts", "python.exe")
+        if not os.path.exists(venv):
+            venv = os.path.join(RAIZ, ".venv", "bin", "python")
+        print("scikit-learn nao esta' disponivel NESTE interpretador:\n"
+              "  %s\n" % sys.executable, file=sys.stderr)
+        if os.path.normcase(sys.executable) != os.path.normcase(venv) \
+                and os.path.exists(venv):
+            print("Voce rodou com o python do sistema. Use o da .venv:\n"
+                  "  %s -X utf8 -m src.rag.floresta --treinar [--cerebro SLUG]\n"
+                  % venv, file=sys.stderr)
+        else:
+            print("O sistema roda sem ele (so' sem a floresta). Para instalar:\n"
+                  "  %s -m pip install scikit-learn\n" % venv, file=sys.stderr)
         raise SystemExit(1)
 
     # --- teste de vazamento, ANTES de olhar qualquer metrica. Metrica alta com
@@ -289,18 +352,19 @@ if __name__ == "__main__":
     from .classificador import _VAZA
     # segue o corte pedido, e nao um ano cravado: com ANO_CORTE diferente, o ano
     # fixo passaria a amostrar dado de TREINO e o teste deixaria de valer
-    amostra = _linhas(ano_min=a.ano_corte + 1)[:600]
+    amostra = _linhas(cam["rag"], ano_min=ano_corte + 1)[:600]
     vazou = sum(bool(_VAZA.search(normaliza(x))) for x in _xy(amostra)[0])
     print("vazamento: %d de %d exemplos de treino ainda revelam o desfecho"
           % (vazou, len(amostra)))
     assert vazou == 0, "a ementa esta' entregando a resposta para o modelo"
 
-    if a.treinar or not os.path.exists(MODELO):
-        p, (Xte, yte) = treinar(ano_corte=a.ano_corte)
+    if a.treinar or not os.path.exists(cam["floresta"]):
+        p, (Xte, yte) = treinar(banco=cam["rag"], destino=cam["floresta"],
+                                ano_corte=ano_corte)
     else:
-        m = carregar()
+        m = carregar(cam["floresta"])
         p = m["pipeline"]
-        Xte, yte = _xy(_linhas(ano_min=m["ano_corte"] + 1))
+        Xte, yte = _xy(_linhas(cam["rag"], ano_min=m["ano_corte"] + 1))
         print("modelo ja' treinado (ate' %d, %d exemplos). --treinar refaz."
               % (m["ano_corte"], m["n_treino"]))
 
@@ -315,16 +379,26 @@ if __name__ == "__main__":
     print("F1 ............................... %.1f%%" % (100 * r["f1_reforma"]))
 
     d = prever("prescrição intercorrente execução fiscal arquivamento",
-               classe="Apelação Cível")
+               classe="Apelação Cível", caminho=cam["floresta"])
     assert d and 0.0 <= d["p_reforma"] <= 1.0, d
     print("\nexemplo: %s  (P(reforma)=%.2f)" % (d["resultado"], d["p_reforma"]))
     assert r["precisao_reforma"] > r["base_reforma"], \
         "a floresta nao bate nem a linha de base — nao serve como estimador"
 
+    # esquecer o caminho tem de explodir: um default aqui carregaria a floresta
+    # de OUTRO cerebro e a previsao sairia plausivel, sobre o acervo errado
+    try:
+        prever("dano moral")
+        raise AssertionError("prever sem caminho tinha que levantar")
+    except ValueError:
+        pass
+    # e o artefato de um cerebro sabe sozinho contra qual indice se conferir
+    assert banco_do_artefato(cam["floresta"]) == cam["rag"]
+
     # --- o selo. Ele existe para pegar reindexacao, e NAO pode gritar so'
     # porque alguem abriu o banco: era o que o selo por mtime fazia, e o
     # lifespan da API disparava o aviso a cada boot.
-    s = selo()
+    s = selo(cam["rag"])
     assert set(s) == {"indice_n", "indice_max_id"} and s["indice_n"] > 0, s
     import io
     from contextlib import redirect_stderr
@@ -333,11 +407,11 @@ if __name__ == "__main__":
                        ("sem meta", None)):
         buf = io.StringIO()
         with redirect_stderr(buf):
-            conferir_selo(meta, "refaz")
+            conferir_selo(meta, "refaz", cam["rag"])
         assert buf.getvalue() == "", "alarme falso em: %s" % caso
     buf = io.StringIO()
     with redirect_stderr(buf):
-        conferir_selo({**s, "indice_n": s["indice_n"] - 7}, "refaz")
+        conferir_selo({**s, "indice_n": s["indice_n"] - 7}, "refaz", cam["rag"])
     assert "mudou depois deste modelo" in buf.getvalue(), buf.getvalue()
 
     print("\nself-check OK — a floresta bate a base em %.2fx e o selo só grita "

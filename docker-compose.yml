@@ -1,0 +1,37 @@
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      # cli.py e feedback.py usam datetime.now() ingenuo para id de thread e
+      # carimbo de hora. Container em UTC faria a consulta das 14h aparecer
+      # como 17h na tela.
+      TZ: America/Sao_Paulo
+    volumes:
+      # Disco LOCAL, nao NFS: web.db, rag_runs.db e feedback.db rodam em WAL,
+      # e WAL nao funciona em filesystem de rede.
+      - ./output:/app/output
+      - ./cerebros.json:/app/cerebros.json
+      - ./config_rag.json:/app/config_rag.json
+    # sem `ports`: quem fala com a app e' o caddy, pela rede interna do compose.
+    # Publicar a 8000 no host seria um caminho sem TLS para a mesma aplicacao.
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      # nomeados: sao os certificados. Perde-los faz o Let's Encrypt reemitir a
+      # cada `up`, e ha' limite de emissoes por semana.
+      - caddy_data:/data
+      - caddy_config:/config
+    environment:
+      DOMINIO: ${DOMINIO}
+
+volumes:
+  caddy_data: {}
+  caddy_config: {}

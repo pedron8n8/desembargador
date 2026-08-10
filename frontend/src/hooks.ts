@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 
 export const NOS = [
   'triagem',
@@ -54,13 +54,11 @@ const zerado = (): Vivo => ({
  */
 export function useEventos(thread: string | undefined, ativo: boolean) {
   const [vivo, setVivo] = useState<Vivo>(zerado)
-  const ref = useRef<EventSource | null>(null)
 
   useEffect(() => {
     if (!thread || !ativo) return
     setVivo(zerado())
     const es = new EventSource(`/api/consultas/${thread}/eventos`)
-    ref.current = es
 
     const ouvir = (tipo: string, f: (p: any, seq: number) => void) =>
       es.addEventListener(tipo, (e) => {
@@ -113,6 +111,14 @@ export function useEventos(thread: string | undefined, ativo: boolean) {
       }),
     )
 
+    // Uma retomada publica 'inicio' de novo, e o replay do SSE vem do seq 0 —
+    // ou seja, os eventos da tentativa ANTERIOR chegam antes dos novos. Sem
+    // zerar aqui, o erro velho fica na tela para sempre e o usuário não sabe se
+    // a retomada pegou. É o `inicio` que separa uma tentativa da outra.
+    ouvir('inicio', (_p, seq) =>
+      setVivo((v) => ({ ...zerado(), ultimoSeq: seq, custo_usd: v.custo_usd })),
+    )
+
     ouvir('log', (p, seq) =>
       setVivo((v) => ({ ...v, ultimoSeq: seq, logs: [...v.logs, p.linha].slice(-200) })),
     )
@@ -137,17 +143,12 @@ export function useEventos(thread: string | undefined, ativo: boolean) {
       })),
     )
 
-    return () => {
-      es.close()
-      ref.current = null
-    }
+    return () => es.close()
   }, [thread, ativo])
 
-  // fecha o stream assim que a consulta termina: nada a ouvir depois disso
-  useEffect(() => {
-    if (vivo.concluido) ref.current?.close()
-  }, [vivo.concluido])
-
+  // Quem fecha o stream é o `ativo` virando false (a consulta saiu de
+  // fila/rodando), não o `concluido`: fechar no primeiro evento terminal do
+  // replay matava a conexão antes dos eventos da retomada chegarem.
   return vivo
 }
 

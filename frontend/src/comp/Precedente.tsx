@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 
 import type { Precedente as P } from '../api'
+import { useCerebroEfetivo } from '../cerebro'
 import { dataBR } from '../hooks'
 
 export function SeloResultado({ r }: { r: string | null | undefined }) {
@@ -27,16 +28,24 @@ export function Precedente({
   veredito,
   onVeredito,
   detalhe = true,
+  cerebro,
 }: {
   p: P
   veredito?: string | null
   onVeredito?: (v: 'util' | 'inutil' | null) => void
   detalhe?: boolean
+  /** de qual acervo é este precedente. Numa comparação, cada coluna tem o seu —
+   *  por isso é prop, e não só o cérebro selecionado na lateral. */
+  cerebro?: string
 }) {
+  const [selecionado] = useCerebroEfetivo()
+  // o id só é único DENTRO de um acervo: sem o slug no link, clicar num
+  // precedente abriria a decisão de mesmo id no cérebro errado
+  const dono = cerebro || selecionado
   return (
     <article className="prec">
       <div className="prec-topo">
-        <Link className="prec-numero" to={`/acervo/${p.id}`}>
+        <Link className="prec-numero" to={`/acervo/${dono}/${p.id}`}>
           {p.numero}
         </Link>
         <SeloResultado r={p.resultado} />

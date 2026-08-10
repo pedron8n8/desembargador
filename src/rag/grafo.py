@@ -24,6 +24,7 @@ from typing import Annotated, TypedDict
 from langgraph.checkpoint.sqlite import SqliteSaver
 from langgraph.graph import END, START, StateGraph
 
+from .. import cerebros
 from . import busca, calibrar, confianca, feedback, floresta, juiz, rerank, sinais
 from .classificador import MERITO, REFORMA
 from .llm import chamar, config, json_da_resposta
@@ -31,8 +32,25 @@ from .llm import chamar, config, json_da_resposta
 RAIZ = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 TJSC = os.path.join(RAIZ, "output", "tjsc.db")
 
+
+def _cam(estado):
+    """Os caminhos do cerebro desta consulta.
+
+    O fallback para o padrao NAO e' cosmetico: e' o que faz os checkpoints
+    gravados antes desta fase — que nao tem a chave `cerebro` — continuarem
+    retomaveis. Sem ele, o primeiro boot depois do deploy quebraria
+    execucao.reconciliar() com KeyError em toda consulta pendente.
+    """
+    return cerebros.caminhos(estado.get("cerebro") or cerebros.padrao())
+
 # Peso de cada precedente no prognostico, pela confianca do classificador.
 PESO_CONFIANCA = {"dispositivo": 1.0, "texto completo": 0.7, "ementa": 0.5, "-": 0.2}
+
+# Piso de acervo para o prognostico poder cravar. Na mesma ordem de grandeza do
+# MIN_AJUSTE=300 do calibrador (que precisa de 300 casos POR ANO), e abaixo do
+# tamanho em que a floresta passa a bater a linha de base. Nao e' um numero
+# medido — e' uma recusa declarada: cerebro novo devolve evidencia, nao numero.
+MIN_MERITO_PARA_CRAVAR = 1500
 
 
 # Linha de argumentacao pedida pelo usuario. NAO existe "condenar/absolver"
@@ -54,6 +72,11 @@ LADOS = {"reformar": "REFORMAR a decisão de origem (dar provimento ao recurso)"
 
 class Estado(TypedDict, total=False):
     caso: str
+    # QUEM julga: slug do cerebros.json. Vive no Estado (e nao em construir())
+    # porque o checkpoint precisa reter isso — e' o que permite retomar uma
+    # consulta sem saber de antemao de qual acervo ela era. NAO confundir com
+    # `perfil` la' embaixo, que e' o perfil do ARGUMENTO.
+    cerebro: str
     filtros: dict                       # classe / ano_min / ano_max / excluir
     tese: str                           # neutra | reformar | manter
     triagem: dict
@@ -100,7 +123,7 @@ P_TRIAR = """Você separa precedentes úteis de ruído.
 O caso em análise:
 {caso}
 
-Abaixo, {n} decisões do mesmo relator. Para cada uma, dê uma nota de analogia:
+Abaixo, {n} decisões do {titulo} {relator}. Para cada uma, dê uma nota de analogia:
 5 = mesma questão jurídica e situação de fato muito parecida
 4 = mesma questão jurídica, fatos diferentes
 3 = questão vizinha, o raciocínio ainda serve
@@ -152,7 +175,7 @@ Na dúvida entre "a_favor" e "neutro", escolha "neutro" — precedente que não
 sustenta de verdade custa caro na sustentação oral.
 """
 
-P_REDIGIR = """Você redige uma minuta no estilo do Desembargador Rubens Schulz (TJSC),
+P_REDIGIR = """Você redige uma minuta no estilo do {titulo} {relator} ({tribunal}),
 imitando a estrutura, o vocabulário e o encadeamento das decisões dele que seguem.
 
 REGRAS DURAS:
@@ -179,7 +202,7 @@ PROGNÓSTICO ESTATÍSTICO (calculado sobre os precedentes, sem IA):
 CASO:
 {caso}
 
-PRECEDENTES DO RELATOR:
+PRECEDENTES DO {titulo} {relator}:
 {precedentes}
 {criticas}
 Escreva a minuta em português jurídico brasileiro, em markdown."""
@@ -279,6 +302,7 @@ def no_triagem(estado):
 
 def no_recuperar(estado):
     cfg = config()["busca"]
+    cam = _cam(estado)
     ciclo = estado.get("ciclo_busca", 0)
     f = estado.get("filtros") or {}
     t = estado["triagem"]
@@ -297,21 +321,27 @@ def no_recuperar(estado):
         limite = cfg["candidatos"] * 2
         termos += [t.get("materia") or "", t.get("tese") or ""]
     consulta = busca.montar_consulta(termos)
-    fb = feedback.boost() if config()["busca"].get("usar_feedback") else None
+    # o boost e' por cerebro: decisao_id so' e' unico dentro de um acervo, e sem
+    # o filtro o veredito dado num cerebro rebaixaria um precedente aleatorio do
+    # outro (ver src/rag/feedback.py)
+    fb = (feedback.boost(cerebro=cam["slug"])
+          if config()["busca"].get("usar_feedback") else None)
     # Busca o dobro e reordena pela ficha de procedencia antes de cortar: o LLM
     # de triagem passa a ver os N melhores de 2N, e nao os 2N primeiros do BM25.
     # Custo de LLM identico — quem paga o dobro e' o SQLite, em milissegundos.
     cand = busca.buscar(consulta, limite=limite * 2, classe=classe,
                         ano_min=f.get("ano_min"), ano_max=f.get("ano_max"),
-                        excluir=f.get("excluir") or ())
+                        excluir=f.get("excluir") or (), banco=cam["rag"])
     cand = rerank.ordenar(cand, limite=limite, boost=fb)
     return {"consulta": consulta, "candidatos": cand, "ciclo_busca": ciclo + 1,
-            "perfil": sinais.perfil(consulta),
+            # `perfil` aqui e' o do ARGUMENTO (sinais.perfil), nao o do cerebro
+            "perfil": sinais.perfil(consulta, banco=cam["rag"]),
             "contra": sinais.contra_argumentacao(cand)}
 
 
 def no_triar(estado):
     cfg = config()["busca"]
+    cam = _cam(estado)
     cand = estado["candidatos"]
     if not cand:
         return {"precedentes": []}
@@ -324,6 +354,7 @@ def no_triar(estado):
     tese = estado.get("tese") or "neutra"
     msg = [{"role": "user", "content": P_TRIAR.format(
         caso=estado["caso"][:6000], n=len(cand), lista=lista,
+        titulo=cam["titulo"], relator=cam["nome"],
         lado=P_TRIAR_LADO.format(lado=LADOS[tese]) if tese in LADOS else "",
         campo=', "lado": "a_favor|contra|neutro"' if tese in LADOS else "")}]
     txt, custo = chamar("triar", msg)
@@ -418,6 +449,7 @@ def no_prognostico(estado):
              recuperacao — por isso responde quando ela falha, e por isso a
              discordancia entre os dois significa alguma coisa.
     """
+    cam = _cam(estado)
     prec = estado.get("precedentes") or []
     pesos = {}
     for p in prec:
@@ -427,7 +459,8 @@ def no_prognostico(estado):
     ordenado = sorted(pesos.items(), key=lambda kv: -kv[1])
     t = estado.get("triagem") or {}
     classe = (estado.get("filtros") or {}).get("classe") or t.get("classe")
-    n_base, taxa_base = busca.taxa_da_classe(classe)
+    n_base, taxa_base = busca.taxa_da_classe(classe, banco=cam["rag"])
+    n_merito = cerebros.saude(cam["slug"])["n_merito"]
 
     if (estado.get("tese") or "neutra") != "neutra":
         # A amostra foi filtrada pelo lado pedido. Contar reforma nela devolveria
@@ -439,9 +472,10 @@ def no_prognostico(estado):
         rf = floresta.prever(
             " ".join(list(t.get("termos") or []) + [t.get("materia") or "",
                                                     t.get("tese") or ""]),
-            classe=classe)
+            classe=classe, caminho=cam["floresta"])
         return {"prognostico": {
             "enviesado": True,
+            "cerebro": cam["slug"], "cerebro_nome": cam["nome"],
             "tese": estado["tese"],
             "n_precedentes": len(prec),
             "classe_base": classe, "n_classe": n_base,
@@ -466,7 +500,7 @@ def no_prognostico(estado):
     rf = floresta.prever(
         " ".join(list(t.get("termos") or []) + [t.get("materia") or "",
                                                 t.get("tese") or ""]),
-        classe=classe)
+        classe=classe, caminho=cam["floresta"])
     p_conj, acordo, fonte = floresta.combinar(
         reforma_knn, rf["p_reforma"] if rf else None,
         config().get("floresta", {}).get("peso_knn", floresta.PESO_KNN))
@@ -475,15 +509,32 @@ def no_prognostico(estado):
     # reformavam 4%. A isotonica corrige a escala sem estragar a ordem — medido
     # em 1092 casos de 2025 que nao entraram no ajuste: maior erro da diagonal
     # de 21,9 pp para 5,0 pp.
-    p_cal = calibrar.aplicar(p_conj)
+    p_cal = calibrar.aplicar(p_conj, caminho=cam["calibrador"])
     lo, hi = confianca.intervalo(prec, peso) if prec else (None, None)
     if lo is not None:
-        lo, hi = calibrar.aplicar(lo), calibrar.aplicar(hi)
+        lo = calibrar.aplicar(lo, caminho=cam["calibrador"])
+        hi = calibrar.aplicar(hi, caminho=cam["calibrador"])
     conf = confianca.avaliar(p_cal, prec, peso, knn=reforma_knn,
                              rf=rf["p_reforma"] if rf else None,
                              largura=(hi - lo) if lo is not None else None)
 
+    # PORTAO DE ACERVO: a abstencao de confianca.avaliar protege a AMOSTRA desta
+    # consulta; nada ate' aqui olhava o tamanho do acervo por tras dela. Num
+    # cerebro recem-coletado, taxa_da_classe devolve base historica de 40
+    # decisoes como se valesse algo, e o percentual sai com cara de medida.
+    # Acervo pequeno nao e' defeito — cravar em cima dele e' que seria.
+    if n_merito < MIN_MERITO_PARA_CRAVAR:
+        conf = {**conf, "decide": False, "faixa": "acervo_pequeno",
+                "por_que": [
+                    "o acervo de %s tem %d decisões de mérito (mínimo %d para "
+                    "cravar): não há base histórica suficiente neste cérebro"
+                    % (cam["nome"], n_merito, MIN_MERITO_PARA_CRAVAR),
+                    "os precedentes abaixo continuam valendo como material; o "
+                    "que não vale é o percentual"] + list(conf.get("por_que") or [])}
+
     prog = {
+        "cerebro": cam["slug"], "cerebro_nome": cam["nome"],
+        "n_merito_acervo": n_merito,
         "resultado_provavel": ordenado[0][0] if ordenado else (
             rf["resultado"] if rf else "indeterminado"),
         "confianca_pct": round(100 * ordenado[0][1] / total, 1) if total else 0.0,
@@ -502,7 +553,7 @@ def no_prognostico(estado):
         "perfil": estado.get("perfil"),
         # --- calibracao e abstencao
         "probabilidade_pct": round(100 * p_cal, 1) if p_cal is not None else None,
-        "calibrado": calibrar.calibrado(),
+        "calibrado": calibrar.calibrado(cam["calibrador"]),
         "intervalo_pct": ([round(100 * lo, 1), round(100 * hi, 1)]
                           if lo is not None else None),
         "decide": conf["decide"],
@@ -574,7 +625,9 @@ def _bloco_comuns(c):
     for rotulo, chave in (("âncoras citadas por mais de um", "ancoras"),
                           ("câmaras", "orgaos"), ("classes", "classes")):
         if c.get(chave):
-            l.append("- %s: %s" % (rotulo, "; ".join("%s (%d)" % t for t in c[chave])))
+            # desempacota no for: retomado do checkpoint, o par vem como lista
+            l.append("- %s: %s"
+                     % (rotulo, "; ".join("%s (%d)" % (v, n) for v, n in c[chave])))
     l.append("- %d de %d unânimes; %d transitaram em julgado; anos %s"
              % (c["unanimes"], c["n"], c["transitaram"],
                 "-".join(str(a) for a in (c["anos"][:1] + c["anos"][-1:]))))
@@ -583,8 +636,11 @@ def _bloco_comuns(c):
 
 def no_redigir(estado):
     cfg = config()["busca"]
+    cam = _cam(estado)
     prec = estado.get("precedentes") or []
-    db = sqlite3.connect("file:%s?mode=ro" % TJSC.replace("\\", "/"), uri=True)
+    # o inteiro teor vem do tjsc.db DESTE cerebro: os ids so' fazem sentido
+    # dentro do acervo que os gerou
+    db = sqlite3.connect("file:%s?mode=ro" % cam["tjsc"].replace("\\", "/"), uri=True)
     try:
         blocos = [_texto_precedente(db, p, cfg["chars_por_precedente"]) for p in prec]
     finally:
@@ -612,6 +668,7 @@ def no_redigir(estado):
     else:
         aviso = ""
     msg = [{"role": "user", "content": P_REDIGIR.format(
+        titulo=cam["titulo"], relator=cam["nome"], tribunal=cam["tribunal"],
         prognostico=json.dumps(enxuto, ensure_ascii=False),
         divergencia=aviso,
         procedencia=_bloco_procedencia(estado),
@@ -682,12 +739,13 @@ def no_julgar(estado):
     minuta = estado.get("minuta") or ""
     if not minuta.strip():
         return {}
+    cam = _cam(estado)
     redator = next((c["modelo"] for c in reversed(estado.get("custos") or [])
                     if c["no"] == "redigir"), None)
     d, custo = juiz.avaliar(
         minuta, [p["numero"] for p in (estado.get("precedentes") or [])],
         caso=estado.get("caso"), decisao_real=estado.get("decisao_real"),
-        modelo_redator=redator,
+        modelo_redator=redator, titulo=cam["titulo"], relator=cam["nome"],
         absteve=(estado.get("prognostico") or {}).get("decide") is False)
     return {"julgamento": d, "custos": [custo]}
 
@@ -764,7 +822,7 @@ if __name__ == "__main__":
     assert no_prognostico(perto)["prognostico"]["resultado_provavel"] == "provido"
 
     # --- decisao mutua: os quatro ramos da tabela
-    tem_rf = floresta.carregar() is not None
+    tem_rf = floresta.carregar(cerebros.caminhos()["floresta"]) is not None
     p = no_prognostico(falso)["prognostico"]
     assert p["fonte"] == ("conjunto" if tem_rf else "knn"), p["fonte"]
     if tem_rf:
@@ -798,7 +856,8 @@ if __name__ == "__main__":
     # (Precisa ser o mesmo lado: 8 precedentes fabricados contra a floresta
     # geram recusa por desacordo, e isso tambem esta' certo — foi o que este
     # teste pegou quando o fixture apontava para o lado oposto.)
-    lado = floresta.prever("dano moral", classe="Apelação Cível")
+    lado = floresta.prever("dano moral", classe="Apelação Cível",
+                           caminho=cerebros.caminhos()["floresta"])
     lado = ("provido" if not lado or lado["p_reforma"] >= 0.5 else "desprovido")
     firme = {**falso, "precedentes": [
         {"id": i, "resultado": lado, "confianca": "dispositivo",
@@ -868,6 +927,9 @@ if __name__ == "__main__":
     assert c["n"] == 8 and c["ancoras"] == [("Tema 1059/STJ", 8)], c
     assert sinais.comuns([]) == {}
     assert "Tema 1059/STJ" in _bloco_comuns(c) and _bloco_comuns({}) == ""
+    # retomado do checkpoint os pares voltam como LISTA, nao tupla: o relatorio
+    # inteiro morria aqui com "not enough arguments for format string"
+    assert _bloco_comuns(json.loads(json.dumps(c))) == _bloco_comuns(c)
     assert set(LADOS) == {"reformar", "manter"} and "neutra" not in LADOS
 
     # --- no_triar com a triagem dublada: sem rede, sem gastar.
@@ -906,11 +968,11 @@ if __name__ == "__main__":
 
     # o prompt da triagem so' pede o campo "lado" quando ha' lado a pedir
     assert "a_favor" in P_TRIAR_LADO
-    assert P_TRIAR.format(caso="c", n=1, lista="l", lado="", campo="").count(
-        '"lado"') == 0
-    com_lado = P_TRIAR.format(caso="c", n=1, lista="l",
-                              lado=P_TRIAR_LADO.format(lado=LADOS["reformar"]),
-                              campo=', "lado": "a_favor|contra|neutro"')
+    _fmt = dict(caso="c", n=1, lista="l", titulo="Desembargador", relator="Fulano")
+    assert P_TRIAR.format(lado="", campo="", **_fmt).count('"lado"') == 0
+    com_lado = P_TRIAR.format(
+        lado=P_TRIAR_LADO.format(lado=LADOS["reformar"]),
+        campo=', "lado": "a_favor|contra|neutro"', **_fmt)
     assert '"lado"' in com_lado and "REFORMAR" in com_lado
     # e o alerta que o teste real motivou tem que estar la'
     assert "provido/desprovido" in com_lado and "recorrente" in com_lado
@@ -923,4 +985,60 @@ if __name__ == "__main__":
     assert _aprovado({"criticas": ["x"], "ciclo_revisao": 1}) == "redigir"
     assert _aprovado({"criticas": ["x"], "ciclo_revisao": 2}) == fim
     assert "julgar" in construir().get_graph().nodes
-    print("self-check OK — grafo monta e o prognóstico fecha a conta sem LLM")
+
+    # ------------------------------------------------------------------
+    # VAZAMENTO ENTRE CEREBROS. E' a prova barata de que a parametrizacao de
+    # caminhos esta' certa: monta um cerebro de mentira com um rag.db VAZIO e
+    # exige que a consulta apontada para ele volte de maos vazias. Se algum no'
+    # ainda usar constante de modulo, ele acha os 20 mil precedentes do cerebro
+    # padrao e este teste falha — que e' o unico jeito barato de pegar o bug,
+    # porque em producao ele nao levanta erro nenhum: so' responde com o acervo
+    # errado, plausivelmente.
+    import tempfile
+
+    from .indexar import ESQUEMA as ESQUEMA_INDICE
+
+    _dir = tempfile.mkdtemp()
+    _vazio = sqlite3.connect(os.path.join(_dir, "rag.db"))
+    _vazio.executescript(ESQUEMA_INDICE)
+    _vazio.commit()
+    _vazio.close()
+
+    _real, cerebros._cache["mtime"] = cerebros.ARQUIVO, None
+    cerebros.ARQUIVO = os.path.join(_dir, "cerebros.json")
+    cerebros._gravar({"padrao": cerebros.CEREBRO_LEGADO, "cerebros": [
+        {"slug": cerebros.CEREBRO_LEGADO, "nome": "Padrão", "dir": "output"},
+        {"slug": "fantasma", "nome": "Fantasma", "dir": _dir}]})
+    try:
+        # a busca do cerebro fantasma nao pode enxergar o acervo do padrao
+        rec = no_recuperar({"cerebro": "fantasma", "ciclo_busca": 0, "filtros": {},
+                            "triagem": {"termos": ["dano moral", "prescrição"]}})
+        assert rec["candidatos"] == [], \
+            "VAZAMENTO: o cérebro vazio recuperou %d precedentes do vizinho" \
+            % len(rec["candidatos"])
+        assert rec["perfil"] in ({}, None) or not rec["perfil"].get("usos"), rec["perfil"]
+
+        # ... e o prognostico dele se recusa a cravar, por acervo pequeno
+        pf_ = no_prognostico({"cerebro": "fantasma", "precedentes": [],
+                              "triagem": {"classe": "Apelação Cível",
+                                          "termos": ["dano moral"]},
+                              "filtros": {}})["prognostico"]
+        assert pf_["decide"] is False and pf_["faixa"] == "acervo_pequeno", pf_
+        assert pf_["n_merito_acervo"] == 0 and pf_["cerebro"] == "fantasma"
+        assert "Fantasma" in " ".join(pf_["confianca"]["por_que"])
+        assert pf_["floresta"] is None, "carregou a floresta do cérebro vizinho"
+
+        # a persona do prompt segue o cerebro, e nao um nome cravado
+        _p = P_REDIGIR.format(titulo="Desembargadora", relator="Fulana de Tal",
+                              tribunal="TJXX", prognostico="{}", divergencia="",
+                              procedencia="", caso="c", precedentes="p", criticas="")
+        assert "Fulana de Tal" in _p and "Rubens" not in _p, \
+            "o nome do relator ficou cravado no prompt de redação"
+    finally:
+        cerebros.ARQUIVO, cerebros._cache["mtime"] = _real, None
+
+    # e o fallback: estado SEM a chave (checkpoint antigo) continua rodando
+    assert _cam({})["slug"] == cerebros.padrao()
+
+    print("self-check OK — grafo monta, o prognóstico fecha a conta sem LLM, e "
+          "um cérebro não enxerga o acervo do outro")

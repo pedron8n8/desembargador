@@ -51,7 +51,9 @@ export function Entrar() {
           Segundo Cérebro
         </h1>
         <p style={{ color: 'var(--tinta-3)', fontSize: 'var(--t-sm)', margin: '4px 0 var(--e8)' }}>
-          Acervo do Des. Rubens Schulz — TJSC
+          {/* sem nome de desembargador aqui: quem julga passou a ser escolha de
+              quem consulta, e a tela de entrada é anterior a essa escolha */}
+          Acervos de jurisprudência do TJSC
         </p>
 
         <label className="campo">

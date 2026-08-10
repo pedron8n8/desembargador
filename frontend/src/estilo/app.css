@@ -514,3 +514,69 @@ label.campo > span {
 .tabela-rolavel {
   overflow-x: auto;
 }
+
+/* ---------------------------------------------------------- cérebros */
+
+/* Quem julga fica no topo da lateral, junto da marca: é a escolha que muda
+   todas as outras telas, e some de vista se virar item de menu. */
+.seletor-cerebro {
+  display: block;
+}
+
+.seletor-cerebro .rotulo-mudo {
+  display: block;
+  font-size: var(--t-xs);
+  color: var(--tinta-3);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+
+.seletor-cerebro select {
+  width: 100%;
+  font-size: var(--t-sm);
+}
+
+/* Duas ou três colunas lado a lado, uma por cérebro. Empilham no estreito:
+   comparar exige ver os dois, e coluna espremida não deixa ler nenhum. */
+.colunas-comparacao {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: var(--e6);
+  align-items: start;
+}
+
+.coluna-comparacao {
+  border-top: 2px solid var(--linha-forte);
+  padding-top: var(--e4);
+  min-width: 0;
+}
+
+.coluna-comparacao h2 {
+  font-size: var(--t-md);
+  margin-bottom: var(--e4);
+}
+
+.coluna-comparacao h3 {
+  font-size: var(--t-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--tinta-3);
+  margin: var(--e6) 0 var(--e3);
+}
+
+.numero-grande {
+  font-family: var(--fonte-serif);
+  font-size: var(--t-lg);
+  line-height: 1.2;
+}
+
+.caso {
+  white-space: pre-wrap;
+  font-family: var(--fonte-serif);
+  font-size: var(--t-sm);
+  color: var(--tinta-2);
+  max-height: 22em;
+  overflow-y: auto;
+  margin: var(--e3) 0 var(--e6);
+}

@@ -14,15 +14,17 @@ type Detalhe = Precedente & {
 }
 
 export function Decisao() {
-  const { id } = useParams()
+  // o cérebro vem da URL, não do seletor: o link tem de abrir sempre a mesma
+  // decisão, mesmo colado noutra sessão com outro acervo selecionado
+  const { cerebro, id } = useParams()
   const { data: d, error } = useQuery({
-    queryKey: ['decisao', id],
-    queryFn: () => get<Detalhe>(`/api/corpus/${id}`),
+    queryKey: ['decisao', cerebro, id],
+    queryFn: () => get<Detalhe>(`/api/corpus/${cerebro}/${id}`),
     retry: false,
   })
   const { data: teor } = useQuery({
-    queryKey: ['teor', id],
-    queryFn: () => get<string>(`/api/corpus/${id}/teor`),
+    queryKey: ['teor', cerebro, id],
+    queryFn: () => get<string>(`/api/corpus/${cerebro}/${id}/teor`),
     retry: false,
   })
 
@@ -46,7 +48,7 @@ export function Decisao() {
             </a>
           )}
           {d.tem_documento && (
-            <a className="leve" href={`/api/corpus/${d.id}/documento`} download>
+            <a className="leve" href={`/api/corpus/${cerebro}/${d.id}/documento`} download>
               baixar .rtf
             </a>
           )}

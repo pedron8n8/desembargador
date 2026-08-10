@@ -86,6 +86,7 @@ export function Painel() {
             <thead>
               <tr>
                 <th>quando</th>
+                <th>quem julgou</th>
                 <th>caso</th>
                 <th>prognóstico</th>
                 <th className="num">você</th>
@@ -102,6 +103,14 @@ export function Painel() {
                       {(i.criado_em ?? '').slice(11, 16)}
                       {i.da_cli && ' · terminal'}
                     </div>
+                  </td>
+                  <td style={{ whiteSpace: 'nowrap' }}>
+                    {i.cerebro_nome}
+                    {i.comparacao && (
+                      <div style={{ fontSize: 'var(--t-xs)' }}>
+                        <Link to={`/comparacao/${i.comparacao}`}>ver a comparação</Link>
+                      </div>
+                    )}
                   </td>
                   <td style={{ maxWidth: 420 }}>
                     <Link to={`/consulta/${i.thread}`} style={{ color: 'var(--tinta)' }}>

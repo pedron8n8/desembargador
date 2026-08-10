@@ -23,7 +23,7 @@ import re
 import sqlite3
 import sys
 
-from .busca import RAG, _db
+from .busca import RAG, _db, _exigir
 
 # ---------------------------------------------------------------- ancora
 
@@ -149,12 +149,17 @@ def movimentos_por_processo(tjsc):
 _TOPO = 5
 
 
-def perfil(consulta, banco=RAG):
+def perfil(consulta, banco=None):
     """Quantas vezes esse argumento ja' apareceu, onde e com que desfecho.
 
     Uma agregacao FTS5 sobre o indice inteiro (~130 ms medidos em 20 mil
     decisoes) — cabe dentro da consulta sem o usuario sentir.
+
+    Atencao ao nome: este `perfil` e' o do ARGUMENTO, e nao tem relacao com o
+    cerebro (o relator). Sao dois "perfis" diferentes e eles convivem no mesmo
+    estado do grafo — ver src/cerebros.py.
     """
+    banco = _exigir(banco)
     if not (consulta or "").strip():
         return {}
     db = _db(banco)
@@ -270,8 +275,10 @@ def resumir_ficha(d):
 
 
 if __name__ == "__main__":
-    RAIZ = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    TJSC = os.path.join(RAIZ, "output", "tjsc.db")
+    from .. import cerebros
+
+    cam = cerebros.caminhos()
+    TJSC = cam["tjsc"]
 
     # --- ancora: textos escritos a mao, para o teste nao depender do corpus
     assert _ancora("aplica-se o Tema 1059/STJ, julgado sob o rito dos repetitivos")[0] \
@@ -298,7 +305,7 @@ if __name__ == "__main__":
     from . import busca
     q = busca.montar_consulta(["prescrição intercorrente", "honorários recursais"])
     try:
-        p = perfil(q)
+        p = perfil(q, banco=cam["rag"])
     except sqlite3.OperationalError:
         print("indice sem as colunas novas — rode: python -m src.rag.indexar")
         raise SystemExit(1)

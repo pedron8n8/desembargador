@@ -9,7 +9,8 @@ import os
 import re
 import sys
 
-from . import feedback, grafo, rerank, sinais
+from .. import cerebros
+from . import extrair, feedback, grafo, rerank, sinais
 from .llm import SemChave, SemCredito
 
 RAIZ = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -46,8 +47,9 @@ def _procedencia(p, prec):
             out += ["- **%s:** %s" % (rotulo, "; ".join(
                 "%s (%d)" % (v, n) for v, n in perfil[chave][:4]))]
     out += ["",
-            "> \"Por quem\" aqui significa **qual câmara** — o acervo é de um "
-            "relator só. Não há como comparar relatores com estes dados.", ""]
+            "> \"Por quem\" aqui significa **qual câmara** — este acervo é de um "
+            "relator só. Para comparar dois relatores, rode a mesma peça em "
+            "outro cérebro.", ""]
 
     out += ["### Vale em território nacional ou só estadual?", "",
             "**%d das %d** (%.0f%%) se ancoram em precedente de alcance nacional "
@@ -127,8 +129,10 @@ def _sustentacao(estado):
         for rotulo, chave in (("Âncoras citadas por mais de um", "ancoras"),
                               ("Câmaras", "orgaos"), ("Classes", "classes")):
             if c.get(chave):
+                # desempacota no for: o checkpoint devolve os pares como LISTA,
+                # e "%s (%d)" % lista conta a lista como um argumento so'
                 out.append("- **%s:** %s" % (rotulo, "; ".join(
-                    "%s (%d)" % t for t in c[chave])))
+                    "%s (%d)" % (v, n) for v, n in c[chave])))
         out += ["- **%d de %d unânimes**, %d transitaram em julgado, anos %s"
                 % (c["unanimes"], c["n"], c["transitaram"],
                    "–".join(str(x) for x in (c["anos"][:1] + c["anos"][-1:]))), ""]
@@ -184,8 +188,16 @@ def formatar(estado, segundos, quando=None):
     hoje no cabeçalho — a web relê threads de meses atrás."""
     p = estado.get("prognostico") or {}
     prec = estado.get("precedentes") or []
+    # QUEM julgou vai no cabecalho, e nao no rodape: com mais de um cerebro no
+    # sistema, dois relatorios da mesma peca sao documentos diferentes, e quem
+    # abre um .md solto precisa saber de qual acervo ele saiu antes de ler.
+    try:
+        cam = cerebros.caminhos(estado.get("cerebro"))
+        quem = "%s %s (%s)" % (cam["titulo"], cam["nome"], cam["tribunal"])
+    except cerebros.Desconhecido:
+        quem = estado.get("cerebro") or "—"
     out = ["# Consulta — %s" % (quando or dt.datetime.now()).strftime("%d/%m/%Y %H:%M"),
-           "", AVISO, ""]
+           "", "**Acervo consultado:** %s" % quem, "", AVISO, ""]
 
     t = estado.get("triagem") or {}
     out += ["## Leitura do caso", "",
@@ -237,6 +249,19 @@ def _veredito(p, tese=None):
                     "calibração foi ajustada sobre a escala do conjunto, que "
                     "aqui não existe. Ordena, não é probabilidade."
                     % (100 * rf["p_reforma"]), ""]
+    elif p.get("faixa") == "acervo_pequeno":
+        # recusa por falta de ACERVO, nao por duvida sobre este caso. Sao coisas
+        # diferentes e o texto do "NAO DECIDO" (que fala de faixas de acerto
+        # medidas) nao se aplica: aqui nao houve medicao nenhuma.
+        out += ["## SEM PROGNÓSTICO — acervo pequeno demais", "",
+                "Este cérebro ainda não tem histórico suficiente para que um "
+                "percentual signifique alguma coisa:", ""]
+        out += ["- " + m for m in (p.get("confianca") or {}).get("por_que", [])]
+        out += ["",
+                "**As evidências acima continuam válidas** — os precedentes são "
+                "decisões reais deste relator, e é com elas que se trabalha. O "
+                "que falta é base para transformá-las em probabilidade. Para o "
+                "número, rode a mesma peça num cérebro com acervo completo.", ""]
     elif p.get("decide") is False:
         out += ["## NÃO DECIDO", "",
                 "Os dados não sustentam um prognóstico neste caso:", ""]
@@ -424,8 +449,10 @@ def _perguntar_tese():
 
 
 def main(argv=None):
-    ap = argparse.ArgumentParser(description="Segundo cérebro — Des. Rubens Schulz")
-    ap.add_argument("arquivo", nargs="?", help="arquivo .txt com o caso")
+    ap = argparse.ArgumentParser(description="Segundo cérebro — consulta a um acervo")
+    ap.add_argument("arquivo", nargs="?",
+                    help="arquivo com o caso (.pdf, .docx, .txt ou .md)")
+    cerebros.argumento(ap, "quem julga o caso (ver: python -m src.cerebros)")
     ap.add_argument("--tese", choices=("neutra", "reformar", "manter"),
                     help="linha de argumentação. Sem isto, o sistema pergunta.")
     ap.add_argument("--historico", nargs="?", const="", default=None, metavar="TERMO",
@@ -440,13 +467,30 @@ def main(argv=None):
                     help="id da consulta; repetir retoma do checkpoint")
     a = ap.parse_args(argv)
 
+    try:
+        cam = cerebros.caminhos(a.cerebro)
+    except cerebros.Desconhecido as e:
+        print(e, file=sys.stderr)
+        return 2
+
     if a.historico is not None:
         feedback.imprimir_historico(a.historico or None)
         return 0
 
+    if not os.path.exists(cam["rag"]):
+        print("o cérebro %s ainda não tem índice — rode:\n"
+              "  python -m src.rag.indexar --cerebro %s"
+              % (cam["nome"], cam["slug"]), file=sys.stderr)
+        return 2
+
     if a.arquivo:
-        with open(a.arquivo, encoding="utf-8", errors="replace") as f:
-            caso = f.read()
+        # o mesmo extrator da web: .pdf e .docx entram aqui tambem, e um binario
+        # errado para com mensagem em vez de virar caractere de substituicao
+        try:
+            caso, _ = extrair.de_arquivo(a.arquivo)
+        except extrair.NaoSuportado as e:
+            print("Não deu para ler %s: %s" % (a.arquivo, e), file=sys.stderr)
+            return 2
     else:
         print("Cole o caso e termine com uma linha só com FIM:\n")
         linhas = []
@@ -465,11 +509,11 @@ def main(argv=None):
     ckpt = os.path.join(RAIZ, "output", "rag_runs.db")
     app = grafo.construir(checkpoint=ckpt, so_prognostico=a.so_prognostico)
     thread = a.thread or dt.datetime.now().strftime("%Y%m%d-%H%M%S")
-    print("consulta %s — rodando..." % thread, flush=True)
+    print("consulta %s — %s julgando..." % (thread, cam["nome"]), flush=True)
 
     cfg_run = {"configurable": {"thread_id": thread}, "recursion_limit": 30}
     entrada = {"caso": caso, "custos": [], "criticas": [], "ciclo_revisao": 0,
-               "tese": tese,
+               "tese": tese, "cerebro": cam["slug"],
                "filtros": {"classe": a.classe, "ano_min": a.ano_min,
                            "excluir": tuple(a.excluir)}}
     # Retomar exige invoke(None): mandar o input de novo reinicia o grafo do
@@ -540,6 +584,16 @@ if __name__ == "__main__":
                                            "transitaram": 1, "anos": [2020, 2024]}}))
     assert "REFORMAR" in s and "**5**" in s and "**3**" in s, s
     assert "caminhos diferentes" in s, "sem âncora comum, tem que dizer isso"
+    # com âncora, e no formato em que o checkpoint devolve: pares como LISTA.
+    # O caso acima passava com "ancoras": [] e por isso o "%s (%d)" nunca rodou —
+    # em produção o relatório inteiro morria com "not enough arguments".
+    com_ancora = "\n".join(_sustentacao(
+        {"tese": "reformar", "precedentes": [1, 2],
+         "descartados": {"contra": 5, "neutro": 3},
+         "comuns": {"n": 2, "ancoras": [["Tema 1059/STJ", 2]], "orgaos": [],
+                    "classes": [], "unanimes": 2, "transitaram": 1,
+                    "anos": [2020, 2024]}}))
+    assert "Tema 1059/STJ (2)" in com_ancora, com_ancora
     vazio = "\n".join(_sustentacao({"tese": "manter", "precedentes": [],
                                     "descartados": {"contra": 9, "neutro": 2}}))
     assert "não achou precedente que sustente" in vazio

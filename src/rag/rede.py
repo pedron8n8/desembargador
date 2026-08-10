@@ -321,9 +321,11 @@ if __name__ == "__main__":
     assert sem["resumo"]["por_texto"] == 0 and sem["resumo"]["por_ancora"] == 2
 
     if len(sys.argv) > 1:
+        from .. import cerebros
         from . import busca, rerank
         q = busca.montar_consulta(sys.argv[1:])
-        cand = rerank.ordenar(busca.buscar(q, limite=40), limite=40)
+        cand = rerank.ordenar(
+            busca.buscar(q, limite=40, banco=cerebros.caminhos()["rag"]), limite=40)
         assert cand, "índice vazio? rode: python -m src.rag.indexar"
         r = montar(cand)
         s = r["resumo"]

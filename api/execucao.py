@@ -27,6 +27,7 @@ import sys
 import threading
 from concurrent.futures import ThreadPoolExecutor
 
+from src import cerebros
 from src.rag import cli, grafo
 from src.rag.llm import SemChave, SemCredito
 
@@ -112,7 +113,8 @@ def publicar(thread, tipo, payload):
         with c:
             seq = (c.execute("SELECT coalesce(max(seq),0)+1 FROM evento WHERE thread=?",
                              (thread,)).fetchone()[0])
-            c.execute("INSERT INTO evento VALUES (?,?,?,?,?)",
+            c.execute("INSERT INTO evento (thread, seq, tipo, payload_json, criado_em) "
+                      "VALUES (?,?,?,?,?)",
                       (thread, seq, tipo,
                        json.dumps(payload, ensure_ascii=False, default=str), _agora()))
     finally:
@@ -186,7 +188,8 @@ def _gravar_custos(thread, custos):
         with c:
             c.execute("DELETE FROM custo WHERE thread=?", (thread,))
             c.executemany(
-                "INSERT INTO custo VALUES (?,?,?,?,?,?,?)",
+                "INSERT INTO custo (thread, no, modelo, tokens_in, tokens_out, "
+                "custo_usd, quando) VALUES (?,?,?,?,?,?,?)",
                 [(thread, x.get("no"), x.get("modelo"), x.get("tokens_in", 0),
                   x.get("tokens_out", 0), x.get("custo_usd", 0.0), _agora())
                  for x in custos])
@@ -287,17 +290,26 @@ def pool():
     return _pool
 
 
-def iniciar(thread, email, caso, tese="neutra", filtros=None, so_prognostico=False):
+def iniciar(thread, email, caso, tese="neutra", filtros=None, so_prognostico=False,
+            cerebro=None, comparacao=None):
+    cerebro = cerebros.resolver(cerebro)
     c = db()
     try:
         with c:
-            c.execute("INSERT OR REPLACE INTO execucao VALUES (?,?,?,?,NULL,NULL,NULL,?)",
-                      (thread, email, "fila", _agora(), int(bool(so_prognostico))))
-            c.execute("INSERT OR REPLACE INTO dono VALUES (?,?)", (thread, email))
+            # COLUNAS NOMEADAS. A versao posicional (8 '?') quebrava assim que a
+            # tabela ganhasse uma coluna — e ganhou duas nesta fase.
+            c.execute(
+                "INSERT OR REPLACE INTO execucao "
+                "(thread, email, estado, criado_em, so_prognostico, cerebro, "
+                " comparacao) VALUES (?,?,?,?,?,?,?)",
+                (thread, email, "fila", _agora(), int(bool(so_prognostico)),
+                 cerebro, comparacao))
+            c.execute("INSERT OR REPLACE INTO dono (thread, email) VALUES (?,?)",
+                      (thread, email))
     finally:
         c.close()
     entrada = {"caso": caso, "custos": [], "criticas": [], "ciclo_revisao": 0,
-               "tese": tese, "filtros": filtros or {}}
+               "tese": tese, "filtros": filtros or {}, "cerebro": cerebro}
     pool().submit(_rodar, thread, entrada, so_prognostico)
     return thread
 

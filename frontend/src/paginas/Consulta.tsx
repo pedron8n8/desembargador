@@ -29,14 +29,24 @@ export function Consulta() {
   const { thread, aba = 'evidencias' } = useParams()
   const qc = useQueryClient()
 
+  const [retomando, setRetomando] = useState(false)
+
   const { data: c, isLoading, error } = useQuery({
     queryKey: ['consulta', thread],
     queryFn: () => get<C>(`/api/consultas/${thread}`),
     retry: false,
+    // sem isto a tela congela no estado da primeira leitura: quem retoma vê o
+    // 202 e mais nada. Mesmo intervalo do painel e da comparação.
+    refetchInterval: (q) =>
+      RODANDO.has((q.state.data as C | undefined)?.estado ?? '') ? 4000 : false,
   })
 
   const rodando = !!c && RODANDO.has(c.estado)
-  const vivo = useEventos(thread, rodando || (!c && !error))
+  const parado = !!c && (c.estado === 'erro' || c.estado === 'interrompido')
+  // numa consulta PARADA o stream fica aberto de propósito: é por ele que os
+  // eventos de uma retomada chegam. Fechá-lo era o que fazia o clique não dar
+  // sinal nenhum — o 202 voltava e a tela continuava idêntica.
+  const vivo = useEventos(thread, rodando || parado || (!c && !error))
 
   // quando o SSE diz que acabou, o relatório inteiro passa a existir
   useEffect(() => {
@@ -69,6 +79,10 @@ export function Consulta() {
         <div>
           <h1>{c.triagem.materia || 'Consulta'}</h1>
           <p className="sub">
+            <b>
+              {c.cerebro_titulo} {c.cerebro_nome}
+            </b>
+            {' · '}
             <span className="mono">{c.thread}</span>
             {c.triagem.classe && ` · ${c.triagem.classe}`}
             {c.tese !== 'neutra' && ` · sustentando ${c.tese}`}
@@ -94,10 +108,14 @@ export function Consulta() {
         Confira cada citação.
       </div>
 
-      {(rodando || vivo.logs.length > 0 || !!vivo.erro) && (
+      {(rodando || parado || vivo.logs.length > 0 || !!vivo.erro) && (
         <section className="secao">
           <PipelineAoVivo vivo={vivo} />
-          {(c.estado === 'interrompido' || vivo.retomavel) && (
+          {/* `erro` é tão retomável quanto `interrompido`: o servidor publica
+              retomavel:true nos dois (api/execucao.py) e aceita o POST nos
+              dois. Só `interrompido` aqui deixava o botão depender de um
+              evento SSE reproduzido para aparecer. */}
+          {(parado || vivo.retomavel) && (
             <p className="aviso forte" style={{ marginTop: 'var(--e4)' }}>
               {c.erro ?? vivo.erro}
               <br />
@@ -105,12 +123,18 @@ export function Consulta() {
               <button
                 type="button"
                 className="leve"
+                disabled={retomando || rodando}
                 onClick={async () => {
-                  await post(`/api/consultas/${c.thread}/retomar`)
-                  qc.invalidateQueries({ queryKey: ['consulta', thread] })
+                  setRetomando(true)
+                  try {
+                    await post(`/api/consultas/${c.thread}/retomar`)
+                    qc.invalidateQueries({ queryKey: ['consulta', thread] })
+                  } finally {
+                    setRetomando(false)
+                  }
                 }}
               >
-                retomar de onde parou
+                {retomando ? 'retomando…' : 'retomar de onde parou'}
               </button>
             </p>
           )}
