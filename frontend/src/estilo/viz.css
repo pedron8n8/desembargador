@@ -1,0 +1,355 @@
+/* Visualizações. Regra: sem malha de grade, sem animação de entrada, rótulo
+   direto em vez de legenda quando couber. Ver frontend/DESIGN.md. */
+
+/* --------------------------------------------------------- pipeline */
+
+.pipe {
+  border: 1px solid var(--linha);
+  background: var(--papel-2);
+  padding: var(--e6);
+}
+
+.pipe svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.pipe-no rect {
+  fill: var(--papel);
+  stroke: var(--linha-forte);
+  stroke-width: 1;
+}
+
+.pipe-no.correndo rect {
+  stroke: var(--selo);
+  stroke-width: 2;
+  fill: var(--selo-claro);
+}
+
+.pipe-no.pronto rect {
+  stroke: var(--selo-linha);
+  fill: var(--papel);
+}
+
+.pipe-no.erro rect {
+  stroke: var(--alerta);
+  fill: var(--alerta-claro);
+}
+
+.pipe-no text {
+  font-family: var(--fonte-ui);
+  fill: var(--tinta);
+  font-size: 13px;
+}
+
+.pipe-no .meta {
+  fill: var(--tinta-3);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+.pipe-no.pendente text {
+  fill: var(--tinta-3);
+}
+
+.pipe-aresta {
+  stroke: var(--linha-forte);
+  fill: none;
+  stroke-width: 1;
+}
+
+.pipe-aresta.ciclo {
+  stroke-dasharray: 3 3;
+}
+
+.pipe-aresta.percorrida {
+  stroke: var(--selo);
+}
+
+.pipe-volta {
+  font-size: 10px;
+  fill: var(--tinta-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.pipe-log {
+  margin-top: var(--e4);
+  border-top: 1px solid var(--linha);
+  padding-top: var(--e3);
+  font-family: var(--fonte-mono);
+  font-size: var(--t-xs);
+  color: var(--tinta-2);
+  max-height: 160px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+}
+
+/* ------------------------------------------------------------ pesos */
+
+.cascata {
+  display: flex;
+  align-items: center;
+  gap: var(--e2);
+  flex-wrap: wrap;
+  font-variant-numeric: tabular-nums;
+  font-size: var(--t-sm);
+}
+
+.cascata .parcela {
+  border: 1px solid var(--linha-forte);
+  border-radius: var(--raio);
+  padding: 1px var(--e2);
+  background: var(--papel);
+  white-space: nowrap;
+}
+
+.cascata .parcela.sobe {
+  border-color: var(--selo-linha);
+  background: var(--selo-claro);
+  color: var(--selo);
+}
+
+.cascata .parcela.desce {
+  border-color: var(--alerta);
+  color: var(--alerta);
+  background: var(--alerta-claro);
+}
+
+.cascata .op {
+  color: var(--tinta-3);
+}
+
+.cascata .igual {
+  font-weight: 500;
+  border-bottom: 2px solid var(--tinta);
+  padding-bottom: 1px;
+}
+
+.barra-fracao {
+  display: flex;
+  height: 22px;
+  border: 1px solid var(--linha-forte);
+  width: 100%;
+  overflow: hidden;
+}
+
+.barra-fracao > div {
+  border-right: 1px solid var(--papel);
+  font-size: 10px;
+  color: var(--papel);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  font-variant-numeric: tabular-nums;
+}
+
+.barra-fracao > div:last-child {
+  border-right: 0;
+}
+
+.eixo-estimadores {
+  position: relative;
+  height: 78px;
+  margin: var(--e6) 0 var(--e4);
+}
+
+.eixo-estimadores .regua {
+  position: absolute;
+  top: 40px;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--linha-forte);
+}
+
+.eixo-estimadores .tick {
+  position: absolute;
+  top: 44px;
+  font-size: var(--t-xs);
+  color: var(--tinta-3);
+  transform: translateX(-50%);
+  font-variant-numeric: tabular-nums;
+}
+
+.eixo-estimadores .faixa-intervalo {
+  position: absolute;
+  top: 34px;
+  height: 13px;
+  background: var(--papel-3);
+  border-left: 1px solid var(--linha-forte);
+  border-right: 1px solid var(--linha-forte);
+}
+
+.eixo-estimadores .ponto {
+  position: absolute;
+  transform: translateX(-50%);
+  text-align: center;
+  font-size: var(--t-xs);
+  color: var(--tinta-2);
+  white-space: nowrap;
+}
+
+.eixo-estimadores .ponto i {
+  display: block;
+  width: 1px;
+  height: 14px;
+  background: var(--tinta-2);
+  margin: 2px auto 0;
+}
+
+.eixo-estimadores .ponto.destaque {
+  color: var(--selo);
+  font-weight: 500;
+}
+
+.eixo-estimadores .ponto.destaque i {
+  background: var(--selo);
+  width: 2px;
+  height: 18px;
+}
+
+/* NÃO DECIDO é hachura, não alerta vermelho: é o comportamento correto. */
+.hachura {
+  position: absolute;
+  top: 26px;
+  height: 28px;
+  background-image: repeating-linear-gradient(
+    45deg,
+    var(--papel-3),
+    var(--papel-3) 3px,
+    transparent 3px,
+    transparent 7px
+  );
+  border-left: 1px dashed var(--linha-forte);
+  border-right: 1px dashed var(--linha-forte);
+}
+
+/* ------------------------------------------------------------- rede */
+
+.rede {
+  border: 1px solid var(--linha);
+  background: var(--papel-2);
+}
+
+.rede svg {
+  display: block;
+  width: 100%;
+  cursor: grab;
+}
+
+.rede-aresta {
+  stroke: var(--linha-forte);
+  stroke-width: 1;
+}
+
+.rede-aresta.texto {
+  stroke-dasharray: 2 3;
+  stroke: var(--linha);
+}
+
+.rede-aresta.realce {
+  stroke: var(--selo);
+  stroke-width: 2;
+}
+
+.rede-no {
+  cursor: pointer;
+}
+
+.rede-no circle {
+  stroke: var(--papel);
+  stroke-width: 1.5;
+}
+
+.rede-no.precedente circle {
+  stroke: var(--tinta);
+  stroke-width: 2;
+}
+
+.rede-hub rect {
+  fill: var(--papel);
+  stroke: var(--tinta-3);
+  stroke-width: 1;
+}
+
+.rede-hub.vinculante rect {
+  stroke: var(--selo);
+  fill: var(--selo-claro);
+}
+
+.rede-hub text {
+  font-size: 10px;
+  fill: var(--tinta-2);
+  font-family: var(--fonte-ui);
+}
+
+.rede-legenda {
+  display: flex;
+  gap: var(--e6);
+  flex-wrap: wrap;
+  padding: var(--e3) var(--e4);
+  border-top: 1px solid var(--linha);
+  font-size: var(--t-xs);
+  color: var(--tinta-3);
+  align-items: center;
+}
+
+.rede-legenda i {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-right: var(--e1);
+  vertical-align: -1px;
+}
+
+/* --------------------------------------------------------- gráficos */
+
+.gr svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.gr .regua {
+  stroke: var(--linha-forte);
+  stroke-width: 1;
+}
+
+.gr .barra {
+  fill: var(--selo);
+}
+
+.gr .barra.secundaria {
+  fill: var(--papel-3);
+}
+
+.gr .traco {
+  fill: none;
+  stroke: var(--selo);
+  stroke-width: 1.5;
+}
+
+.gr .traco.referencia {
+  stroke: var(--linha-forte);
+  stroke-dasharray: 3 3;
+}
+
+.gr .ponto {
+  fill: var(--selo);
+}
+
+.gr text {
+  font-size: 10px;
+  fill: var(--tinta-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.gr text.rotulo {
+  fill: var(--tinta-2);
+  font-size: 11px;
+}

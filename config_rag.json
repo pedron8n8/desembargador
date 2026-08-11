@@ -7,7 +7,9 @@
     "redigir":      "deepseek/deepseek-v3.2",
     "revisar":      "x-ai/grok-4.3",
     "juiz":         "openai/gpt-5.6-terra",
-    "juiz_reserva": "google/gemini-3.6-flash"
+    "juiz_reserva": "google/gemini-3.6-flash",
+    "conversa":     "google/gemini-3.5-flash-lite",
+    "ocr":          "google/gemini-3.5-flash-lite"
   },
 
   "_por_que": {
@@ -15,7 +17,9 @@
     "triar":   "$0,30/$2,50 — lê ~40 ementas (entrada grande) e devolve só notas (saída minúscula)",
     "redigir": "$0,27/$0,40 — deepseek-v3.2. A troca foi feita por CUSTO (bench com prompts quebrados: 8 candidatos entre 2,10 e 2,65, apenas 0,9 sigma) e CONFIRMADA pela medição depois de corrigidos os prompts: deepseek lidera com 3,40 contra 3,35 do sonnet-5, que custa 3,2x mais, e mantém o melhor disp (3,50). O ranking passou a 2,2 sigma entre topo e cauda — o prompt quebrado estava mascarando a diferença entre modelos. RISCO MONITORADO: a fidelidade do deepseek despenca quando falta contexto (na consulta em que a triagem truncou e sobraram 0 precedentes, ele inventou a Súmula 610/STJ); com os 8 precedentes normais, fidelidade 5. Se aparecer citação inventada em uso real, olhe primeiro se a triagem entregou precedentes.",
     "revisar": "$1,25/$2,50 — DE PROPÓSITO de outro fornecedor que o redator: crítica independente é o ponto do multi-agente",
-    "juiz":    "$1,00/$6,00 — é o instrumento de medida; fornecedor distinto de todos os outros nós. Cai no reserva se o redator julgado for do mesmo fornecedor (autopreferência)"
+    "juiz":    "$1,00/$6,00 — é o instrumento de medida; fornecedor distinto de todos os outros nós. Cai no reserva se o redator julgado for do mesmo fornecedor (autopreferência)",
+    "ocr": "PDF escaneado (sem camada de texto) que o pypdf não consegue ler. Quem faz o OCR é o plugin file-parser do OpenRouter com a engine 'cloudflare-ai', que é GRÁTIS; o modelo aqui é só o veículo — o texto extraído volta nas annotations e nem passa pela saída dele. O que se paga é a entrada: o plugin injeta a peça inteira no prompt (~15k tokens numa peça de 30 páginas, ~US$ 0,005). max_tokens fica baixo de propósito em extrair.py: não queremos que ele escreva nada.",
+    "conversa": "$0,30/$2,50 — o turno de acompanhamento na interface web. NÃO roda o grafo: lê o checkpoint (precedentes, prognóstico, minuta) e responde em uma chamada. Entrada grande (~10k), saída curta: ~US$ 0,005 por pergunta, contra US$ 0,20 de uma consulta. É a diferença entre poder perguntar 'por que esse precedente pesou mais?' e não poder."
   },
 
   "_candidatos_redigir": {

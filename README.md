@@ -17,6 +17,10 @@ a origem, e `proveniencia_json` diz de qual fonte veio **cada campo**.
 
 ## Como rodar
 
+> **Passo a passo completo — instalação, web, contas e o que fazer quando dá
+> errado — está em [COMO_RODAR.md](COMO_RODAR.md).** O que segue aqui é só a
+> coleta.
+
 1. Edite `config.json` e preencha `"relator"` (o nome como aparece no portal).
 2. **Dê dois cliques em `run.bat`.** Ele checa o Python, cria a venv, instala a dependência
    e inicia a coleta.
@@ -719,32 +723,72 @@ opera: **reformar** (provido + parcialmente provido) contra **manter**
 (desprovido), 14.657 decisões de mérito. Traduzir um pelo outro seria dar ao
 sistema um vocabulário que os documentos não têm.
 
-## Duas buscas, e só uma conta
+## O filtro por `resultado` estava errado, e o teste provou
 
-Este é o ponto que decide se a fase serve ou estraga tudo:
+A primeira implementação encolhia a amostra com SQL: `--tese reformar` buscava
+`resultado IN ('provido','parcialmente provido')`. Rodada ponta a ponta no caso
+de exemplo — em que **o apelante é o autor** — ela trouxe 8 precedentes "provido"
+e a minuta saiu assim:
 
-| busca | filtro | para que serve |
-|---|---|---|
-| **neutra** | nenhum | precedentes, contra-argumentação e **todo o prognóstico** |
-| **da tese** | `resultado IN (lado pedido)` | material de sustentação, e só |
+> *"não restou configurado o evento coberto pela apólice, sendo indevida a
+> indenização pleiteada. A sentença merece ser mantida."*
+> **DISPOSITIVO: NEGO-LHE PROVIMENTO**
 
-Uma busca filtrada pelo resultado que o usuário quer mediria 100% de reforma
-numa amostra só de reformas. Se ela alimentasse a contagem, o percentual
-calibrado — 5 pp de erro máximo, medido em 1.092 casos de 2025 — viraria
-propaganda com cara de medição. Então ela não alimenta: `no_triar` separa as
-duas listas, e o self-check do grafo falha se a lista da tese vazar para o
-prognóstico.
+Pedi reformar e saiu manter. Não foi desobediência: nos 8 precedentes quem
+recorreu foi a **seguradora**, então "provido" ali significa *a seguradora
+ganhou*. O redator foi fiel a documentos que argumentam o contrário do pedido.
 
-O relatório diz isso na cara do usuário, no lugar onde ele leria o número:
+**`provido` é resultado processual, não direção da tese.** E o filtro ainda
+descartava o melhor material: um `desprovido` em que a parte contrária recorreu
+e perdeu é exatamente o que a sua tese quer citar.
 
-> Calculado na busca **neutra**, sem o filtro de lado que você pediu. Se ele
-> apontar contra a sua linha de argumentação, é esse o recado: a sustentação
-> existe, mas rema contra a corrente do acervo.
+Tentei recuperar o recorrente por regex na ementa: **40,2%** das 14.657 decisões
+de mérito. Não dá para filtrar em cima disso.
+
+## Quem filtra é a triagem
+
+A pergunta "este precedente favorece o meu lado?" só tem resposta lendo o
+mérito. Quem lê é o triador, que já passa por cada candidato. Ele passou a
+devolver um campo a mais:
+
+```json
+{"id": 123, "nota": 4, "por_que": "...", "lado": "a_favor|contra|neutro"}
+```
+
+Só `a_favor` chega ao redator. O prompt avisa explicitamente da armadilha do
+rótulo (`um acórdão "provido" em que quem recorreu foi a seguradora é material
+CONTRA um segurado`). Custo: ~5 tokens por candidato.
+
+**As três, no mesmo caso, ponta a ponta:**
+
+| modo | triagem | dispositivo da minuta | prognóstico |
+|---|---|---|---|
+| neutra | 8 de 40, sem filtro de lado | condicional (2 cenários) | 17,1% calibrado |
+| reformar | **3 de 67** (63 contra, 1 neutro) | **DOU-LHE PROVIMENTO** | recusado |
+| manter | **33 de 34** (0 contra, 1 neutro) | **NEGO-LHE PROVIMENTO** | recusado |
+
+Os números do meio são o achado: para sustentar `reformar` neste caso o sistema
+teve de descartar 63 precedentes análogos que decidem contra, e precisou de dois
+ciclos de busca para achar 3 que sustentam. Para `manter`, 33 de 34 serviam de
+primeira. **Isso é a evidência na cara do usuário** — e bate com o prognóstico
+neutro de 17%. Um dos 3 de `reformar` é `prejudicado`, resultado que o filtro
+SQL antigo excluía por definição.
+
+## Sem prognóstico quando você pede um lado
+
+Contar resultado numa amostra escolhida por sustentar um lado mede a escolha, não
+o tribunal. Então no modo extremo não sai percentual nenhum: `faixa:
+amostra_filtrada`, `probabilidade_pct: None`. O self-check do grafo falha se
+`reforma_nos_precedentes`, `probabilidade_pct`, `reforma_conjunta_pct`,
+`distribuicao` ou `intervalo_pct` aparecerem numa consulta com tese.
+
+Sobrevive só a **floresta**, que lê o caso e não a busca — e sai crua, porque a
+calibração foi ajustada sobre a escala do conjunto, que aqui não existe.
 
 ## Os pontos em comum
 
-`sinais.comuns()` conta o que se repete entre os precedentes do lado pedido —
-tudo de campo indexado, sem LLM. No caso de exemplo, com `--tese reformar`:
+`sinais.comuns()` conta o que se repete entre os precedentes que sobraram —
+campo indexado, sem LLM:
 
 ```
 - Âncoras citadas por mais de um: Súmula n. 5 (7)
@@ -752,14 +796,26 @@ tudo de campo indexado, sem LLM. No caso de exemplo, com `--tese reformar`:
 - 8 de 8 unânimes, 7 transitaram em julgado, anos 2019–2019
 ```
 
-Sete dos oito precedentes que deram provimento se apoiam na mesma súmula, todos
-unânimes, quase todos transitados. **É esse o material.** Quando nenhuma âncora
-aparece em mais de um, o relatório diz o contrário com todas as letras: são
-decisões que chegaram ao mesmo resultado por caminhos diferentes, e não há tese
-única para citar.
+Quando nenhuma âncora aparece em mais de um, o relatório diz o contrário com
+todas as letras: são decisões que chegaram ao mesmo resultado por caminhos
+diferentes, e não há tese única para citar.
 
-Custo: **US$ 0,0135** na consulta com `--so-prognostico` — as 20 linhas a mais na
-triagem, e nada além disso. A segunda busca é SQLite.
+## A trava de tendência
+
+No modo tese a minuta não pode dizer "os precedentes são uníssonos" — a contagem
+mede o filtro. O revisor pega isso, mas **depende de sobrar ciclo de revisão, e
+num teste real não sobrou**: a minuta final saiu com "os precedentes desta Corte
+são uníssonos" listado apenas como ressalva não corrigida.
+
+Então há uma varredura por regex no texto pronto (`cli.tendencia_no_texto`), que
+não depende de modelo nenhum. Os trechos vão em destaque **antes** da minuta. A
+seção "Onde esta tese é frágil" fica fora da varredura: falar de jurisprudência
+dominante contrária é o propósito dela, e sem essa exceção o alerta dispararia em
+toda consulta — alerta que sempre dispara é alerta que ninguém lê.
+
+A minuta também passou a fechar com essa seção obrigatória, apontando do próprio
+material o que enfraquece a tese: precedente não unânime, âncora só estadual,
+fato que afasta a analogia.
 
 ## O que você já usou
 
@@ -903,6 +959,138 @@ output/
 
 ---
 
+---
+
+# Fase 6 — A interface
+
+Até aqui o produto era um `.md` de 400 linhas cuspido no PowerShell. A
+inteligência toda já existia como função Python importável; o que faltava era
+superfície. Um advogado sênior não lê `consultar.bat` — e a parte mais valiosa
+do sistema, **por que** cada precedente pesa o que pesa, estava enterrada em
+texto corrido.
+
+```bat
+.venv\Scripts\python -m pip install -r requirements-web.txt
+.venv\Scripts\python -m api.usuarios --criar voce@escritorio.com --papel admin
+web.bat
+```
+
+Duas dependências novas no Python (`fastapi`, `uvicorn`) — `httpx`, `pydantic`,
+`starlette` e `anyio` já vinham com o langgraph, e a autenticação é stdlib
+inteira (`hashlib.scrypt`, `secrets`, `hmac`).
+
+```
+api/        só HTTP. Nada de lógica de domínio aqui.
+frontend/   projeto Node isolado (Vite + React + TS). Sem package.json na raiz.
+web.bat     sobe os dois: uvicorn na 8000, vite na 5173
+```
+
+Em dev o Vite faz proxy de `/api` para o uvicorn — same-origin, então não há
+CORS nem cookie cross-site para configurar. Em produção, `npm run build` gera
+`frontend/dist/` e o FastAPI o serve: um processo, uma porta, um certificado.
+
+## O que a interface mostra que o `.md` não mostrava
+
+| tela | o que ela responde |
+|---|---|
+| pipeline ao vivo | qual nó está rodando, com qual modelo, quantos tokens e quantos centavos — nó a nó, por SSE |
+| painel de pesos | a cascata inteira: `\|BM25\| × idade × âncora × unanimidade × efeito × feedback = pontos`, depois `× confiança × analogia = peso final`, e a fração de cada precedente no total |
+| rede de precedentes | quais decisões se apoiam na mesma súmula ou tema repetitivo |
+| estatísticas | deriva de época, taxa por classe e câmara, curva de calibração, cobertura de abstenção **medida no seu uso**, livro-caixa |
+| acervo | as 20.363 decisões, com a busca explicando a própria ordem |
+| conversa | perguntar sobre uma consulta já feita por ~US$ 0,005, sem rodar o grafo de novo |
+
+## A âncora é nó, não aresta
+
+A forma óbvia do grafo de precedentes seria ligar decisão a decisão quando as
+duas citam a mesma súmula. Medido: 40 candidatos produziram **466 arestas**,
+porque 20 decisões que citam a Súmula 150 formam uma clique de 190. Isso não é
+visualização, é novelo — e pior, esconde o fato que interessa, que é *qual*
+precedente as segura. Com a âncora como nó, a mesma informação custa 20 arestas
+em vez de 190, e a leitura vira a frase jurídica: "estas 20 decisões se apoiam
+na Súmula 150".
+
+E a canonização não é detalhe. O `ancoras_json` tem **1.941 rótulos distintos**
+para bem menos âncoras reais, porque o mesmo verbete aparece como `Súmula 54 do
+STJ`, `SÚMULA 54 DO STJ`, `Súmula n. 54` e `Súmula 54`. Sem normalizar, as
+arestas de âncora simplesmente não aparecem — e o grafo sai vazio sem erro
+nenhum, que é o pior modo de falhar. `src/rag/rede.py` reduz tudo a uma chave
+(`sumula:54:stj`) e ainda resolve o tribunal ausente **quando não há dúvida**:
+se `Súmula 150` e `Súmula 150/STF` aparecem no mesmo conjunto, viram uma coisa
+só; se aparecem duas cortes com o mesmo número, a citação sem corte fica
+separada, porque escolher seria inventar de qual tribunal é o precedente.
+
+## Consulta longa dentro de uma request
+
+Uma consulta leva minutos e custa dinheiro; nada disso cabe num request HTTP.
+`ThreadPoolExecutor` de 2 workers no próprio processo do uvicorn — sem Celery e
+sem Redis, porque o grafo é síncrono, a durabilidade que importa já está no
+`rag_runs.db`, e o gargalo real é USD por consulta, não CPU.
+
+O `app.stream(stream_mode=["tasks","updates"])` entrega nó a nó. Como
+`Estado.custos` é `Annotated[list, operator.add]`, cada nó devolve o próprio
+custo no delta — **modelo, tokens e US$ por nó saem de graça, sem instrumentar
+nada**. O `result` da task é um `dict`; a primeira versão do leitor assumiu
+lista de pares e falhava calada, fazendo todo nó aparecer a US$ 0,0000 ao vivo
+com o total certo no fim — que é o jeito mais convincente de um número errado
+passar despercebido. Há um assert para isso em `api/execucao.py`.
+
+Os `print()` de `no_triar` e `no_redigir` ("triagem cortada no teto", "AVISO: a
+triagem não devolveu nota nenhuma") sumiriam no console do servidor.
+`contextlib.redirect_stdout` não serve: ele troca o `sys.stdout` do *processo*, e
+com dois workers um capturaria os prints do outro. O conserto é um roteador
+instalado uma vez que despacha por thread do SO — e o self-check roda duas
+threads imprimindo ao mesmo tempo para provar que não se misturam.
+
+Se o servidor cair no meio, o startup reconcilia: quem parou vira
+`interrompido`, e retomar usa `stream(None, config)` — reenviar o input
+reiniciaria o grafo do zero e **repagaria** o que já saiu. Por isso retomar é
+botão, não automatismo.
+
+## Confidencialidade sem migrar nada
+
+As decisões são públicas; as consultas dos advogados não. O `feedback.db` é
+escrito pela CLI também e não tem coluna de dono, então a propriedade vive numa
+tabela aditiva em `output/web.db`: thread sem dono é de quem rodou pelo
+terminal, e só o admin vê. Migração: nenhuma.
+
+Sessão opaca no servidor, não JWT — revogação imediata e "derrubar as sessões
+deste usuário agora" são requisitos reais aqui, e com JWT isso vira lista de
+revogação, que é o banco de sessão de volta só que pior. O token vive só no
+cookie; no banco fica o `sha256` dele.
+
+## Design
+
+Referência: publicação jurídica e jornal de formato grande. Papel quente em vez
+de branco, um acento só (verde-garrafa dessaturado), serifa para o texto
+jurídico, régua de 1px no lugar de sombra. `frontend/DESIGN.md` tem a lista do que é
+proibido — gradiente, glassmorphism, `box-shadow`, balão de chat em pílula,
+emoji, skeleton pulsante — e `npm run lint:css` faz valer a parte que dá para
+automatizar, para o padrão da indústria não voltar sorrateiramente um componente
+por vez.
+
+Duas regras que não são estéticas:
+
+- **Evidência antes de veredito.** A aba de Prognóstico vem depois da de
+  Evidências, sempre. Quem lê o percentual primeiro ancora nele e lê o resto
+  procurando confirmação — é a mesma razão de `cli.formatar` montar o markdown
+  nessa ordem.
+- **NÃO DECIDO é estado de primeira classe**, com a lista de motivos e uma faixa
+  hachurada no eixo dos estimadores. Não é erro nem vazio: é o comportamento
+  correto.
+
+O teste final do design é imprimir `/consulta/:thread` em PDF pelo Chrome. Se
+não ler como documento, falhou.
+
+## Sem fonte de CDN
+
+As consultas são confidenciais e não se vaza nem o referrer. A v1 usa pilha de
+sistema (`Charter, Georgia` no corpo). Para trocar por Source Serif 4, os
+`.woff2` vão em `frontend/public/fontes/` e a família entra na frente de
+`--fonte-serif`; nada mais muda.
+
+---
+
 ## Plugando novas fontes (Escavador, SAJ...)
 
 Cada fonte é um módulo com `coletar(config, storage)` que grava via `src/storage.py`.
@@ -950,8 +1138,22 @@ Fase 4 (todos offline, custo zero):
 Fase 5 (offline):
 
 ```bat
-.venv\Scripts\python -X utf8 -m src.rag.grafo            REM inclui: a tese NÃO vaza para o prognóstico
-.venv\Scripts\python -X utf8 -m src.rag.feedback         REM inclui: histórico acha por número e conta reuso
+.venv\Scripts\python -X utf8 -m src.rag.grafo            REM a tese NÃO vaza para o prognóstico
+.venv\Scripts\python -X utf8 -m src.rag.cli              REM varredura de tendência + cabeçalho da tese
+.venv\Scripts\python -X utf8 -m src.rag.feedback         REM histórico acha por número e conta reuso
+```
+
+Fase 6 (offline; `api.smoke` sobe a API inteira contra um `web.db` temporário):
+
+```bat
+verificar.bat                                            REM roda tudo o que está abaixo, de uma vez
+.venv\Scripts\python -X utf8 -m src.rag.rede             REM âncoras canonizadas, arestas únicas e sem laço
+.venv\Scripts\python -X utf8 -m src.rag.estatisticas     REM agregações fecham com o total
+.venv\Scripts\python -X utf8 -m src.rag.conversa         REM contexto do chat sai do checkpoint, cortado
+.venv\Scripts\python -X utf8 -m api.auth                 REM scrypt, expiração, revogação, rate limit
+.venv\Scripts\python -X utf8 -m api.serial               REM estado → JSON, e os pesos fecham
+.venv\Scripts\python -X utf8 -m api.execucao             REM eventos SSE + prints de dois workers não se misturam
+.venv\Scripts\python -X utf8 -m api.smoke                REM auth, CSRF, isolamento entre usuários
 ```
 
 **`src.rag.indexar` não é self-check** — é o construtor do índice. Ele apaga

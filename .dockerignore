@@ -1,0 +1,20 @@
+# Sem isto o `docker build` manda os 11 GB do output/ para o daemon antes de
+# executar a primeira linha do Dockerfile.
+output/
+*.db
+*.db-shm
+*.db-wal
+*.pkl
+
+.venv/
+__pycache__/
+*.py[cod]
+
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+.git/
+.env
+*.bat
+*.md

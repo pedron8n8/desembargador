@@ -39,11 +39,15 @@ class SemCredito(RuntimeError):
     pass
 
 
-def chamar(no, mensagens, max_tokens=None):
-    """Devolve (texto, {modelo, custo_usd, tokens_in, tokens_out}).
+def chamar(no, mensagens, max_tokens=None, extra=None):
+    """Devolve (texto, {modelo, custo_usd, tokens_in, tokens_out, anotacoes}).
 
     `no` e' a chave em config_rag.json["modelos"] — cada no do grafo usa um
     modelo diferente; ver o README para o porque de cada escolha.
+
+    `extra` e' mesclado no corpo da requisicao. Serve para o que e' de UMA
+    chamada so' e nao vale um parametro proprio — hoje, o `plugins` do
+    file-parser que a extracao de PDF usa (src/rag/extrair.py).
     """
     cfg = config()
     chave = os.environ.get("OPENROUTER_API_KEY", "").strip()
@@ -59,6 +63,7 @@ def chamar(no, mensagens, max_tokens=None):
         "max_tokens": max_tokens or cfg.get("max_tokens", {}).get(no, 4000),
         "usage": {"include": True},
     }
+    corpo.update(extra or {})
     espera = 2
     for tentativa in range(cfg.get("max_retries", 4)):
         try:
@@ -114,6 +119,10 @@ def chamar(no, mensagens, max_tokens=None):
             # cortado no meio. Sem isso, o revisor gasta um ciclo inteiro
             # reclamando de um problema que e' de configuracao, nao de conteudo.
             "cortado": escolha.get("finish_reason") == "length",
+            # o file-parser devolve o texto extraido AQUI, nao na resposta do
+            # modelo: pedir para ele repetir a peca inteira pagaria tokens de
+            # saida e ele resumiria no meio do caminho
+            "anotacoes": escolha["message"].get("annotations") or [],
         }
     raise RuntimeError("esgotou as tentativas em " + modelo)
 

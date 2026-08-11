@@ -117,47 +117,66 @@ def _tabela(titulo, linhas, nota=""):
 
 
 if __name__ == "__main__":
+    import argparse
+
+    from .. import cerebros
+
+    ap = argparse.ArgumentParser(description="Auditoria de deriva do acervo")
+    cerebros.argumento(ap)
+    a_ = ap.parse_args()
+    cam = cerebros.caminhos(a_.cerebro)
+    RAG = cam["rag"]
     if not os.path.exists(RAG):
-        print("índice não existe — rode: python -m src.rag.indexar", file=sys.stderr)
+        print("índice de %s não existe — rode: python -m src.rag.indexar --cerebro %s"
+              % (cam["nome"], cam["slug"]), file=sys.stderr)
         raise SystemExit(1)
 
     print("Auditoria de deriva — o resultado depende de algo que não deveria?")
-    print("(20 mil decisões datadas do mesmo relator; só decisões de mérito)")
+    print("(cérebro: %s; decisões datadas de um relator só, e só as de mérito)"
+          % cam["nome"])
 
     dp_dia = _tabela(
-        "DIA DA SEMANA  — o 'humor de segunda-feira'", por_dia_semana(),
+        "DIA DA SEMANA  — o 'humor de segunda-feira'", por_dia_semana(RAG),
         "Nenhum efeito. É a boa notícia: o dia da semana não muda o desfecho.")
 
-    anos = por_ano()
+    anos = por_ano(RAG)
     dp_ano = _tabela(
         "ANO A ANO  — deriva de época", anos,
         "AQUI está a variação real. Não é humor: é jurisprudência que consolida,\n"
         "   lei que muda e composição do acervo que muda junto.")
 
     dp_carga = _tabela(
-        "CARGA DO DIA  — quantas decisões ele assinou naquele dia", por_carga(),
+        "CARGA DO DIA  — quantas decisões ele assinou naquele dia", por_carga(RAG),
         "CONFUNDIDO: dia de poucas decisões é dia sem sessão (monocráticas).\n"
         "   Ver abaixo o mesmo corte, já controlado.")
 
     dp_ctrl = _tabela("CARGA DO DIA, só entre acórdãos  — controlado",
-                      por_carga_controlada())
+                      por_carga_controlada(RAG))
     print("   O efeito caiu de %.2f pp para %.2f pp ao controlar por tipo de\n"
           "   decisão: era composição (dia sem sessão = monocrática), não cansaço."
           % (dp_carga, dp_ctrl))
 
-    _tabela("ÂNCORA CITADA  — sinal jurídico, estável", por_ancora(),
+    _tabela("ÂNCORA CITADA  — sinal jurídico, estável", por_ancora(RAG),
             "Precedente de alcance nacional muda o desfecho. Este é o tipo de\n"
             "   variação que o sistema DEVE usar — e usa, no re-ranking.")
 
     print("\n-- o que isto manda fazer --")
     print("O inimigo não é o humor de curto prazo (%.2f pp entre dias úteis)."
           % dp_dia)
-    print("É a deriva de época (%.1f pp entre anos, de %.1f%% a %.1f%%)."
-          % (dp_ano, min(p for _a, _n, p in anos), max(p for _a, _n, p in anos)))
-    print("Por isso: o calibrador é ajustado em janela recente, e a média")
-    print("histórica de 20 anos NÃO serve como referência para um caso de hoje.")
+    if len(anos) >= 2:
+        print("É a deriva de época (%.1f pp entre anos, de %.1f%% a %.1f%%)."
+              % (dp_ano, min(p for _a, _n, p in anos), max(p for _a, _n, p in anos)))
+        print("Por isso: o calibrador é ajustado em janela recente, e a média")
+        print("histórica de 20 anos NÃO serve como referência para um caso de hoje.")
 
     assert dp_dia < 3.0, \
         "apareceu efeito de dia da semana (%.2f pp) — investigar antes de confiar" % dp_dia
-    assert dp_ano > dp_dia, "a deriva de época deveria dominar a de curto prazo"
-    print("\nself-check OK — sem efeito de dia da semana; a deriva é de época")
+    if len(anos) >= 2:
+        assert dp_ano > dp_dia, "a deriva de época deveria dominar a de curto prazo"
+        print("\nself-check OK — sem efeito de dia da semana; a deriva é de época")
+    else:
+        # acervo novo/curto: nao ha' serie temporal para comparar, e afirmar que
+        # "a deriva e' de epoca" sem ela seria inventar medicao
+        print("\nself-check OK — sem efeito de dia da semana. Só %d ano(s) com "
+              "n>=%d: sem série para medir deriva de época neste acervo."
+              % (len(anos), _MIN))

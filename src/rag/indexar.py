@@ -108,11 +108,38 @@ def construir(tjsc=TJSC, rag=RAG, verboso=True):
 
 
 if __name__ == "__main__":
-    n, d = construir()
-    # invariantes da fase 1: 20.363 decisoes coletadas, 18.622 com inteiro teor
-    if n != 20363:
-        print("AVISO: esperava 20.363 decisoes no tjsc.db, achei %d" % n,
-              file=sys.stderr)
+    import argparse
+
+    from .. import cerebros
+
+    ap = argparse.ArgumentParser(description="Constrói o índice FTS5 de um cérebro")
+    cerebros.argumento(ap)
+    a_ = ap.parse_args()
+    cam = cerebros.caminhos(a_.cerebro)
+    TJSC, RAG = cam["tjsc"], cam["rag"]
+    if not os.path.exists(TJSC):
+        raise SystemExit("sem acervo coletado para %s — rode: python -m src.main "
+                         "--cerebro %s" % (cam["nome"], cam["slug"]))
+    print("cérebro: %s\n  %s -> %s\n" % (cam["nome"], TJSC, RAG))
+    os.makedirs(os.path.dirname(RAG), exist_ok=True)
+
+    n, d = construir(TJSC, RAG)
+
+    # A contagem esperada e' por cerebro, e so' existe depois de uma coleta
+    # completa conferida (cerebros.json -> esperado.decisoes). O aviso continua
+    # valendo a pena: ele pega coleta truncada, que e' erro caro e silencioso.
+    # Cerebro sem o campo — recem-coletado — nao recebe aviso nenhum.
+    esperado = (cerebros.obter(cam["slug"]).get("esperado") or {}).get("decisoes")
+    if esperado and n != esperado:
+        print("AVISO: esperava %d decisões no tjsc.db de %s, achei %d. Coleta\n"
+              "       truncada? Se a diferença for esperada (coleta nova),\n"
+              "       atualize \"esperado\" em cerebros.json."
+              % (esperado, cam["slug"], n), file=sys.stderr)
+    elif not esperado:
+        print("\n(sem contagem de referência para %s — se estas %d decisões forem "
+              "a coleta\n completa, grave \"esperado\": {\"decisoes\": %d} em "
+              "cerebros.json)" % (cam["slug"], n, n))
+
     db = sqlite3.connect(RAG)
     print("\ndistribuicao de resultados:")
     for r, c in db.execute("SELECT resultado, count(*) c FROM decisao "
@@ -132,9 +159,10 @@ if __name__ == "__main__":
 
     # Gemeas por deriva de ementa (ver o comentario longo em src/merge.py).
     # A reindexacao e' o momento em que gemeas novas apareceriam, entao e' aqui
-    # que se vigia. Nao se apaga nada: em 04/08/2026 eram 114 grupos / 229
-    # linhas e o dano medido no top-8 de 300 consultas cegas foi ZERO. Se este
-    # numero disparar, ai' sim vale investigar o que mudou no portal.
+    # que se vigia. Nao se apaga nada: no acervo do rubens-schulz, em 04/08/2026,
+    # eram 114 grupos / 229 linhas e o dano medido no top-8 de 300 consultas
+    # cegas foi ZERO. A referencia e' daquele acervo — em cerebro novo o que
+    # importa e' a PROPORCAO, nao o numero absoluto.
     orig_ro = sqlite3.connect("file:%s?mode=ro" % TJSC.replace("\\", "/"), uri=True)
     g, l = orig_ro.execute(
         "SELECT count(*), COALESCE(sum(c),0) FROM (SELECT count(*) c FROM decisoes "
@@ -142,4 +170,5 @@ if __name__ == "__main__":
         "HAVING count(DISTINCT hash) > 1)").fetchone()
     orig_ro.close()
     print("gêmeas por deriva de ementa: %d grupos, %d linhas (%.1f%%) — "
-          "referência 04/08/2026: 114 / 229" % (g, l, 100 * l / n if n else 0))
+          "referência do acervo rubens-schulz em 04/08/2026: 114 / 229 (1,1%%)"
+          % (g, l, 100 * l / n if n else 0))

@@ -1,7 +1,12 @@
 """Orquestrador: config -> fontes ativas -> merge -> exports.
 
-Uso:  python -m src.main [--relator "NOME"] [--data-inicio 2020-01-01] [--data-fim 2024-12-31]
-Argumentos de linha de comando sobrescrevem o config.json.
+Uso:  python -m src.main --cerebro SLUG
+      python -m src.main [--relator "NOME"] [--data-inicio 2020-01-01] [--data-fim ...]
+
+`--cerebro` resolve relator, periodo e destino a partir do cerebros.json — e' o
+jeito de coletar o acervo de um segundo desembargador sem escrever por cima do
+primeiro. Sem ele, vale o config.json de sempre (o cerebro padrao).
+Argumentos de linha de comando sobrescrevem os dois.
 """
 import argparse
 import json
@@ -12,9 +17,15 @@ from pathlib import Path
 RAIZ = Path(__file__).parent.parent
 
 
-def load_config():
-    with open(RAIZ / "config.json", encoding="utf-8") as f:
-        cfg = json.load(f)
+def load_config(cerebro=None):
+    from src import cerebros
+
+    # cerebros.config_coleta ja' devolve o config.json com relator/periodo/saida
+    # do cerebro aplicados por cima
+    cfg = cerebros.config_coleta(cerebro) if cerebro else None
+    if cfg is None:
+        with open(RAIZ / "config.json", encoding="utf-8") as f:
+            cfg = json.load(f)
     # .env simples (só DATAJUD_API_KEY) sem dependência extra
     env = RAIZ / ".env"
     if env.exists():
@@ -30,6 +41,9 @@ def load_config():
 
 def main():
     p = argparse.ArgumentParser(description="Coleta decisões de um desembargador do TJSC")
+    p.add_argument("--cerebro", metavar="SLUG",
+                   help="qual acervo coletar (ver cerebros.json). Define relator, "
+                        "período e destino; sem ele vale o config.json.")
     p.add_argument("--relator")
     p.add_argument("--data-inicio")
     p.add_argument("--data-fim")
@@ -38,7 +52,7 @@ def main():
                         "novas). Não duplica nada: os registros existentes são atualizados.")
     a = p.parse_args()
 
-    cfg = load_config()
+    cfg = load_config(a.cerebro)
     if a.relator:
         cfg["relator"] = a.relator
     if a.data_inicio:
@@ -55,9 +69,14 @@ def main():
                   'ou via --relator "NOME". Abortando.')
         return
 
+    # os checkpoints de coleta moram DENTRO do tjsc.db de cada cerebro, entao
+    # dois acervos nao disputam a mesma memoria de progresso
+    os.makedirs(os.path.dirname(cfg["saida"]["db"]), exist_ok=True)
     storage = Storage(cfg["saida"]["db"])
-    log.info("Relator: %s | período: %s a %s", cfg["relator"],
-             cfg.get("data_inicio") or "-", cfg.get("data_fim") or "-")
+    log.info("Cérebro: %s | relator: %s | período: %s a %s | banco: %s",
+             a.cerebro or "(config.json)", cfg["relator"],
+             cfg.get("data_inicio") or "-", cfg.get("data_fim") or "-",
+             cfg["saida"]["db"])
     if a.recoletar:
         # 'datajud_ausentes' sobrevive de proposito: ele nao registra PROGRESSO
         # (que e' o que --recoletar quer refazer), e sim um FATO sobre a API —

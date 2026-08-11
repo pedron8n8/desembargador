@@ -24,6 +24,7 @@ from typing import Annotated, TypedDict
 from langgraph.checkpoint.sqlite import SqliteSaver
 from langgraph.graph import END, START, StateGraph
 
+from .. import cerebros
 from . import busca, calibrar, confianca, feedback, floresta, juiz, rerank, sinais
 from .classificador import MERITO, REFORMA
 from .llm import chamar, config, json_da_resposta
@@ -31,32 +32,59 @@ from .llm import chamar, config, json_da_resposta
 RAIZ = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 TJSC = os.path.join(RAIZ, "output", "tjsc.db")
 
+
+def _cam(estado):
+    """Os caminhos do cerebro desta consulta.
+
+    O fallback para o padrao NAO e' cosmetico: e' o que faz os checkpoints
+    gravados antes desta fase — que nao tem a chave `cerebro` — continuarem
+    retomaveis. Sem ele, o primeiro boot depois do deploy quebraria
+    execucao.reconciliar() com KeyError em toda consulta pendente.
+    """
+    return cerebros.caminhos(estado.get("cerebro") or cerebros.padrao())
+
 # Peso de cada precedente no prognostico, pela confianca do classificador.
 PESO_CONFIANCA = {"dispositivo": 1.0, "texto completo": 0.7, "ementa": 0.5, "-": 0.2}
 
+# Piso de acervo para o prognostico poder cravar. Na mesma ordem de grandeza do
+# MIN_AJUSTE=300 do calibrador (que precisa de 300 casos POR ANO), e abaixo do
+# tamanho em que a floresta passa a bater a linha de base. Nao e' um numero
+# medido — e' uma recusa declarada: cerebro novo devolve evidencia, nao numero.
+MIN_MERITO_PARA_CRAVAR = 1500
 
-# Linha de argumentacao pedida pelo usuario -> resultados que a sustentam.
-# NAO existe "condenar/absolver" neste acervo: 18 decisoes criminais em 20.363.
-# O eixo real do corpus e' reformar x manter, e e' nele que a busca opera.
-TESES = {
-    "reformar": ("provido", "parcialmente provido"),
-    "manter": ("desprovido",),
-    "neutra": (),
-}
-ROTULO_TESE = {"reformar": "reformar a decisão de origem (dar provimento)",
-               "manter": "manter a decisão de origem (negar provimento)"}
+
+# Linha de argumentacao pedida pelo usuario. NAO existe "condenar/absolver"
+# neste acervo: 18 decisoes criminais em 20.363. O eixo do corpus e' reformar x
+# manter a decisao de origem.
+#
+# QUEM FILTRA E' A TRIAGEM, NAO O SQL — e isso foi medido, nao suposto. Filtrar
+# por `resultado` traz decisoes em que o RECORRENTE venceu, que nao e' a mesma
+# coisa que decisoes que sustentam a SUA tese: num teste com o autor recorrendo,
+# os 8 precedentes "provido" eram todos casos em que quem recorreu foi a
+# seguradora, e a minuta pedida como "reformar" saiu negando provimento. Pior,
+# o filtro por resultado joga fora o melhor material: um "desprovido" em que a
+# parte contraria recorreu e perdeu e' exatamente o que a sua tese quer citar.
+# A pergunta "este precedente favorece o meu lado?" so' tem resposta lendo o
+# merito — e quem le' e' o triador.
+LADOS = {"reformar": "REFORMAR a decisão de origem (dar provimento ao recurso)",
+         "manter": "MANTER a decisão de origem (negar provimento ao recurso)"}
 
 
 class Estado(TypedDict, total=False):
     caso: str
+    # QUEM julga: slug do cerebros.json. Vive no Estado (e nao em construir())
+    # porque o checkpoint precisa reter isso — e' o que permite retomar uma
+    # consulta sem saber de antemao de qual acervo ela era. NAO confundir com
+    # `perfil` la' embaixo, que e' o perfil do ARGUMENTO.
+    cerebro: str
     filtros: dict                       # classe / ano_min / ano_max / excluir
     tese: str                           # neutra | reformar | manter
     triagem: dict
     consulta: str
     candidatos: list
     precedentes: list
-    sustentacao: list                   # precedentes do lado pedido (so' com --tese)
-    comuns: dict                        # o que se repete entre eles
+    comuns: dict                        # o que se repete entre eles (so' com --tese)
+    descartados: dict                   # quantos o triador cortou por lado
     perfil: dict                        # historico do argumento (sinais.perfil)
     contra: dict                        # quem discorda, dentro do que veio
     ciclo_busca: int
@@ -95,7 +123,7 @@ P_TRIAR = """Você separa precedentes úteis de ruído.
 O caso em análise:
 {caso}
 
-Abaixo, {n} decisões do mesmo relator. Para cada uma, dê uma nota de analogia:
+Abaixo, {n} decisões do {titulo} {relator}. Para cada uma, dê uma nota de analogia:
 5 = mesma questão jurídica e situação de fato muito parecida
 4 = mesma questão jurídica, fatos diferentes
 3 = questão vizinha, o raciocínio ainda serve
@@ -119,14 +147,35 @@ Entre duas decisões de mesma analogia, dê a nota maior à mais bem ancorada e 
 recente. NÃO suba a nota de um precedente pouco análogo só porque a ficha é boa:
 âncora forte em questão jurídica diferente continua sendo 1 ou 2.
 
-Devolva SOMENTE um JSON: {{"notas": [{{"id": 123, "nota": 4, "por_que": "até 12 palavras"}}]}}
+{lado}
+Devolva SOMENTE um JSON: {{"notas": [{{"id": 123, "nota": 4, "por_que": "até 12 palavras"{campo}}}]}}
 Inclua todas as {n} decisões.
 
 DECISÕES:
 {lista}
 """
 
-P_REDIGIR = """Você redige uma minuta no estilo do Desembargador Rubens Schulz (TJSC),
+P_TRIAR_LADO = """
+ALÉM DA NOTA, diga de que lado cada decisão joga. O usuário quer sustentar:
+**{lado}**.
+
+CUIDADO — o rótulo "provido/desprovido" NÃO responde isso. Ele só diz que o
+RECORRENTE daquele processo venceu ou perdeu, e o recorrente de lá pode ser a
+parte contrária à do caso em análise. Um acórdão "provido" em que quem recorreu
+foi a seguradora é material CONTRA um segurado; um "desprovido" em que a
+seguradora recorreu e perdeu é material A FAVOR dele.
+
+Então leia o mérito: o que aquela decisão concluiu ajuda ou atrapalha a tese que
+o usuário quer sustentar NESTE caso? Responda no campo "lado":
+  "a_favor"  = o que ela decidiu no mérito sustenta a tese pedida
+  "contra"   = decidiu no sentido oposto
+  "neutro"   = não dá para dizer, ou trata de questão lateral (preliminar,
+               honorários, competência) sem tomar partido no mérito
+Na dúvida entre "a_favor" e "neutro", escolha "neutro" — precedente que não
+sustenta de verdade custa caro na sustentação oral.
+"""
+
+P_REDIGIR = """Você redige uma minuta no estilo do {titulo} {relator} ({tribunal}),
 imitando a estrutura, o vocabulário e o encadeamento das decisões dele que seguem.
 
 REGRAS DURAS:
@@ -153,7 +202,7 @@ PROGNÓSTICO ESTATÍSTICO (calculado sobre os precedentes, sem IA):
 CASO:
 {caso}
 
-PRECEDENTES DO RELATOR:
+PRECEDENTES DO {titulo} {relator}:
 {precedentes}
 {criticas}
 Escreva a minuta em português jurídico brasileiro, em markdown."""
@@ -189,15 +238,23 @@ Quem decide é o desembargador; seu papel aqui é deixar a escolha informada.
 P_TESE = """
 LINHA DE ARGUMENTAÇÃO PEDIDA: o usuário quer a sustentação para {lado}.
 
-Escreva a fundamentação que sustenta esse lado, apoiada nos PRECEDENTES DE
-SUSTENTAÇÃO abaixo e no que se repete entre eles.
+TODOS os precedentes abaixo foram recuperados JÁ FILTRADOS por esse resultado.
+A amostra é de um lado só, de propósito. Duas consequências obrigatórias:
 
-Isto NÃO é licença para forçar nem para esconder:
-- a contra-argumentação continua tendo de ser enfrentada pelo número;
-- se o prognóstico neutro (que foi calculado SEM este filtro) apontar para o
-  outro lado, escreva uma seção final "O que joga contra" dizendo isso com todas
-  as letras e apontando o que precisaria ser provado nos autos para virar;
-- não invente precedente, súmula nem tese que não esteja na lista.
+1. NÃO EXISTE PROGNÓSTICO nesta consulta, e você não vai escrever um. Não diga
+   que o resultado é "provável", "majoritário", "pacífico" ou "consolidado", e
+   não conte precedentes como se a contagem medisse tendência — ela mede o
+   filtro. Quem quiser o número roda a consulta em modo neutro.
+2. Escreva a MELHOR fundamentação possível para esse lado, apoiada nos
+   precedentes abaixo e no que se repete entre eles. Cite pelo número.
+
+Continua valendo tudo o mais: não invente precedente, súmula, tema nem regime
+jurídico; enfrente todos os pedidos; o dispositivo é o do lado pedido.
+
+Feche com uma seção "Onde esta tese é frágil" apontando, do próprio material,
+o que a enfraquece: precedente não unânime, âncora só estadual, decisão antiga,
+caso cujos fatos afastam a analogia. Sustentar um lado não é esconder o flanco —
+quem vai a julgamento com este texto precisa saber por onde vai apanhar.
 {comuns}"""
 
 P_REVISAR = """Você é o revisor. Não reescreva nada — aponte problemas.
@@ -245,6 +302,7 @@ def no_triagem(estado):
 
 def no_recuperar(estado):
     cfg = config()["busca"]
+    cam = _cam(estado)
     ciclo = estado.get("ciclo_busca", 0)
     f = estado.get("filtros") or {}
     t = estado["triagem"]
@@ -263,34 +321,27 @@ def no_recuperar(estado):
         limite = cfg["candidatos"] * 2
         termos += [t.get("materia") or "", t.get("tese") or ""]
     consulta = busca.montar_consulta(termos)
-    fb = feedback.boost() if config()["busca"].get("usar_feedback") else None
+    # o boost e' por cerebro: decisao_id so' e' unico dentro de um acervo, e sem
+    # o filtro o veredito dado num cerebro rebaixaria um precedente aleatorio do
+    # outro (ver src/rag/feedback.py)
+    fb = (feedback.boost(cerebro=cam["slug"])
+          if config()["busca"].get("usar_feedback") else None)
     # Busca o dobro e reordena pela ficha de procedencia antes de cortar: o LLM
     # de triagem passa a ver os N melhores de 2N, e nao os 2N primeiros do BM25.
     # Custo de LLM identico — quem paga o dobro e' o SQLite, em milissegundos.
-    comum = dict(classe=classe, ano_min=f.get("ano_min"), ano_max=f.get("ano_max"),
-                 excluir=f.get("excluir") or ())
-    cand = busca.buscar(consulta, limite=limite * 2, **comum)
+    cand = busca.buscar(consulta, limite=limite * 2, classe=classe,
+                        ano_min=f.get("ano_min"), ano_max=f.get("ano_max"),
+                        excluir=f.get("excluir") or (), banco=cam["rag"])
     cand = rerank.ordenar(cand, limite=limite, boost=fb)
-    for c in cand:
-        c["neutro"] = True   # so' estes contam no prognostico
-
-    # Linha de argumentacao: uma SEGUNDA busca, restrita ao lado pedido, para
-    # achar sustentacao que nao cabia no top-N neutro. As duas listas seguem
-    # separadas de proposito — a neutra alimenta o prognostico calibrado, esta
-    # alimenta a minuta. Custo de LLM: so' as linhas novas na triagem.
-    lado = TESES.get(estado.get("tese") or "neutra", ())
-    if lado:
-        vistos = {c["id"] for c in cand}
-        extra = busca.buscar(consulta, limite=limite * 2, resultados=lado, **comum)
-        extra = [c for c in rerank.ordenar(extra, boost=fb) if c["id"] not in vistos]
-        cand += extra[:max(8, limite // 2)]
     return {"consulta": consulta, "candidatos": cand, "ciclo_busca": ciclo + 1,
-            "perfil": sinais.perfil(consulta),
-            "contra": sinais.contra_argumentacao([c for c in cand if c.get("neutro")])}
+            # `perfil` aqui e' o do ARGUMENTO (sinais.perfil), nao o do cerebro
+            "perfil": sinais.perfil(consulta, banco=cam["rag"]),
+            "contra": sinais.contra_argumentacao(cand)}
 
 
 def no_triar(estado):
     cfg = config()["busca"]
+    cam = _cam(estado)
     cand = estado["candidatos"]
     if not cand:
         return {"precedentes": []}
@@ -300,8 +351,12 @@ def no_triar(estado):
            sinais.resumir_ficha(c),
            (c["ementa"] or c["dispositivo"] or "")[:900])
         for c in cand)
+    tese = estado.get("tese") or "neutra"
     msg = [{"role": "user", "content": P_TRIAR.format(
-        caso=estado["caso"][:6000], n=len(cand), lista=lista)}]
+        caso=estado["caso"][:6000], n=len(cand), lista=lista,
+        titulo=cam["titulo"], relator=cam["nome"],
+        lado=P_TRIAR_LADO.format(lado=LADOS[tese]) if tese in LADOS else "",
+        campo=', "lado": "a_favor|contra|neutro"' if tese in LADOS else "")}]
     txt, custo = chamar("triar", msg)
     custos = [custo]
     if custo["cortado"]:
@@ -319,11 +374,18 @@ def no_triar(estado):
             txt = txt2
     notas = {n.get("id"): n for n in json_da_resposta(txt, padrao={}).get("notas", [])
              if isinstance(n, dict)}
-    escolhidos = []
+    escolhidos, anotados = [], []
     for c in cand:
-        n = notas.get(c["id"])
-        if n and (n.get("nota") or 0) >= cfg["nota_minima"]:
-            escolhidos.append({**c, "nota": n["nota"], "por_que": n.get("por_que", "")})
+        n = notas.get(c["id"]) or {}
+        c = {**c, "nota": n.get("nota"), "por_que": n.get("por_que", ""),
+             "lado": (n.get("lado") or "").strip().lower()}
+        # o veredito volta para a LISTA INTEIRA de candidatos, nao so' para os
+        # aprovados: e' assim que a visualizacao de rede consegue mostrar os
+        # analogos que decidem CONTRA — que e' a evidencia que o modo tese
+        # produz. Sem isto o front recebe 80 nos sem lado nenhum.
+        anotados.append(c)
+        if (c["nota"] or 0) >= cfg["nota_minima"]:
+            escolhidos.append(c)
     # a nota do LLM manda (e' ela que veta o que nao e' analogo); o rerank so'
     # desempata dentro da mesma nota
     escolhidos.sort(key=lambda c: (-c["nota"], -c.get("pontos", 0.0)))
@@ -331,17 +393,29 @@ def no_triar(estado):
         print("  AVISO: a triagem não devolveu nota nenhuma para %d candidatos "
               "— o prognóstico vai sair vazio" % len(cand), flush=True)
 
-    # A LISTA DO PROGNOSTICO E' SO' A NEUTRA. Deixar a busca da tese entrar aqui
-    # empurraria a contagem para o lado pedido — o sistema responderia o que o
-    # usuario quer ouvir, com a cara de numero calibrado. E' o oposto do que ele
-    # serve para fazer.
-    prec = [c for c in escolhidos if c.get("neutro")][:cfg["precedentes"]]
-    lado = TESES.get(estado.get("tese") or "neutra", ())
-    sust = ([c for c in escolhidos if c["resultado"] in lado][:cfg["precedentes"]]
-            if lado else [])
-    return {"precedentes": prec, "custos": custos, "sustentacao": sust,
-            "comuns": sinais.comuns(sust),
-            "contra": sinais.contra_argumentacao(prec)}
+    if tese not in LADOS:
+        return {"precedentes": escolhidos[:cfg["precedentes"]], "custos": custos,
+                "candidatos": anotados, "comuns": {},
+                "contra": sinais.contra_argumentacao(escolhidos)}
+
+    # AQUI a amostra encolhe: fica so' o que o triador leu e disse que sustenta a
+    # tese pedida. 'neutro' e 'contra' saem — inclusive precedentes de analogia 5,
+    # que no modo neutro entrariam. E' esse o corte que o modo extremo faz.
+    a_favor = [c for c in escolhidos if c["lado"] == "a_favor"]
+    prec = a_favor[:cfg["precedentes"]]
+    descartados = {"contra": sum(c["lado"] == "contra" for c in escolhidos),
+                   "neutro": sum(c["lado"] not in ("a_favor", "contra")
+                                 for c in escolhidos)}
+    print("  tese '%s': %d de %d precedentes sustentam o lado pedido "
+          "(%d contra, %d neutros)"
+          % (tese, len(a_favor), len(escolhidos),
+             descartados["contra"], descartados["neutro"]), flush=True)
+    return {"precedentes": prec, "custos": custos, "candidatos": anotados,
+            "comuns": sinais.comuns(prec), "descartados": descartados,
+            # a contra-argumentacao vem do conjunto INTEIRO, nao do filtrado:
+            # e' justamente o que o triador marcou como "contra" que o usuario
+            # vai ter de enfrentar no julgamento
+            "contra": sinais.contra_argumentacao(escolhidos)}
 
 
 def _suficiente(estado):
@@ -353,7 +427,7 @@ def _suficiente(estado):
     return "prognostico"
 
 
-def _peso(p):
+def peso(p):
     """Peso de um precedente no voto.
 
     O BM25 entra: medido em 400 casos cegos, ponderar pelo score sobe a precisao
@@ -375,16 +449,47 @@ def no_prognostico(estado):
              recuperacao — por isso responde quando ela falha, e por isso a
              discordancia entre os dois significa alguma coisa.
     """
+    cam = _cam(estado)
     prec = estado.get("precedentes") or []
     pesos = {}
     for p in prec:
-        w = _peso(p)
+        w = peso(p)
         pesos[p["resultado"]] = pesos.get(p["resultado"], 0.0) + w
     total = sum(pesos.values())
     ordenado = sorted(pesos.items(), key=lambda kv: -kv[1])
     t = estado.get("triagem") or {}
     classe = (estado.get("filtros") or {}).get("classe") or t.get("classe")
-    n_base, taxa_base = busca.taxa_da_classe(classe)
+    n_base, taxa_base = busca.taxa_da_classe(classe, banco=cam["rag"])
+    n_merito = cerebros.saude(cam["slug"])["n_merito"]
+
+    if (estado.get("tese") or "neutra") != "neutra":
+        # A amostra foi filtrada pelo lado pedido. Contar reforma nela devolveria
+        # o lado pedido POR CONSTRUCAO — 100%, sempre, dissesse o acervo o que
+        # dissesse. Entao aqui nao sai numero nenhum do k-NN, e a calibracao (que
+        # foi ajustada sobre a escala do conjunto) nao se aplica. Sobra a
+        # floresta, que le' o CASO e nao a busca — e' o unico estimador que a
+        # filtragem nao contamina, e ela sai crua, sem calibrar.
+        rf = floresta.prever(
+            " ".join(list(t.get("termos") or []) + [t.get("materia") or "",
+                                                    t.get("tese") or ""]),
+            classe=classe, caminho=cam["floresta"])
+        return {"prognostico": {
+            "enviesado": True,
+            "cerebro": cam["slug"], "cerebro_nome": cam["nome"],
+            "tese": estado["tese"],
+            "n_precedentes": len(prec),
+            "classe_base": classe, "n_classe": n_base,
+            "reforma_historica_classe": round(100 * taxa_base, 1) if taxa_base else None,
+            "floresta": rf,
+            "perfil": estado.get("perfil"),
+            "comuns": estado.get("comuns"),
+            "decide": False,
+            "faixa": "amostra_filtrada",
+            "confianca": {"decide": False, "faixa": "amostra_filtrada", "por_que": [
+                "a amostra foi filtrada pelo lado que você pediu — contar "
+                "resultado nela não mede nada",
+                "para o prognóstico calibrado, rode a mesma consulta em --tese neutra"]},
+        }}
 
     merito = sum(w for r, w in pesos.items() if r in MERITO)
     reforma = sum(w for r, w in pesos.items() if r in REFORMA)
@@ -395,7 +500,7 @@ def no_prognostico(estado):
     rf = floresta.prever(
         " ".join(list(t.get("termos") or []) + [t.get("materia") or "",
                                                 t.get("tese") or ""]),
-        classe=classe)
+        classe=classe, caminho=cam["floresta"])
     p_conj, acordo, fonte = floresta.combinar(
         reforma_knn, rf["p_reforma"] if rf else None,
         config().get("floresta", {}).get("peso_knn", floresta.PESO_KNN))
@@ -404,15 +509,32 @@ def no_prognostico(estado):
     # reformavam 4%. A isotonica corrige a escala sem estragar a ordem — medido
     # em 1092 casos de 2025 que nao entraram no ajuste: maior erro da diagonal
     # de 21,9 pp para 5,0 pp.
-    p_cal = calibrar.aplicar(p_conj)
-    lo, hi = confianca.intervalo(prec, _peso) if prec else (None, None)
+    p_cal = calibrar.aplicar(p_conj, caminho=cam["calibrador"])
+    lo, hi = confianca.intervalo(prec, peso) if prec else (None, None)
     if lo is not None:
-        lo, hi = calibrar.aplicar(lo), calibrar.aplicar(hi)
-    conf = confianca.avaliar(p_cal, prec, _peso, knn=reforma_knn,
+        lo = calibrar.aplicar(lo, caminho=cam["calibrador"])
+        hi = calibrar.aplicar(hi, caminho=cam["calibrador"])
+    conf = confianca.avaliar(p_cal, prec, peso, knn=reforma_knn,
                              rf=rf["p_reforma"] if rf else None,
                              largura=(hi - lo) if lo is not None else None)
 
+    # PORTAO DE ACERVO: a abstencao de confianca.avaliar protege a AMOSTRA desta
+    # consulta; nada ate' aqui olhava o tamanho do acervo por tras dela. Num
+    # cerebro recem-coletado, taxa_da_classe devolve base historica de 40
+    # decisoes como se valesse algo, e o percentual sai com cara de medida.
+    # Acervo pequeno nao e' defeito — cravar em cima dele e' que seria.
+    if n_merito < MIN_MERITO_PARA_CRAVAR:
+        conf = {**conf, "decide": False, "faixa": "acervo_pequeno",
+                "por_que": [
+                    "o acervo de %s tem %d decisões de mérito (mínimo %d para "
+                    "cravar): não há base histórica suficiente neste cérebro"
+                    % (cam["nome"], n_merito, MIN_MERITO_PARA_CRAVAR),
+                    "os precedentes abaixo continuam valendo como material; o "
+                    "que não vale é o percentual"] + list(conf.get("por_que") or [])}
+
     prog = {
+        "cerebro": cam["slug"], "cerebro_nome": cam["nome"],
+        "n_merito_acervo": n_merito,
         "resultado_provavel": ordenado[0][0] if ordenado else (
             rf["resultado"] if rf else "indeterminado"),
         "confianca_pct": round(100 * ordenado[0][1] / total, 1) if total else 0.0,
@@ -431,7 +553,7 @@ def no_prognostico(estado):
         "perfil": estado.get("perfil"),
         # --- calibracao e abstencao
         "probabilidade_pct": round(100 * p_cal, 1) if p_cal is not None else None,
-        "calibrado": calibrar.calibrado(),
+        "calibrado": calibrar.calibrado(cam["calibrador"]),
         "intervalo_pct": ([round(100 * lo, 1), round(100 * hi, 1)]
                           if lo is not None else None),
         "decide": conf["decide"],
@@ -498,12 +620,14 @@ def _bloco_comuns(c):
     """O que se repete entre os precedentes do lado pedido — material bruto."""
     if not c.get("n"):
         return ""
-    l = ["\nO QUE SE REPETE nos %d precedentes de sustentação (contagem, não "
+    l = ["\nO QUE SE REPETE nos %d precedentes recuperados (contagem, não "
          "opinião):" % c["n"]]
     for rotulo, chave in (("âncoras citadas por mais de um", "ancoras"),
                           ("câmaras", "orgaos"), ("classes", "classes")):
         if c.get(chave):
-            l.append("- %s: %s" % (rotulo, "; ".join("%s (%d)" % t for t in c[chave])))
+            # desempacota no for: retomado do checkpoint, o par vem como lista
+            l.append("- %s: %s"
+                     % (rotulo, "; ".join("%s (%d)" % (v, n) for v, n in c[chave])))
     l.append("- %d de %d unânimes; %d transitaram em julgado; anos %s"
              % (c["unanimes"], c["n"], c["transitaram"],
                 "-".join(str(a) for a in (c["anos"][:1] + c["anos"][-1:]))))
@@ -512,18 +636,13 @@ def _bloco_comuns(c):
 
 def no_redigir(estado):
     cfg = config()["busca"]
+    cam = _cam(estado)
     prec = estado.get("precedentes") or []
-    vistos = {p["id"] for p in prec}
-    sust = [p for p in (estado.get("sustentacao") or []) if p["id"] not in vistos][:4]
-    db = sqlite3.connect("file:%s?mode=ro" % TJSC.replace("\\", "/"), uri=True)
+    # o inteiro teor vem do tjsc.db DESTE cerebro: os ids so' fazem sentido
+    # dentro do acervo que os gerou
+    db = sqlite3.connect("file:%s?mode=ro" % cam["tjsc"].replace("\\", "/"), uri=True)
     try:
         blocos = [_texto_precedente(db, p, cfg["chars_por_precedente"]) for p in prec]
-        if sust:
-            blocos.append("\n## PRECEDENTES DE SUSTENTAÇÃO (recuperados já "
-                          "filtrados pelo lado pedido — não servem de amostra "
-                          "para medir tendência, servem de material)\n")
-            blocos += [_texto_precedente(db, p, cfg["chars_por_precedente"])
-                       for p in sust]
     finally:
         db.close()
     criticas = estado.get("criticas") or []
@@ -536,17 +655,20 @@ def no_redigir(estado):
     # gastaria contexto
     enxuto = {k: v for k, v in prog.items()
               if k not in ("perfil", "contra", "floresta", "confianca")}
-    if prog.get("decide") is False:
+    if prog.get("enviesado"):
+        # P_SEM_DECISAO manda escrever dispositivo condicional nos dois cenarios
+        # — o oposto do que se pediu aqui. No modo tese quem manda e' P_TESE.
+        aviso = P_TESE.format(lado=LADOS[estado["tese"]],
+                              comuns=_bloco_comuns(estado.get("comuns") or {}))
+    elif prog.get("decide") is False:
         aviso = P_SEM_DECISAO.format(
             por_que="; ".join(prog.get("confianca", {}).get("por_que") or ["—"]))
     elif prog.get("divergencia"):
         aviso = P_DIVERGENCIA.format(divergencia=prog["divergencia"])
     else:
         aviso = ""
-    if ROTULO_TESE.get(estado.get("tese")):
-        aviso += P_TESE.format(lado=ROTULO_TESE[estado["tese"]],
-                               comuns=_bloco_comuns(estado.get("comuns") or {}))
     msg = [{"role": "user", "content": P_REDIGIR.format(
+        titulo=cam["titulo"], relator=cam["nome"], tribunal=cam["tribunal"],
         prognostico=json.dumps(enxuto, ensure_ascii=False),
         divergencia=aviso,
         procedencia=_bloco_procedencia(estado),
@@ -579,16 +701,23 @@ foi instruído a NÃO cravar um desfecho. Então, aqui:
 - tem de existir uma seção final apontando o ponto concreto que decide o caso.
 """
 
+R_TESE = """
+MODO LINHA DE ARGUMENTAÇÃO: o usuário pediu a sustentação de um lado, e os
+precedentes foram recuperados JÁ FILTRADOS por esse resultado. Então, aqui:
+- dispositivo definitivo do lado pedido é o CORRETO — não aponte como erro;
+- é ERRO GRAVE a minuta afirmar tendência ("majoritário", "pacífico",
+  "consolidado", "a jurisprudência é firme") ou usar a contagem dos precedentes
+  como argumento: a contagem mede o filtro, não o tribunal. Aponte o trecho;
+- tem de existir a seção "Onde esta tese é frágil". Se faltar, aponte.
+"""
+
 
 def no_revisar(estado):
-    # a sustentacao entra: sao numeros que o redator recebeu e pode citar com
-    # razao. Fora daqui, o revisor os acusaria de inventados.
-    numeros = list(dict.fromkeys(
-        p["numero"] for p in ((estado.get("precedentes") or [])
-                              + (estado.get("sustentacao") or []))))
-    absteve = (estado.get("prognostico") or {}).get("decide") is False
+    numeros = [p["numero"] for p in (estado.get("precedentes") or [])]
+    prog = estado.get("prognostico") or {}
+    absteve = prog.get("decide") is False
     txt, custo = chamar("revisar", [{"role": "user", "content": P_REVISAR.format(
-        modo=R_SEM_DECISAO if absteve else "",
+        modo=R_TESE if prog.get("enviesado") else (R_SEM_DECISAO if absteve else ""),
         prognostico=json.dumps(estado["prognostico"], ensure_ascii=False),
         numeros=", ".join(numeros) or "(nenhum)",
         caso=estado["caso"][:8000], minuta=estado["minuta"])}])
@@ -610,14 +739,13 @@ def no_julgar(estado):
     minuta = estado.get("minuta") or ""
     if not minuta.strip():
         return {}
+    cam = _cam(estado)
     redator = next((c["modelo"] for c in reversed(estado.get("custos") or [])
                     if c["no"] == "redigir"), None)
     d, custo = juiz.avaliar(
-        minuta, list(dict.fromkeys(
-            p["numero"] for p in ((estado.get("precedentes") or [])
-                                  + (estado.get("sustentacao") or [])))),
+        minuta, [p["numero"] for p in (estado.get("precedentes") or [])],
         caso=estado.get("caso"), decisao_real=estado.get("decisao_real"),
-        modelo_redator=redator,
+        modelo_redator=redator, titulo=cam["titulo"], relator=cam["nome"],
         absteve=(estado.get("prognostico") or {}).get("decide") is False)
     return {"julgamento": d, "custos": [custo]}
 
@@ -656,7 +784,11 @@ def construir(checkpoint=None, so_prognostico=False):
         g.add_edge("julgar", END)
     saver = None
     if checkpoint:
-        saver = SqliteSaver(sqlite3.connect(checkpoint, check_same_thread=False))
+        # timeout: a web roda ate' 2 consultas ao mesmo tempo no mesmo processo,
+        # e as duas escrevem checkpoint aqui. Sem espera, a segunda morre com
+        # "database is locked" no meio de um no' ja' pago.
+        saver = SqliteSaver(sqlite3.connect(checkpoint, check_same_thread=False,
+                                            timeout=30))
     return g.compile(checkpointer=saver)
 
 
@@ -690,7 +822,7 @@ if __name__ == "__main__":
     assert no_prognostico(perto)["prognostico"]["resultado_provavel"] == "provido"
 
     # --- decisao mutua: os quatro ramos da tabela
-    tem_rf = floresta.carregar() is not None
+    tem_rf = floresta.carregar(cerebros.caminhos()["floresta"]) is not None
     p = no_prognostico(falso)["prognostico"]
     assert p["fonte"] == ("conjunto" if tem_rf else "knn"), p["fonte"]
     if tem_rf:
@@ -724,7 +856,8 @@ if __name__ == "__main__":
     # (Precisa ser o mesmo lado: 8 precedentes fabricados contra a floresta
     # geram recusa por desacordo, e isso tambem esta' certo — foi o que este
     # teste pegou quando o fixture apontava para o lado oposto.)
-    lado = floresta.prever("dano moral", classe="Apelação Cível")
+    lado = floresta.prever("dano moral", classe="Apelação Cível",
+                           caminho=cerebros.caminhos()["floresta"])
     lado = ("provido" if not lado or lado["p_reforma"] >= 0.5 else "desprovido")
     firme = {**falso, "precedentes": [
         {"id": i, "resultado": lado, "confianca": "dispositivo",
@@ -765,32 +898,84 @@ if __name__ == "__main__":
                                        "exemplos": [{"numero": "123"}]}})
     assert "300 decisões" in b and "CONTRA-ARGUMENTAÇÃO" in b and "123" in b, b
 
-    # --- linha de argumentacao: puxa material do lado pedido SEM mexer no
-    # prognostico. E' a invariante que sustenta o resto do sistema — se a busca
-    # enviesada vazar para a contagem, o percentual calibrado vira propaganda.
-    fake = [{"id": i, "numero": "n%d" % i, "resultado": r, "confianca": "dispositivo",
-             "nota": 5, "pontos": 10.0, "ano": 2024, "orgao": "Segunda Câmara",
-             "classe": "Apelação Cível", "unanime": 1,
-             "ancoras_json": '["Tema 1059/STJ"]', "neutro": n}
-            for i, (r, n) in enumerate([("desprovido", True)] * 6
-                                       + [("provido", False)] * 4)]
+    # --- linha de argumentacao: amostra ENCOLHE para o lado pedido, e por isso
+    # NAO sai prognostico. E' a invariante que sustenta o resto do sistema: se a
+    # contagem sobre a amostra filtrada virasse percentual, ele diria 100% do
+    # lado pedido sempre, dissesse o acervo o que dissesse.
+    so_reforma = [{"id": i, "numero": "n%d" % i, "resultado": "provido",
+                   "confianca": "dispositivo", "nota": 5, "pontos": 10.0,
+                   "ano": 2024, "orgao": "Segunda Câmara", "classe": "Apelação Cível",
+                   "unanime": 1, "ancoras_json": '["Tema 1059/STJ"]'} for i in range(8)]
     base = {"triagem": {"classe": "Apelação Cível"}, "filtros": {}}
-    neutros = [c for c in fake if c["neutro"]]
-    p_neutro = no_prognostico({**base, "precedentes": neutros})["prognostico"]
-    assert p_neutro["reforma_nos_precedentes"] == 0.0, p_neutro
 
-    prec = [c for c in fake if c.get("neutro")][:8]
-    lado = TESES["reformar"]
-    sust = [c for c in fake if c["resultado"] in lado][:8]
-    assert len(prec) == 6 and len(sust) == 4, (len(prec), len(sust))
-    assert no_prognostico({**base, "precedentes": prec})["prognostico"][
-        "reforma_nos_precedentes"] == 0.0, "a busca da tese vazou para a contagem"
+    pn = no_prognostico({**base, "precedentes": so_reforma})["prognostico"]
+    assert pn["reforma_nos_precedentes"] == 100.0, "controle: sem tese, ele conta"
 
-    c = sinais.comuns(sust)
-    assert c["n"] == 4 and c["ancoras"] == [("Tema 1059/STJ", 4)], c
+    pt = no_prognostico({**base, "tese": "reformar",
+                         "precedentes": so_reforma})["prognostico"]
+    assert pt["enviesado"] is True and pt["decide"] is False, pt
+    for proibido in ("reforma_nos_precedentes", "probabilidade_pct",
+                     "reforma_conjunta_pct", "distribuicao", "intervalo_pct"):
+        assert proibido not in pt, "%s vazou numa amostra filtrada" % proibido
+    assert pt["floresta"], "a floresta le' o caso, nao a busca — ela sobrevive"
+    assert "neutra" in " ".join(pt["confianca"]["por_que"])
+    # e o modo neutro continua intacto
+    assert no_prognostico({**base, "tese": "neutra",
+                           "precedentes": so_reforma})["prognostico"] == pn
+
+    c = sinais.comuns(so_reforma)
+    assert c["n"] == 8 and c["ancoras"] == [("Tema 1059/STJ", 8)], c
     assert sinais.comuns([]) == {}
     assert "Tema 1059/STJ" in _bloco_comuns(c) and _bloco_comuns({}) == ""
-    assert TESES["neutra"] == () and set(TESES) == {"neutra", "reformar", "manter"}
+    # retomado do checkpoint os pares voltam como LISTA, nao tupla: o relatorio
+    # inteiro morria aqui com "not enough arguments for format string"
+    assert _bloco_comuns(json.loads(json.dumps(c))) == _bloco_comuns(c)
+    assert set(LADOS) == {"reformar", "manter"} and "neutra" not in LADOS
+
+    # --- no_triar com a triagem dublada: sem rede, sem gastar.
+    # Prova as duas coisas que o teste real nao provou de graca: que o corte
+    # semantico manda (analogia 5 CONTRA a tese fica de fora, analogia 3 a favor
+    # entra) e que o veredito volta para TODOS os candidatos — sem isso a
+    # visualizacao de rede recebe 80 nos sem lado e o usuario nao ve quem
+    # decide contra ele.
+    _chamar_real = chamar
+    _dub = [{"id": 1, "nota": 5, "por_que": "x", "lado": "contra"},
+            {"id": 2, "nota": 3, "por_que": "y", "lado": "a_favor"},
+            {"id": 3, "nota": 5, "por_que": "z", "lado": "neutro"},
+            {"id": 4, "nota": 1, "por_que": "w", "lado": "contra"}]
+    chamar = lambda *a, **k: (  # noqa: E731,F811
+        json.dumps({"notas": _dub}),
+        {"no": "triar", "modelo": "dublê", "tokens_in": 0, "tokens_out": 0,
+         "custo_usd": 0.0, "cortado": False})
+    _cands = [{"id": i, "numero": "n%d" % i, "data": "2024-01-01",
+               "classe": "Apelação Cível", "resultado": "provido", "ementa": "e",
+               "dispositivo": "d", "pontos": 1.0, "ano": 2024, "unanime": 1,
+               "ancoras_json": "[]"} for i in (1, 2, 3, 4)]
+    _e = {"candidatos": _cands, "caso": "c", "tese": "reformar"}
+    r = no_triar(_e)
+    assert [p["id"] for p in r["precedentes"]] == [2], r["precedentes"]
+    assert r["descartados"] == {"contra": 1, "neutro": 1}, r["descartados"]
+    # id 4 tem nota 1: nao e' analogo, logo nao conta como descartado...
+    assert len(r["candidatos"]) == 4, "a rede precisa dos 4"
+    # ... mas o veredito dele volta assim mesmo, para a rede poder desenhar
+    assert {c["id"]: c["lado"] for c in r["candidatos"]} == {
+        1: "contra", 2: "a_favor", 3: "neutro", 4: "contra"}
+    # no modo neutro o campo nem e' pedido, e a nota manda sozinha
+    rn = no_triar({**_e, "tese": "neutra"})
+    assert [p["id"] for p in rn["precedentes"]] == [1, 3, 2], rn["precedentes"]
+    assert rn["comuns"] == {} and "descartados" not in rn
+    chamar = _chamar_real  # noqa: F811
+
+    # o prompt da triagem so' pede o campo "lado" quando ha' lado a pedir
+    assert "a_favor" in P_TRIAR_LADO
+    _fmt = dict(caso="c", n=1, lista="l", titulo="Desembargador", relator="Fulano")
+    assert P_TRIAR.format(lado="", campo="", **_fmt).count('"lado"') == 0
+    com_lado = P_TRIAR.format(
+        lado=P_TRIAR_LADO.format(lado=LADOS["reformar"]),
+        campo=', "lado": "a_favor|contra|neutro"', **_fmt)
+    assert '"lado"' in com_lado and "REFORMAR" in com_lado
+    # e o alerta que o teste real motivou tem que estar la'
+    assert "provido/desprovido" in com_lado and "recorrente" in com_lado
 
     assert _suficiente({"precedentes": [1, 2, 3], "ciclo_busca": 1}) == "prognostico"
     assert _suficiente({"precedentes": [1], "ciclo_busca": 1}) == "recuperar"
@@ -800,4 +985,60 @@ if __name__ == "__main__":
     assert _aprovado({"criticas": ["x"], "ciclo_revisao": 1}) == "redigir"
     assert _aprovado({"criticas": ["x"], "ciclo_revisao": 2}) == fim
     assert "julgar" in construir().get_graph().nodes
-    print("self-check OK — grafo monta e o prognóstico fecha a conta sem LLM")
+
+    # ------------------------------------------------------------------
+    # VAZAMENTO ENTRE CEREBROS. E' a prova barata de que a parametrizacao de
+    # caminhos esta' certa: monta um cerebro de mentira com um rag.db VAZIO e
+    # exige que a consulta apontada para ele volte de maos vazias. Se algum no'
+    # ainda usar constante de modulo, ele acha os 20 mil precedentes do cerebro
+    # padrao e este teste falha — que e' o unico jeito barato de pegar o bug,
+    # porque em producao ele nao levanta erro nenhum: so' responde com o acervo
+    # errado, plausivelmente.
+    import tempfile
+
+    from .indexar import ESQUEMA as ESQUEMA_INDICE
+
+    _dir = tempfile.mkdtemp()
+    _vazio = sqlite3.connect(os.path.join(_dir, "rag.db"))
+    _vazio.executescript(ESQUEMA_INDICE)
+    _vazio.commit()
+    _vazio.close()
+
+    _real, cerebros._cache["mtime"] = cerebros.ARQUIVO, None
+    cerebros.ARQUIVO = os.path.join(_dir, "cerebros.json")
+    cerebros._gravar({"padrao": cerebros.CEREBRO_LEGADO, "cerebros": [
+        {"slug": cerebros.CEREBRO_LEGADO, "nome": "Padrão", "dir": "output"},
+        {"slug": "fantasma", "nome": "Fantasma", "dir": _dir}]})
+    try:
+        # a busca do cerebro fantasma nao pode enxergar o acervo do padrao
+        rec = no_recuperar({"cerebro": "fantasma", "ciclo_busca": 0, "filtros": {},
+                            "triagem": {"termos": ["dano moral", "prescrição"]}})
+        assert rec["candidatos"] == [], \
+            "VAZAMENTO: o cérebro vazio recuperou %d precedentes do vizinho" \
+            % len(rec["candidatos"])
+        assert rec["perfil"] in ({}, None) or not rec["perfil"].get("usos"), rec["perfil"]
+
+        # ... e o prognostico dele se recusa a cravar, por acervo pequeno
+        pf_ = no_prognostico({"cerebro": "fantasma", "precedentes": [],
+                              "triagem": {"classe": "Apelação Cível",
+                                          "termos": ["dano moral"]},
+                              "filtros": {}})["prognostico"]
+        assert pf_["decide"] is False and pf_["faixa"] == "acervo_pequeno", pf_
+        assert pf_["n_merito_acervo"] == 0 and pf_["cerebro"] == "fantasma"
+        assert "Fantasma" in " ".join(pf_["confianca"]["por_que"])
+        assert pf_["floresta"] is None, "carregou a floresta do cérebro vizinho"
+
+        # a persona do prompt segue o cerebro, e nao um nome cravado
+        _p = P_REDIGIR.format(titulo="Desembargadora", relator="Fulana de Tal",
+                              tribunal="TJXX", prognostico="{}", divergencia="",
+                              procedencia="", caso="c", precedentes="p", criticas="")
+        assert "Fulana de Tal" in _p and "Rubens" not in _p, \
+            "o nome do relator ficou cravado no prompt de redação"
+    finally:
+        cerebros.ARQUIVO, cerebros._cache["mtime"] = _real, None
+
+    # e o fallback: estado SEM a chave (checkpoint antigo) continua rodando
+    assert _cam({})["slug"] == cerebros.padrao()
+
+    print("self-check OK — grafo monta, o prognóstico fecha a conta sem LLM, e "
+          "um cérebro não enxerga o acervo do outro")

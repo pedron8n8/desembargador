@@ -9,3 +9,13 @@ output/
 *.db-shm
 *.db-wal
 *.pkl
+
+# fase 6 — frontend. O output/web.db (contas e sessoes) ja' cai no output/ acima.
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# deploy — os certificados do Caddy sao volume nomeado do Docker, mas quem
+# trocar por bind mount cai aqui.
+caddy_data/
+caddy_config/

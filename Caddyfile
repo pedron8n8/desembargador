@@ -1,0 +1,15 @@
+# Certificado do Let's Encrypt automatico. O DOMINIO vem do .env pelo compose.
+{$DOMINIO} {
+	reverse_proxy app:8000 {
+		# Sem isto o Caddy bufferiza a resposta e o SSE de
+		# /api/consultas/{thread}/eventos so' chega quando a consulta termina —
+		# a tela fica parada por minutos e parece travada.
+		flush_interval -1
+	}
+
+	# O upload de peca vai em base64 dentro do JSON (api/app.py, /api/extrair):
+	# um PDF de 20 MB vira ~27 MB de corpo.
+	request_body {
+		max_size 40MB
+	}
+}

@@ -1,0 +1,582 @@
+/* Cromo da interface. Separação por régua de 1px; nenhuma sombra. */
+
+/* ------------------------------------------------------------- estrutura */
+
+.app {
+  display: grid;
+  grid-template-columns: 232px 1fr;
+  min-height: 100%;
+}
+
+.lateral {
+  border-right: 1px solid var(--linha);
+  background: var(--papel-2);
+  padding: var(--e6) 0;
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+}
+
+.marca {
+  padding: 0 var(--e6) var(--e6);
+  border-bottom: 1px solid var(--linha);
+  margin-bottom: var(--e4);
+}
+
+.marca strong {
+  display: block;
+  font-family: var(--fonte-serif);
+  font-size: var(--t-md);
+  font-weight: 400;
+  letter-spacing: 0.01em;
+}
+
+.marca span {
+  font-size: var(--t-xs);
+  color: var(--tinta-3);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 0 var(--e3);
+}
+
+.nav a {
+  padding: var(--e2) var(--e3);
+  color: var(--tinta-2);
+  text-decoration: none;
+  border-left: 2px solid transparent;
+  border-radius: 0;
+}
+
+.nav a:hover {
+  background: var(--papel-3);
+  color: var(--tinta);
+}
+
+.nav a.ativo {
+  border-left-color: var(--selo);
+  color: var(--tinta);
+  background: var(--papel);
+  font-weight: 500;
+}
+
+.nav hr {
+  border: 0;
+  border-top: 1px solid var(--linha);
+  margin: var(--e3) var(--e3);
+}
+
+.rodape-lateral {
+  margin-top: auto;
+  padding: var(--e4) var(--e6) 0;
+  border-top: 1px solid var(--linha);
+  font-size: var(--t-xs);
+  color: var(--tinta-3);
+}
+
+.conteudo {
+  padding: var(--e8) var(--e12) var(--e24);
+  max-width: 1120px;
+  min-width: 0;
+}
+
+.cabecalho {
+  border-bottom: 1px solid var(--linha-forte);
+  padding-bottom: var(--e4);
+  margin-bottom: var(--e6);
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--e6);
+}
+
+.cabecalho h1 {
+  font-family: var(--fonte-serif);
+  font-size: var(--t-xxl);
+  font-weight: 400;
+}
+
+.cabecalho .sub {
+  color: var(--tinta-3);
+  font-size: var(--t-sm);
+  margin-top: var(--e1);
+}
+
+.secao {
+  margin-bottom: var(--e12);
+}
+
+.secao > h2 {
+  font-family: var(--fonte-serif);
+  font-size: var(--t-lg);
+  font-weight: 400;
+  margin-bottom: var(--e1);
+}
+
+.secao > .nota {
+  color: var(--tinta-3);
+  font-size: var(--t-sm);
+  margin-bottom: var(--e4);
+  max-width: var(--medida);
+}
+
+/* ---------------------------------------------------------- componentes */
+
+.painel {
+  border: 1px solid var(--linha);
+  background: var(--papel);
+  padding: var(--e4) var(--e6);
+}
+
+.painel + .painel {
+  border-top: 0;
+}
+
+.faixa {
+  display: flex;
+  gap: var(--e8);
+  flex-wrap: wrap;
+  border: 1px solid var(--linha);
+  padding: var(--e4) var(--e6);
+  background: var(--papel-2);
+}
+
+.medida {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.medida dt {
+  font-size: var(--t-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--tinta-3);
+}
+
+.medida dd {
+  margin: 0;
+  font-size: var(--t-lg);
+  font-family: var(--fonte-serif);
+  font-variant-numeric: tabular-nums;
+}
+
+.medida dd small {
+  font-size: var(--t-xs);
+  font-family: var(--fonte-ui);
+  color: var(--tinta-3);
+}
+
+button.botao,
+a.botao {
+  background: var(--selo);
+  color: var(--papel);
+  border: 1px solid var(--selo);
+  border-radius: var(--raio);
+  padding: var(--e2) var(--e4);
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+  font-weight: 500;
+}
+
+button.botao:hover,
+a.botao:hover {
+  background: #263c33;
+}
+
+button.botao:disabled {
+  background: var(--papel-3);
+  border-color: var(--linha-forte);
+  color: var(--tinta-3);
+  cursor: not-allowed;
+}
+
+button.leve,
+a.leve {
+  background: transparent;
+  color: var(--tinta-2);
+  border: 1px solid var(--linha-forte);
+  border-radius: var(--raio);
+  padding: var(--e1) var(--e3);
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+}
+
+button.leve:hover {
+  background: var(--papel-2);
+  color: var(--tinta);
+}
+
+button.leve[aria-pressed='true'] {
+  background: var(--selo-claro);
+  border-color: var(--selo-linha);
+  color: var(--selo);
+  font-weight: 500;
+}
+
+input[type='text'],
+input[type='email'],
+input[type='password'],
+input[type='number'],
+select,
+textarea {
+  border: 1px solid var(--linha-forte);
+  border-radius: var(--raio);
+  background: var(--papel);
+  padding: var(--e2) var(--e3);
+  width: 100%;
+}
+
+input:focus,
+select:focus,
+textarea:focus,
+button:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--selo);
+  outline-offset: 1px;
+}
+
+label.campo {
+  display: block;
+  margin-bottom: var(--e4);
+}
+
+label.campo > span {
+  display: block;
+  font-size: var(--t-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--tinta-3);
+  margin-bottom: var(--e1);
+}
+
+.abas {
+  display: flex;
+  gap: var(--e6);
+  border-bottom: 1px solid var(--linha-forte);
+  margin-bottom: var(--e6);
+}
+
+.abas a {
+  padding: var(--e2) 0 var(--e3);
+  color: var(--tinta-3);
+  text-decoration: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+
+.abas a:hover {
+  color: var(--tinta);
+}
+
+.abas a.ativo {
+  color: var(--tinta);
+  border-bottom-color: var(--selo);
+  font-weight: 500;
+}
+
+.selo {
+  display: inline-block;
+  font-size: var(--t-xs);
+  padding: 1px var(--e2);
+  border: 1px solid var(--linha-forte);
+  border-radius: var(--raio);
+  color: var(--tinta-2);
+  white-space: nowrap;
+}
+
+.selo.provido {
+  color: var(--provido);
+  border-color: var(--provido);
+}
+
+.selo.parcial {
+  color: var(--parcial);
+  border-color: var(--parcial);
+}
+
+.selo.desprovido {
+  color: var(--desprovido);
+  border-color: var(--desprovido);
+}
+
+.selo.processual {
+  color: var(--processual);
+}
+
+.selo.acento {
+  color: var(--selo);
+  border-color: var(--selo-linha);
+  background: var(--selo-claro);
+}
+
+.selo.alerta {
+  color: var(--alerta);
+  border-color: var(--alerta);
+  background: var(--alerta-claro);
+}
+
+.aviso {
+  border-left: 2px solid var(--linha-forte);
+  padding: var(--e1) 0 var(--e1) var(--e4);
+  color: var(--tinta-2);
+  font-size: var(--t-sm);
+  max-width: var(--medida);
+}
+
+.aviso.forte {
+  border-left-color: var(--alerta);
+}
+
+.vazio {
+  color: var(--tinta-3);
+  padding: var(--e8) 0;
+  text-align: center;
+  border: 1px dashed var(--linha-forte);
+}
+
+/* ------------------------------------------------------------ juridico */
+
+.juridico {
+  font-family: var(--fonte-serif);
+  font-size: var(--t-corpo);
+  line-height: 1.62;
+  max-width: var(--medida);
+}
+
+.juridico h1,
+.juridico h2,
+.juridico h3 {
+  font-family: var(--fonte-serif);
+  font-weight: 400;
+  margin: var(--e8) 0 var(--e3);
+}
+
+.juridico h1 {
+  font-size: var(--t-xl);
+}
+
+.juridico h2 {
+  font-size: var(--t-lg);
+}
+
+.juridico h3 {
+  font-size: var(--t-md);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--tinta-2);
+}
+
+.juridico p {
+  margin: 0 0 var(--e4);
+}
+
+.juridico ul,
+.juridico ol {
+  margin: 0 0 var(--e4);
+  padding-left: var(--e6);
+}
+
+.juridico li {
+  margin-bottom: var(--e2);
+}
+
+.juridico blockquote {
+  margin: 0 0 var(--e4);
+  padding-left: var(--e4);
+  border-left: 2px solid var(--linha-forte);
+  color: var(--tinta-2);
+  font-size: var(--t-md);
+}
+
+/* ---------------------------------------------------------- precedente */
+
+.prec {
+  border-top: 1px solid var(--linha);
+  padding: var(--e4) 0;
+}
+
+.prec:last-child {
+  border-bottom: 1px solid var(--linha);
+}
+
+.prec-topo {
+  display: flex;
+  align-items: baseline;
+  gap: var(--e3);
+  flex-wrap: wrap;
+  margin-bottom: var(--e2);
+}
+
+.prec-numero {
+  font-family: var(--fonte-mono);
+  font-size: var(--t-base);
+  color: var(--tinta);
+  text-decoration: none;
+  border-bottom: 1px solid var(--linha-forte);
+}
+
+.prec-numero:hover {
+  border-bottom-color: var(--selo);
+}
+
+.prec-meta {
+  color: var(--tinta-3);
+  font-size: var(--t-sm);
+}
+
+.prec-analogia {
+  font-variant-numeric: tabular-nums;
+  color: var(--tinta-2);
+  font-size: var(--t-sm);
+}
+
+.prec-linha {
+  font-size: var(--t-sm);
+  color: var(--tinta-2);
+  margin-bottom: var(--e1);
+}
+
+.prec-linha b {
+  font-weight: 500;
+  color: var(--tinta-3);
+  text-transform: uppercase;
+  font-size: var(--t-xs);
+  letter-spacing: 0.06em;
+  margin-right: var(--e2);
+}
+
+.prec-ementa {
+  font-family: var(--fonte-serif);
+  font-size: var(--t-md);
+  line-height: 1.55;
+  color: var(--tinta-2);
+  max-width: var(--medida);
+  margin: var(--e3) 0;
+}
+
+.prec-acoes {
+  display: flex;
+  gap: var(--e2);
+  align-items: center;
+  margin-top: var(--e3);
+}
+
+.prec-acoes span {
+  font-size: var(--t-xs);
+  color: var(--tinta-3);
+  margin-right: var(--e2);
+}
+
+/* --------------------------------------------------------------- chat */
+
+.chat {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e6);
+  max-width: var(--medida);
+}
+
+/* Nada de balão em pílula nem avatar: é transcrição, não app de mensagem. */
+.chat-turno {
+  border-left: 2px solid var(--linha);
+  padding-left: var(--e4);
+}
+
+.chat-turno.usuario {
+  border-left-color: var(--tinta-3);
+}
+
+.chat-turno.assistente {
+  border-left-color: var(--selo-linha);
+}
+
+.chat-quem {
+  font-size: var(--t-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--tinta-3);
+  margin-bottom: var(--e2);
+  display: flex;
+  gap: var(--e3);
+  align-items: baseline;
+}
+
+.tabela-rolavel {
+  overflow-x: auto;
+}
+
+/* ---------------------------------------------------------- cérebros */
+
+/* Quem julga fica no topo da lateral, junto da marca: é a escolha que muda
+   todas as outras telas, e some de vista se virar item de menu. */
+.seletor-cerebro {
+  display: block;
+}
+
+.seletor-cerebro .rotulo-mudo {
+  display: block;
+  font-size: var(--t-xs);
+  color: var(--tinta-3);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+
+.seletor-cerebro select {
+  width: 100%;
+  font-size: var(--t-sm);
+}
+
+/* Duas ou três colunas lado a lado, uma por cérebro. Empilham no estreito:
+   comparar exige ver os dois, e coluna espremida não deixa ler nenhum. */
+.colunas-comparacao {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: var(--e6);
+  align-items: start;
+}
+
+.coluna-comparacao {
+  border-top: 2px solid var(--linha-forte);
+  padding-top: var(--e4);
+  min-width: 0;
+}
+
+.coluna-comparacao h2 {
+  font-size: var(--t-md);
+  margin-bottom: var(--e4);
+}
+
+.coluna-comparacao h3 {
+  font-size: var(--t-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--tinta-3);
+  margin: var(--e6) 0 var(--e3);
+}
+
+.numero-grande {
+  font-family: var(--fonte-serif);
+  font-size: var(--t-lg);
+  line-height: 1.2;
+}
+
+.caso {
+  white-space: pre-wrap;
+  font-family: var(--fonte-serif);
+  font-size: var(--t-sm);
+  color: var(--tinta-2);
+  max-height: 22em;
+  overflow-y: auto;
+  margin: var(--e3) 0 var(--e6);
+}

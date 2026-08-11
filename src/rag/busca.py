@@ -11,6 +11,19 @@ import sys
 RAG = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(
     os.path.abspath(__file__)))), "output", "rag.db")
 
+
+def _exigir(banco):
+    """`banco` sem default de proposito: cada cerebro tem o seu rag.db.
+
+    Um default silencioso aqui produziria o unico bug desta base que ninguem
+    detecta — a consulta de um cerebro respondida com os precedentes de outro,
+    plausivel e sem erro nenhum. Melhor explodir na hora, no self-check.
+    """
+    if not banco:
+        raise ValueError(
+            "busca sem banco: passe banco=cerebros.caminhos(slug)['rag']")
+    return banco
+
 _LIXO = re.compile(r"[^\wÀ-ÿ\s.º°§-]", re.U)
 # Palavras que aparecem em quase toda decisao: pontuam ruido no BM25.
 _VAZIAS = {"recurso", "apelacao", "apelação", "agravo", "processo", "civel",
@@ -57,7 +70,7 @@ def _db(banco):
 
 
 def buscar(consulta, limite=40, classe=None, ano_min=None, ano_max=None,
-           excluir=(), resultados=(), banco=RAG):
+           excluir=(), resultados=(), banco=None):
     """Devolve lista de dicts ordenada por relevancia BM25 (score: menor = melhor).
 
     So' BM25 e filtros. Quem mexe na ordem depois disso — feedback do usuario,
@@ -65,6 +78,7 @@ def buscar(consulta, limite=40, classe=None, ano_min=None, ano_max=None,
     lugares alterando o score; com os sinais novos seriam tres, e ninguem
     saberia mais explicar por que um precedente ficou em primeiro.
     """
+    banco = _exigir(banco)
     if not consulta.strip():
         return []
     bruto = limite
@@ -85,9 +99,6 @@ def buscar(consulta, limite=40, classe=None, ano_min=None, ano_max=None,
         sql.append("AND d.id NOT IN (%s)" % ",".join("?" * len(excluir)))
         args += list(excluir)
     if resultados:
-        # so' o grafo usa, e so' na busca da LINHA DE ARGUMENTACAO (--tese). O
-        # prognostico NUNCA enxerga uma busca filtrada assim: contar reforma numa
-        # amostra so' de reformas daria 100%, e a calibracao iria junto.
         sql.append("AND d.resultado IN (%s)" % ",".join("?" * len(resultados)))
         args += list(resultados)
     sql.append("ORDER BY score LIMIT ?")
@@ -102,9 +113,9 @@ def buscar(consulta, limite=40, classe=None, ano_min=None, ano_max=None,
     return [dict(zip(CAMPOS + ("score",), l)) for l in linhas][:limite]
 
 
-def taxa_da_classe(classe, banco=RAG):
+def taxa_da_classe(classe, banco=None):
     """Base rate historica: (n_merito, taxa_de_reforma) para a classe."""
-    n, ref = _db(banco).execute(
+    n, ref = _db(_exigir(banco)).execute(
         "SELECT count(*), sum(resultado IN ('provido','parcialmente provido')) "
         "FROM decisao WHERE resultado IN "
         "('provido','parcialmente provido','desprovido') AND classe LIKE ?",
@@ -113,10 +124,22 @@ def taxa_da_classe(classe, banco=RAG):
 
 
 if __name__ == "__main__":
+    from .. import cerebros
+
+    cam = cerebros.caminhos()          # o cerebro padrao, explicito de proposito
     termos = sys.argv[1:] or ["efeito suspensivo", "agravo de instrumento"]
     q = montar_consulta(termos)
+    print("cérebro: %s  (%s)" % (cam["nome"], cam["rag"]))
     print("consulta FTS5:", q)
-    r = buscar(q, limite=10)
+
+    # esquecer o banco tem de explodir, nao cair num acervo qualquer
+    try:
+        buscar(q, limite=1)
+        raise AssertionError("buscar sem banco tinha que levantar")
+    except ValueError:
+        pass
+
+    r = buscar(q, limite=10, banco=cam["rag"])
     assert r, "nenhum resultado — indice vazio? rode: python -m src.rag.indexar"
     for d in r:
         print("\n[%.1f] %s | %s | %s | %s -> %s"

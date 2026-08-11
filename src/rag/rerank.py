@@ -168,9 +168,12 @@ if __name__ == "__main__":
     assert r[0]["id"] == 9, "feedback nao promoveu um empate tecnico"
 
     # --- dados reais: a ordem muda, e da' para explicar por que
+    from .. import cerebros
+
+    cam = cerebros.caminhos()
     q = busca.montar_consulta(sys.argv[1:] or ["prescrição intercorrente",
                                                "honorários recursais"])
-    bruto = busca.buscar(q, limite=40)
+    bruto = busca.buscar(q, limite=40, banco=cam["rag"])
     assert bruto, "indice vazio? rode: python -m src.rag.indexar"
     novo_ = ordenar(bruto, limite=8)
     antes = [c["id"] for c in bruto[:8]]
