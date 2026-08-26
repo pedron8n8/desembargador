@@ -82,6 +82,24 @@ def ancoras(d):
     return saida
 
 
+def leis_de(d):
+    """As leis de uma decisao, ja' canonicas.
+
+    Sem canonizar() aqui, e nao por esquecimento: a ancora chega crua do acordao
+    ("Súmula 54 do STJ", "SUMULA 54/STJ") e precisa de normalizacao para virar
+    no'; a lei chega de sinais.leis(), que ja' normalizou na indexacao. Passar
+    por um segundo canonizador seria manter duas regras para a mesma coisa, e a
+    hora em que as duas divergissem o grafo perderia arestas em silencio.
+    """
+    bruto = d.get("leis_json")
+    if isinstance(bruto, str):
+        try:
+            bruto = json.loads(bruto or "[]")
+        except ValueError:
+            bruto = []
+    return [x for x in (bruto or []) if x]
+
+
 def resolver_corte(chaves):
     """{chave_ambigua: chave_resolvida} — 'sumula:150:?' -> 'sumula:150:stf'.
 
@@ -166,7 +184,8 @@ def montar(candidatos, limiar=0.12, max_por_no=4, usar_texto=True):
             # a rede mostra de novo e' justamente o 'contra' — os analogos que
             # decidem do outro lado e por isso ficaram de fora da minuta.
             "lado": c.get("_lado") or "",
-            "ancoras": sorted(ancoras(c).values())}
+            "ancoras": sorted(ancoras(c).values()),
+            "leis": leis_de(c)}
            for c in cands]
 
     mapa = [ancoras(c) for c in cands]
@@ -203,6 +222,27 @@ def montar(candidatos, limiar=0.12, max_por_no=4, usar_texto=True):
             arestas.append({"de": cands[i]["id"], "para": "anc:" + chave,
                             "tipo": "ancora", "peso": 1.0, "rotulo": u["rotulo"]})
 
+    # --- (a2) dispositivo legal compartilhado: a LEI VIRA NO', ao lado da
+    # ancora e NUNCA no mesmo balde que ela. As duas respondem perguntas
+    # diferentes: a ancora diz "outro tribunal ja' decidiu assim", a lei diz "e'
+    # isto que o legislador escreveu". Empilhadas no mesmo tipo, a tela afirmaria
+    # que uma sumula e um artigo de codigo sustentam a decisao do mesmo jeito.
+    #
+    # Mesma regra de grau minimo da ancora: dispositivo citado por uma decisao
+    # so' nao liga nada, e no' sem aresta e' ruido no mapa.
+    usos_lei = {}
+    for i, c in enumerate(cands):
+        for rotulo in leis_de(c):
+            usos_lei.setdefault(rotulo, []).append(i)
+    for rotulo, indices in usos_lei.items():
+        if len(indices) < 2:
+            continue
+        nos.append({"id": "lei:" + rotulo, "tipo": "lei", "rotulo": rotulo,
+                    "chave": rotulo, "grau": len(indices)})
+        for i in indices:
+            arestas.append({"de": cands[i]["id"], "para": "lei:" + rotulo,
+                            "tipo": "lei", "peso": 1.0, "rotulo": rotulo})
+
     # --- (b) semelhanca de ementa: tracejada, e podada
     if usar_texto and len(cands) > 1:
         textos = [(c.get("ementa") or c.get("dispositivo") or "") for c in cands]
@@ -233,11 +273,14 @@ def montar(candidatos, limiar=0.12, max_por_no=4, usar_texto=True):
         "resumo": {
             "n_decisoes": len(cands),
             "n_ancoras": sum(n["tipo"] == "ancora" for n in nos),
+            "n_leis": sum(n["tipo"] == "lei" for n in nos),
             "n_arestas": len(arestas),
             "por_ancora": sum(a["tipo"] == "ancora" for a in arestas),
+            "por_lei": sum(a["tipo"] == "lei" for a in arestas),
             "por_texto": sum(a["tipo"] == "texto" for a in arestas),
             "isolados": sum(c["id"] not in ligados for c in cands),
             "ancoras_distintas": len({k for m in mapa for k in m}),
+            "leis_distintas": len(usos_lei),
         },
     }
 
@@ -289,6 +332,25 @@ if __name__ == "__main__":
     assert {a["de"] for a in anc} == {1, 2}
     assert all(a["para"] == "anc:sumula:54:stj" for a in anc)
     assert r["resumo"]["ancoras_distintas"] == 2, r["resumo"]
+
+    # --- a lei vira no' PROPRIO, e nao entra no balde da ancora
+    comleis = [
+        {"id": 1, "numero": "A", "leis_json": '["art. 830 do CPC", "art. 854 do CPC"]',
+         "ancoras_json": '["S\\u00famula 54 do STJ"]', "ementa": "arresto sisbajud"},
+        {"id": 2, "numero": "B", "leis_json": '["art. 830 do CPC"]',
+         "ancoras_json": '["S\\u00famula 54 do STJ"]', "ementa": "arresto sisbajud"},
+        {"id": 3, "numero": "C", "leis_json": "[]", "ementa": "outro assunto"},
+    ]
+    rl = montar(comleis, usar_texto=False)
+    hl = [n for n in rl["nos"] if n["tipo"] == "lei"]
+    assert len(hl) == 1 and hl[0]["chave"] == "art. 830 do CPC", hl
+    assert hl[0]["grau"] == 2                   # o 854 tem 1 uso so': não vira nó
+    assert rl["resumo"]["n_leis"] == 1 and rl["resumo"]["por_lei"] == 2, rl["resumo"]
+    # a sumula continua sendo no' de ancora, separada da lei
+    assert rl["resumo"]["n_ancoras"] == 1, rl["resumo"]
+    assert {n["tipo"] for n in rl["nos"]} == {"decisao", "ancora", "lei"}
+    # leis_json ausente, vazio ou quebrado nao derruba nada
+    assert leis_de({}) == [] and leis_de({"leis_json": "nao e' json"}) == []
 
     # o ganho que motivou a forma bipartida: N decisões com a mesma âncora dão
     # N arestas, não N*(N-1)/2

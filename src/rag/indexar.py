@@ -37,6 +37,9 @@ CREATE TABLE decisao (
   -- ficha de procedencia (src/rag/sinais.py), tudo deterministico
   ancora          TEXT,                  -- vinculante | persuasiva | estadual
   ancoras_json    TEXT,                  -- ["Tema 1059/STJ", "Súmula 297/STJ"]
+  -- lei e' coluna separada de ancora de proposito: precedente diz que outro
+  -- tribunal decidiu assim, dispositivo diz o que o legislador escreveu
+  leis_json       TEXT,                  -- ["art. 830 do CPC", "Lei 11.101/2005"]
   unanime         INTEGER,               -- 1 | 0 | NULL (nao identificado)
   efeito          TEXT                   -- {"transitou","subiu","sobrestado"} do Datajud
 );
@@ -67,8 +70,8 @@ def construir(tjsc=TJSC, rag=RAG, verboso=True):
         "SELECT id, numero_processo_raw, numero_processo, categoria, tipo_documento, "
         "       classe, orgao, origem, data_julgamento, url, ementa, inteiro_teor "
         "FROM decisoes")
-    t0, n, com_disp, com_efeito = time.time(), 0, 0, 0
-    colunas = 19
+    t0, n, com_disp, com_efeito, com_lei = time.time(), 0, 0, 0, 0
+    colunas = 20
     lote = []
     for (id_, num_raw, num, cat, tipo, classe, orgao, comarca, data, url,
          ementa, teor) in cur:
@@ -77,12 +80,14 @@ def construir(tjsc=TJSC, rag=RAG, verboso=True):
         com_disp += bool(disp)
         f = sinais.ficha(teor, mov.get(num or ""))
         com_efeito += f["efeito"] is not None
+        com_lei += bool(f["leis"])
         lote.append((
             id_, (num_raw or num or "").strip(), cat, tipo, classe, orgao, comarca,
             data, int(data[:4]) if data and data[:4].isdigit() else None, url,
             resultado, confianca, int(bool(teor and len(teor) > 200)),
             limpar_ementa(ementa), disp,
-            f["ancora"], json.dumps(f["ancoras"], ensure_ascii=False), f["unanime"],
+            f["ancora"], json.dumps(f["ancoras"], ensure_ascii=False),
+            json.dumps(f["leis"], ensure_ascii=False), f["unanime"],
             json.dumps(f["efeito"]) if f["efeito"] else None))
         n += 1
         if len(lote) >= 500:
@@ -101,9 +106,10 @@ def construir(tjsc=TJSC, rag=RAG, verboso=True):
     novo.close()
     orig.close()
     if verboso:
-        print("indexadas %d decisoes (%d com dispositivo, %d com efeito no Datajud) "
-              "em %.0fs — %.0f MB"
-              % (n, com_disp, com_efeito, time.time() - t0, os.path.getsize(rag) / 1e6))
+        print("indexadas %d decisoes (%d com dispositivo, %d com efeito no Datajud, "
+              "%d com dispositivo legal) em %.0fs — %.0f MB"
+              % (n, com_disp, com_efeito, com_lei, time.time() - t0,
+                 os.path.getsize(rag) / 1e6))
     return n, com_disp
 
 

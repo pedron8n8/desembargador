@@ -1,0 +1,3750 @@
+{
+ "candidatos": [
+  {
+   "id": 13295,
+   "num": "5045030-56.2025.8.24.0000",
+   "classe": "Agravo de Instrumento",
+   "orgao": "Sexta Câmara de Direito Comercial",
+   "comarca": "Tribunal de Justiça de Santa Catarina",
+   "data": "2025-07-24",
+   "ano": 2025,
+   "res": "provido",
+   "nota": 5,
+   "porque": "Mesma questão sobre arresto executivo via Sisbajud e devedor não localizado.",
+   "proc": "âncora nacional persuasiva | unanimidade não identificada | Datajud: transitou",
+   "rank": "idade 0.89 · âncora persuasiva 1.15 · transitou em julgado 1.10 → 1.13x",
+   "fatores": {
+    "idade": 0.8908987181403393,
+    "âncora persuasiva": 1.15,
+    "transitou em julgado": 1.1
+   },
+   "bm25": -19.242984261384144,
+   "pontos": 21.686590764752253,
+   "confianca": "dispositivo",
+   "ancora": "persuasiva",
+   "ancoras": "[]",
+   "leis": "[\"art. 830 do CPC\", \"art. 854 do CPC\"]",
+   "unanime": null,
+   "efeito": "{\"transitou\": true, \"subiu\": false, \"sobrestado\": false}",
+   "ementa": "AGRAVO DE INSTRUMENTO. EXECUÇÃO DE TÍTULO EXTRAJUDICIAL. DECISÃO QUE INDEFERIU O PEDIDO DE ARRESTO EXECUTIVO. INSURGÊNCIA DO EXEQUENTE. ADMISSIBILIDADE. DEFERIMENTO DE RENAJUD E INFOJUG. NÃO CONHECIMENTO NO PONTO. QUESTÃO NÃO APRECIADA NO DECISÓRIO. ANÁLISE QUE IMPLICARIA EM SUPRESSÃO DE INSTÂNCIA. MÉRITO. PLEITO PARA DEFERIMENTO DO ARRESTO ONLINE VIA SISBAJUD. SUBSISTÊNCIA. DEVEDOR QUE NÃO FORA L",
+   "url": "https://busca.tjsc.jus.br/jurisprudencia/html.do?id=321753376397875409016011660599&categoria=acordao_eproc"
+  },
+  {
+   "id": 12452,
+   "num": "5022533-82.2024.8.24.0000",
+   "classe": "Agravo de Instrumento",
+   "orgao": "Sexta Câmara de Direito Comercial",
+   "comarca": "Tribunal de Justiça de Santa Catarina",
+   "data": "2024-06-13",
+   "ano": 2024,
+   "res": "provido",
+   "nota": 5,
+   "porque": "Trata exatamente de arresto online via Sisbajud com devedor não localizado.",
+   "proc": "âncora nacional persuasiva | unanimidade não identificada | Datajud: transitou",
+   "rank": "idade 0.79 · âncora persuasiva 1.15 · transitou em julgado 1.10 → 1.00x",
+   "fatores": {
+    "idade": 0.7937005259840998,
+    "âncora persuasiva": 1.15,
+    "transitou em julgado": 1.1
+   },
+   "bm25": -21.072910946983786,
+   "pontos": 21.157859335835965,
+   "confianca": "dispositivo",
+   "ancora": "persuasiva",
+   "ancoras": "[]",
+   "leis": "[\"art. 830 do CPC\"]",
+   "unanime": null,
+   "efeito": "{\"transitou\": true, \"subiu\": false, \"sobrestado\": false}",
+   "ementa": "AGRAVO DE INSTRUMENTO. EXECUÇÃO DE TÍTULO EXTRAJUDICIAL. DECISÃO QUE INDEFERIU O PEDIDO DE ARRESTO ONLINE DE VALORES DEPOSITADOS EM CONTAS EM NOME DA EXECUTADA. INSURGÊNCIA DO EXEQUENTE. PLEITO PARA DEFERIMENTO DO ARRESTO ONLINE VIA SISBAJUD. SUBSISTÊNCIA. DEVEDOR QUE NÃO FORA LOCALIZADO POR OFICIAL DE JUSTIÇA. DESNECESSIDADE DE EXAURIMENTO DE TODOS OS MEIOS DE LOCALIZAÇÃO DA EXECUTADA. POSSIBILID",
+   "url": "https://busca.tjsc.jus.br/jurisprudencia/html.do?id=321718377179089231797680615058&categoria=acordao_eproc"
+  },
+  {
+   "id": 13601,
+   "num": "5056148-63.2024.8.24.0000",
+   "classe": "Agravo de Instrumento",
+   "orgao": "Sexta Câmara de Direito Comercial",
+   "comarca": "Tribunal de Justiça de Santa Catarina",
+   "data": "2024-10-10",
+   "ano": 2024,
+   "res": "provido",
+   "nota": 5,
+   "porque": "Envolve o cabimento de arresto online via Sisbajud após devedor não ser citado.",
+   "proc": "âncora nacional persuasiva | unanimidade não identificada | Datajud: transitou",
+   "rank": "idade 0.79 · âncora persuasiva 1.15 · transitou em julgado 1.10 → 1.00x",
+   "fatores": {
+    "idade": 0.7937005259840998,
+    "âncora persuasiva": 1.15,
+    "transitou em julgado": 1.1
+   },
+   "bm25": -19.59203080852481,
+   "pontos": 19.67100952464588,
+   "confianca": "dispositivo",
+   "ancora": "persuasiva",
+   "ancoras": "[]",
+   "leis": "[\"art. 830 do CPC\", \"art. 854 do CPC\"]",
+   "unanime": null,
+   "efeito": "{\"transitou\": true, \"subiu\": false, \"sobrestado\": false}",
+   "ementa": "AGRAVO DE INSTRUMENTO. EXECUÇÃO DE TÍTULO EXTRAJUDICIAL. DECISÃO QUE INDEFERIU O PEDIDO DE ARRESTO DE VALORES POR MEIO DO SISBAJUD. INSURGÊNCIA DO EXEQUENTE. PLEITO PARA DEFERIMENTO DO ARRESTO ONLINE VIA SISBAJUD. SUBSISTÊNCIA. DEVEDOR QUE NÃO FORA LOCALIZADO POR OFICIAL DE JUSTIÇA NO ENDEREÇO INFORMADO NA CÉDULA DE CRÉDITO BANCÁRIO. DESNECESSIDADE DE EXAURIMENTO DE TODOS OS MEIOS DE LOCALIZAÇÃO D",
+   "url": "https://busca.tjsc.jus.br/jurisprudencia/html.do?id=321728574301554757065458597638&categoria=acordao_eproc"
+  },
+  {
+   "id": 11983,
+   "num": "5012737-67.2024.8.24.0000",
+   "classe": "Agravo de Instrumento",
+   "orgao": "Sexta Câmara de Direito Comercial",
+   "comarca": "Tribunal de Justiça de Santa Catarina",
+   "data": "2024-04-25",
+   "ano": 2024,
+   "res": "provido",
+   "nota": 5,
+   "porque": "Mesma tese jurídica sobre arresto executivo via Sisbajud sem exaurimento de buscas.",
+   "proc": "âncora nacional persuasiva | unanimidade não identificada | Datajud: transitou",
+   "rank": "idade 0.79 · âncora persuasiva 1.15 · transitou em julgado 1.10 → 1.00x",
+   "fatores": {
+    "idade": 0.7937005259840998,
+    "âncora persuasiva": 1.15,
+    "transitou em julgado": 1.1
+   },
+   "bm25": -19.528769300299405,
+   "pontos": 19.60749299881927,
+   "confianca": "dispositivo",
+   "ancora": "persuasiva",
+   "ancoras": "[]",
+   "leis": "[\"art. 830 do CPC\"]",
+   "unanime": null,
+   "efeito": "{\"transitou\": true, \"subiu\": false, \"sobrestado\": false}",
+   "ementa": "AGRAVO DE INSTRUMENTO. EXECUÇÃO DE TÍTULO EXTRAJUDICIAL. DECISÃO QUE INDEFERIU O PEDIDO DE ARRESTO ONLINE DE VALORES DEPOSITADOS EM CONTAS EM NOME DO EXECUTADO. INSURGÊNCIA DO EXEQUENTE. PLEITO PARA DEFERIMENTO DO ARRESTO EXECUTIVO ONLINE VIA SISBAJUD. SUBSISTÊNCIA. INTELIGÊNCIA DO ARTIGO 830, DO CÓDIGO DE PROCESSO CIVIL. DEVEDOR NÃO FORA LOCALIZADO POR OFICIAL DE JUSTIÇA NO ENDEREÇO FORNECIDO NO ",
+   "url": "https://busca.tjsc.jus.br/jurisprudencia/html.do?id=321714399550784311028760290057&categoria=acordao_eproc"
+  },
+  {
+   "id": 13564,
+   "num": "5055086-85.2024.8.24.0000",
+   "classe": "Agravo de Instrumento",
+   "orgao": "Sexta Câmara de Direito Comercial",
+   "comarca": "Tribunal de Justiça de Santa Catarina",
+   "data": "2024-10-10",
+   "ano": 2024,
+   "res": "provido",
+   "nota": 5,
+   "porque": "Mesma discussão sobre arresto online via Sisbajud ante a não localização do devedor.",
+   "proc": "âncora nacional persuasiva | unanimidade não identificada | Datajud: transitou",
+   "rank": "idade 0.79 · âncora persuasiva 1.15 · transitou em julgado 1.10 → 1.00x",
+   "fatores": {
+    "idade": 0.7937005259840998,
+    "âncora persuasiva": 1.15,
+    "transitou em julgado": 1.1
+   },
+   "bm25": -18.890340897692518,
+   "pontos": 18.96649098574464,
+   "confianca": "dispositivo",
+   "ancora": "persuasiva",
+   "ancoras": "[]",
+   "leis": "[\"art. 830 do CPC\", \"art. 854 do CPC\"]",
+   "unanime": null,
+   "efeito": "{\"transitou\": true, \"subiu\": false, \"sobrestado\": false}",
+   "ementa": "AGRAVO DE INSTRUMENTO. EXECUÇÃO DE TÍTULO EXTRAJUDICIAL. DECISÃO QUE INDEFERIU O PEDIDO DE ARRESTO DE VALORES POR MEIO DO SISBAJUD. INSURGÊNCIA DO EXEQUENTE. PLEITO PARA DEFERIMENTO DO ARRESTO ONLINE VIA SISBAJUD. SUBSISTÊNCIA. DEVEDOR QUE NÃO FORA LOCALIZADO POR OFICIAL DE JUSTIÇA NO ENDEREÇO INFORMADO NA CÉDULA DE CRÉDITO BANCÁRIO. DESNECESSIDADE DE EXAURIMENTO DE TODOS OS MEIOS DE LOCALIZAÇÃO D",
+   "url": "https://busca.tjsc.jus.br/jurisprudencia/html.do?id=321728574301554757065459093472&categoria=acordao_eproc"
+  },
+  {
+   "id": 12262,
+   "num": "5018404-34.2024.8.24.0000",
+   "classe": "Agravo de Instrumento",
+   "orgao": "Sexta Câmara de Direito Comercial",
+   "comarca": "Tribunal de Justiça de Santa Catarina",
+   "data": "2024-06-13",
+   "ano": 2024,
+   "res": "parcialmente provido",
+   "nota": 2,
+   "porque": "Trata de penhora de salário, tema distinto do arresto executivo.",
+   "proc": "âncora nacional persuasiva (SÚMULA N. 284 DO STF, SÚMULA N. 83 DO STJ, SÚMULA N. 7 DO STJ) | unanimidade não identificada | Datajud: transitou",
+   "rank": "idade 0.79 · âncora persuasiva 1.15 · transitou em julgado 1.10 → 1.00x",
+   "fatores": {
+    "idade": 0.7937005259840998,
+    "âncora persuasiva": 1.15,
+    "transitou em julgado": 1.1
+   },
+   "bm25": -17.70008738995976,
+   "pontos": 17.77143936929013,
+   "confianca": "dispositivo",
+   "ancora": "persuasiva",
+   "ancoras": "[\"SÚMULA N. 284 DO STF\", \"SÚMULA N. 83 DO STJ\", \"SÚMULA N. 7 DO STJ\", \"Súmula n. 7 do STJ\", \"SÚMULA 568/STJ\"]",
+   "leis": "[\"art. 833 do CPC\", \"art. 649 do CPC\"]",
+   "unanime": null,
+   "efeito": "{\"transitou\": true, \"subiu\": false, \"sobrestado\": false}",
+   "ementa": "AGRAVO DE INSTRUMENTO. EXECUÇÃO DE TÍTULO EXTRAJUDICIAL. DECISÃO QUE INDEFERIU A PENHORA SOBRE PERCENTUAL DA VERBA SALARIAL DA PARTE EXECUTADA. INSURGÊNCIA DA EXEQUENTE. TESE DE POSSIBILIDADE DE PENHORA DE PERCENTUAL DO SALÁRIO PARA O PAGAMENTO DE DÉBITO. ACOLHIMENTO PARCIAL. CASO CONCRETO QUE PERMITE A FLEXIBILIZAÇÃO DA REGRA DE IMPENHORABILIDADE PREVISTA NO ARTIGO 833, INCISO IV, DO CÓDIGO DE PR",
+   "url": "https://busca.tjsc.jus.br/jurisprudencia/html.do?id=321718377179089231797689911203&categoria=acordao_eproc"
+  },
+  {
+   "id": 13824,
+   "num": "5064136-38.2024.8.24.0000",
+   "classe": "Agravo de Instrumento",
+   "orgao": "Sexta Câmara de Direito Comercial",
+   "comarca": "Tribunal de Justiça de Santa Catarina",
+   "data": "2025-01-30",
+   "ano": 2025,
+   "res": "provido",
+   "nota": 5,
+   "porque": "Discute arresto online via Sisbajud quando o devedor não é localizado.",
+   "proc": "âncora nacional persuasiva | unanimidade não identificada | Datajud: transitou",
+   "rank": "idade 0.89 · âncora persuasiva 1.15 · transitou em julgado 1.10 → 1.13x",
+   "fatores": {
+    "idade": 0.8908987181403393,
+    "âncora persuasiva": 1.15,
+    "transitou em julgado": 1.1
+   },
+   "bm25": -13.66280892722253,
+   "pontos": 15.397806383715555,
+   "confianca": "dispositivo",
+   "ancora": "persuasiva",
+   "ancoras": "[]",
+   "leis": "[\"art. 830 do CPC\", \"art. 854 do CPC\"]",
+   "unanime": null,
+   "efeito": "{\"transitou\": true, \"subiu\": false, \"sobrestado\": false}",
+   "ementa": "AGRAVO DE INSTRUMENTO. CUMPRIMENTO DE SENTENÇA. DECISÃO QUE INDEFERIU O PEDIDO DE ARRESTO DE VALORES POR MEIO DO SISBAJUD. INSURGÊNCIA DO EXEQUENTE. PLEITO PARA DEFERIMENTO DO ARRESTO ONLINE VIA SISBAJUD. SUBSISTÊNCIA. DEVEDOR QUE NÃO FORA LOCALIZADO POR OFICIAL DE JUSTIÇA NO ENDEREÇO INFORMADO EM PETIÇÃO. DESNECESSIDADE DE EXAURIMENTO DE TODOS OS MEIOS DE LOCALIZAÇÃO DO EXECUTADO. POSSIBILIDADE D",
+   "url": "https://busca.tjsc.jus.br/jurisprudencia/html.do?id=321738259049472292030548054720&categoria=acordao_eproc"
+  },
+  {
+   "id": 11777,
+   "num": "5009469-13.2022.8.24.0020",
+   "classe": "Apelação",
+   "orgao": "Sexta Câmara de Direito Comercial",
+   "comarca": "Tribunal de Justiça de Santa Catarina",
+   "data": "2025-03-13",
+   "ano": 2025,
+   "res": "provido",
+   "nota": 2,
+   "porque": "Trata de acordo e extinção da execução, questão processual distinta.",
+   "proc": "âncora nacional persuasiva | unanimidade não identificada | Datajud: transitou, sobrestado",
+   "rank": "idade 0.89 · âncora persuasiva 1.15 · sobrestado 0.80 → 0.82x",
+   "fatores": {
+    "idade": 0.8908987181403393,
+    "âncora persuasiva": 1.15,
+    "sobrestado": 0.8
+   },
+   "bm25": -17.389730876173573,
+   "pontos": 14.253089830677434,
+   "confianca": "dispositivo",
+   "ancora": "persuasiva",
+   "ancoras": "[]",
+   "leis": "[\"art. 924 do CPC\", \"art. 925 do CPC\", \"art. 90 do CPC\", \"art. 1.012 do CPC\", \"art. 487 do CPC\", \"art. 85 do CPC\"]",
+   "unanime": null,
+   "efeito": "{\"transitou\": true, \"subiu\": false, \"sobrestado\": true}",
+   "ementa": "APELAÇÃO CÍVEL. EXECUÇÃO DE TÍTULO EXTRAJUDICIAL. HOMOLOGAÇÃO DE ACORDO E EXTINÇÃO DA DEMANDA, COM FULCRO NO ART. 924, III, DO CÓDIGO DE PROCESSO CIVIL. INSURGÊNCIA DA EMPRESA EXEQUENTE. PLEITO DE CONCESSÃO DE EFEITO SUSPENSIVO AO RECURSO. PRETENSÃO PREJUDICADA, DIANTE DO JULGAMENTO DE MÉRITO DO APELO. NÃO CONHECIMENTO NESSE TOCANTE. ALEGAÇÃO DE NULIDADE DA DECISÃO HOMOLOGATÓRIA POR DESCONSIDERAR ",
+   "url": "https://busca.tjsc.jus.br/jurisprudencia/html.do?id=321741890709578189081442169093&categoria=acordao_eproc"
+  },
+  {
+   "id": 10403,
+   "num": "4030693-89.2019.8.24.0000",
+   "classe": "Agravo de Instrumento",
+   "orgao": "Segunda Câmara de Direito Civil",
+   "comarca": "Joinville",
+   "data": "2020-01-30",
+   "ano": 2020,
+   "res": "desprovido",
+   "nota": 2,
+   "porque": "Trata de impenhorabilidade de verba salarial/consignado.",
+   "proc": "âncora nacional persuasiva | unânime | Datajud: transitou",
+   "rank": "idade 0.50 · âncora persuasiva 1.15 · transitou em julgado 1.10 → 0.63x",
+   "fatores": {
+    "idade": 0.5,
+    "âncora persuasiva": 1.15,
+    "transitou em julgado": 1.1
+   },
+   "bm25": -18.114224332217393,
+   "pontos": 11.457246890127502,
+   "confianca": "texto completo",
+   "ancora": "persuasiva",
+   "ancoras": "[]",
+   "leis": "[\"art. 1.015 do CPC\", \"art. 833 do CPC\", \"art. 649 do CPC\"]",
+   "unanime": 1,
+   "efeito": "{\"transitou\": true, \"subiu\": false, \"sobrestado\": false}",
+   "ementa": "AGRAVO DE INSTRUMENTO. CUMPRIMENTO DE SENTENÇA. PENHORA ELETRÔNICA DE ATIVOS EM CONTA DO DEVEDOR. ARGUIDA IMPENHORABILIDADE DA VERBA. DEPÓSITO DECORRENTE DE EMPRÉSTIMO CONSIGNADO. POSSIBILIDADE DA CONSTRIÇÃO. MONTANTE CUJA NATUREZA JURÍDICA NÃO ESTÁ PROTEGIDA PELA IMPENHORABILIDADE FIXADA POR LEI. PRECEDENTES. RECURSO CONHECIDO E DESPROVIDO.",
+   "url": "https://busca.tjsc.jus.br/jurisprudencia/html.do?id=AABAg7AAHAALcjEAAI&categoria=acordao_5"
+  },
+  {
+   "id": 13848,
+   "num": "5064917-65.2021.8.24.0000",
+   "classe": "Agravo de Instrumento",
+   "orgao": "Segunda Câmara de Direito Civil",
+   "comarca": "Tribunal de Justiça de Santa Catarina",
+   "data": "2022-01-31",
+   "ano": 2022,
+   "res": "desprovido",
+   "nota": 2,
+   "porque": "Trata de substituição de penhora por motivo de saúde do devedor.",
+   "proc": "âncora nacional persuasiva | unanimidade não identificada | Datajud: transitou",
+   "rank": "idade 0.63 · âncora persuasiva 1.15 · transitou em julgado 1.10 → 0.80x",
+   "fatores": {
+    "idade": 0.6299605249474366,
+    "âncora persuasiva": 1.15,
+    "transitou em julgado": 1.1
+   },
+   "bm25": -11.94381930259638,
+   "pontos": 9.518030367342291,
+   "confianca": "dispositivo",
+   "ancora": "persuasiva",
+   "ancoras": "[]",
+   "leis": "[\"art. 835 do CPC\", \"art. 847 do CPC\", \"art. 1.015 do CPC\", \"art. 805 do CPC\"]",
+   "unanime": null,
+   "efeito": "{\"transitou\": true, \"subiu\": false, \"sobrestado\": false}",
+   "ementa": "AGRAVO DE INSTRUMENTO. CUMPRIMENTO DE SENTENÇA. DECISÃO INTERLOCUTÓRIA QUE DEFERIU O PEDIDO DE SUBSTITUIÇÃO DA PENHORA DE ATIVO FINANCEIRO POR IMÓVEL. RECURSO DA EXEQUENTE. PLEITO DE MANUTENÇÃO DA PENHORA DOS ATIVOS FINANCEIROS. NÃO ACOLHIMENTO. DEVEDOR ACOMETIDO POR DOENÇA GRAVE. NECESSIDADE DOS ATIVOS FINANCEIROS PARA CUSTEAR O TRATAMENTO DE SAÚDE. IMÓVEL PENHORADO AVALIADO EM IMPORTÂNCIA SUPERI",
+   "url": "https://busca.tjsc.jus.br/jurisprudencia/html.do?id=321643654873357268370822938228&categoria=acordao_eproc"
+  },
+  {
+   "id": 7847,
+   "num": "2013.073378-3",
+   "classe": "Agravo de Instrumento",
+   "orgao": "Câmara Especial Regional de Chapecó",
+   "comarca": "Chapecó",
+   "data": "2015-03-09",
+   "ano": 2015,
+   "res": "desprovido",
+   "nota": 4,
+   "porque": "Trata de penhora online via Bacenjud sem esgotamento de bens.",
+   "proc": "âncora nacional vinculante | unânime",
+   "rank": "idade 0.50 · âncora vinculante 1.35 → 0.68x",
+   "fatores": {
+    "idade": 0.5,
+    "âncora vinculante": 1.35
+   },
+   "bm25": -13.235995749733455,
+   "pontos": 8.934297131070082,
+   "confianca": "dispositivo",
+   "ancora": "vinculante",
+   "ancoras": "[]",
+   "leis": "[\"art. 655 do CPC\", \"Lei 11.382/2006\"]",
+   "unanime": 1,
+   "efeito": null,
+   "ementa": "AGRAVO DE INSTRUMENTO. CUMPRIMENTO DE SENTENÇA. PENHORA ON LINE EFETUADA EM CONTA CORRENTE DA AGRAVANTE. SISTEMA BACEN-JUD. DESNECESSIDADE DE ESGOTAMENTO DA BUSCA DE OUTROS BENS DA DEVEDORA ANTES DO BLOQUEIO ELETRÔNICO. EXCESSO DE EXECUÇÃO. MATÉRIA NÃO ANALISADA NA DECISÃO AGRAVADA. IMPOSSIBILIDADE DE CONHECIMENTO DO RECURSO NO PONTO, SOB PENA DE SUPRESSÃO DE INSTÂNCIA E OFENSA AOS PRINCÍPIOS DO D",
+   "url": "https://busca.tjsc.jus.br/jurisprudencia/html.do?id=AAAbmQAACAALMMAAAB&categoria=acordao"
+  },
+  {
+   "id": 10277,
+   "num": "4025972-31.2018.8.24.0000",
+   "classe": "Agravo de Instrumento",
+   "orgao": "Segunda Câmara de Direito Civil",
+   "comarca": "São José",
+   "data": "2019-01-24",
+   "ano": 2019,
+   "res": "desprovido",
+   "nota": 4,
+   "porque": "Trata de penhora online e efetividade da execução via Bacenjud.",
+   "proc": "âncora nacional vinculante (Súmula n. 532) | unânime",
+   "rank": "idade 0.50 · âncora vinculante 1.35 → 0.68x",
+   "fatores": {
+    "idade": 0.5,
+    "âncora vinculante": 1.35
+   },
+   "bm25": -13.123902553828403,
+   "pontos": 8.858634223834173,
+   "confianca": "dispositivo",
+   "ancora": "vinculante",
+   "ancoras": "[\"Súmula n. 532\"]",
+   "leis": "[\"art. 655 do CPC\", \"Lei 11.382/2006\"]",
+   "unanime": 1,
+   "efeito": null,
+   "ementa": "AGRAVO DE INSTRUMENTO. CUMPRIMENTO DE SENTENÇA. INSURGÊNCIA DO EXEQUENTE QUANTO A DUAS DECISÕES INTERLOCUTÓRIAS. OCORRÊNCIA DE PRECLUSÃO TEMPORAL COM RELAÇÃO À PRIMEIRA. INTEMPESTIVIDADE VERIFICADA. RECURSO NÃO CONHECIDO NESSE PONTO. PENHORA ON LINE EFETUADA EM CONTA CORRENTE DO BANCO AGRAVANTE. SISTEMA BACEN-JUD. AUSÊNCIA DE AFRONTA AO PRINCÍPIO DA MENOR ONEROSIDADE DA EXECUÇÃO AO DEVEDOR. Com a ",
+   "url": "https://busca.tjsc.jus.br/jurisprudencia/html.do?id=AABAg7AAFAACqT0AAE&categoria=acordao_5"
+  },
+  {
+   "id": 13054,
+   "num": "5037928-56.2020.8.24.0000",
+   "classe": "Agravo de Instrumento",
+   "orgao": "Segunda Câmara de Direito Civil",
+   "comarca": "Tribunal de Justiça de Santa Catarina",
+   "data": "2021-10-21",
+   "ano": 2021,
+   "res": "parcialmente provido",
+   "nota": 2,
+   "porque": "Trata de preclusão e excesso de execução em levantamento de valores.",
+   "proc": "âncora nacional persuasiva | unanimidade não identificada | Datajud: transitou",
+   "rank": "idade 0.56 · âncora persuasiva 1.15 · transitou em julgado 1.10 → 0.71x",
+   "fatores": {
+    "idade": 0.5612310241546865,
+    "âncora persuasiva": 1.15,
+    "transitou em julgado": 1.1
+   },
+   "bm25": -12.172816572677876,
+   "pontos": 8.642179324592899,
+   "confianca": "dispositivo",
+   "ancora": "persuasiva",
+   "ancoras": "[]",
+   "leis": "[\"art. 507 do CPC\", \"art. 141 do CPC\", \"art. 1.015 do CPC\", \"art. 505 do CPC\", \"art. 267 do CPC\"]",
+   "unanime": null,
+   "efeito": "{\"transitou\": true, \"subiu\": false, \"sobrestado\": false}",
+   "ementa": "AGRAVO DE INSTRUMENTO. CUMPRIMENTO DE SENTENÇA. DECISÃO INTERLOCUTÓRIA QUE DETERMINOU O LEVANTAMENTO DO ÚLTIMO BLOQUEIO VIA BACENJUD, BEM COMO A RESTITUIÇÃO DA DIFERENÇA ENTRE O VALOR OUTRORA LIBERADO E O EFETIVAMENTE DEVIDO, CONFORME OS CÁLCULOS ATUAIS DA CONTADORIA JUDICIAL. INSURGÊNCIA DOS EXEQUENTES. COMANDO DECISÓRIO QUE DETERMINOU A RESTITUIÇÃO DA DIFERENÇA ENTRE O VALOR OUTRORA LIBERADO E O",
+   "url": "https://busca.tjsc.jus.br/jurisprudencia/html.do?id=321635168076811027890693565311&categoria=acordao_eproc"
+  },
+  {
+   "id": 6169,
+   "num": "0320795-06.2014.8.24.0038",
+   "classe": "Apelação",
+   "orgao": "Sexta Câmara de Direito Comercial",
+   "comarca": "Tribunal de Justiça de Santa Catarina",
+   "data": "2025-04-24",
+   "ano": 2025,
+   "res": "desprovido",
+   "nota": 2,
+   "porque": "Trata de inexequibilidade de título e apelação em embargos.",
+   "proc": "âncora nacional vinculante (TEMA 587, SÚMULA Nº 233 DO STJ, SÚMULA Nº 258 DO STJ) | unanimidade não identificada | Datajud: transitou",
+   "rank": "idade 0.89 · âncora vinculante 1.35 · transitou em julgado 1.10 → 1.32x",
+   "fatores": {
+    "idade": 0.8908987181403393,
+    "âncora vinculante": 1.35,
+    "transitou em julgado": 1.1
+   },
+   "bm25": -6.165986716370101,
+   "pontos": 8.157505447601459,
+   "confianca": "dispositivo",
+   "ancora": "vinculante",
+   "ancoras": "[\"TEMA 587\", \"SÚMULA Nº 233 DO STJ\", \"SÚMULA Nº 258 DO STJ\"]",
+   "leis": "[\"art. 803 do CPC\", \"art. 485 do CPC\", \"art. 82 do CPC\", \"art. 85 do CPC\", \"art. 927 do CPC\", \"art. 921 do CPC\"]",
+   "unanime": null,
+   "efeito": "{\"transitou\": true, \"subiu\": false, \"sobrestado\": false}",
+   "ementa": "APELAÇÃO CÍVEL. EXECUÇÃO DE TÍTULO EXTRAJUDICIAL. SENTENÇA QUE EXTINGUIU A EXECUCIONAL, DIANTE DA INEXEQUIBILIDADE DO TÍTULO RECONHECIDA NOS AUTOS DOS EMBARGOS À EXECUÇÃO DE N. 5017421-52.2023.8.24.0038, E QUE CONDENOU A PARTE EXEQUENTE AO PAGAMENTO DAS CUSTAS PROCESSUAIS E HONORÁRIOS ADVOCATÍCIOS. IRRESIGNAÇÃO DA PARTE EXEQUENTE. ADMISSIBILIDADE. ARGUMENTAÇÃO A RESPEITO DE PRESCRIÇÃO INTERCORRENT",
+   "url": "https://busca.tjsc.jus.br/jurisprudencia/html.do?id=321745522966694732142181268254&categoria=acordao_eproc"
+  },
+  {
+   "id": 16899,
+   "num": "4013961-04.2017.8.24.0000",
+   "classe": "Agravo de Instrumento",
+   "orgao": "Segunda Câmara de Direito Civil",
+   "comarca": "São José",
+   "data": "2018-10-29",
+   "ano": 2018,
+   "res": "liminar/tutela indeferida",
+   "nota": 1,
+   "porque": "Decisão sobre obrigação de fazer, sem relação direta.",
+   "proc": "âncora nacional persuasiva | unanimidade não identificada | Datajud: transitou",
+   "rank": "idade 0.50 · âncora persuasiva 1.15 · transitou em julgado 1.10 → 0.63x",
+   "fatores": {
+    "idade": 0.5,
+    "âncora persuasiva": 1.15,
+    "transitou em julgado": 1.1
+   },
+   "bm25": -12.826542803858285,
+   "pontos": 8.112788323440364,
+   "confianca": "dispositivo",
+   "ancora": "persuasiva",
+   "ancoras": "[]",
+   "leis": "[\"art. 1.015 do CPC\", \"art. 1.019 do CPC\", \"Lei 11.101/2005\"]",
+   "unanime": null,
+   "efeito": "{\"transitou\": true, \"subiu\": false, \"sobrestado\": false}",
+   "ementa": "Agravo de Instrumento n. 4013961-04.2017.8.24.0000, de São José Agravante: API SPE 03 Planejamento e Desenvolvimento de Empreendimentos Imobiliários Ltda, PDG Realty SA Empreendimentos e Participações Advogado: Fabio Rivelli (35357/SC) Agravado: Condomínio Mirante Quatro Estações Advogado: Alexsander da Silva Martins (16813/SC) e Marco Aurelio Maceno Banowits (16868/SC) Relator: Desembargador Rube",
+   "url": "https://busca.tjsc.jus.br/jurisprudencia/html.do?id=AABAg7AAFAAAZ1pAAH&categoria=decmono_5"
+  },
+  {
+   "id": 13212,
+   "num": "5042500-49.2021.8.24.0023",
+   "classe": "Apelação",
+   "orgao": "Sexta Câmara de Direito Comercial",
+   "comarca": "Tribunal de Justiça de Santa Catarina",
+   "data": "2024-05-23",
+   "ano": 2024,
+   "res": "provido",
+   "nota": 2,
+   "porque": "Trata de cláusula arbitral em execução de título extrajudicial.",
+   "proc": "âncora nacional persuasiva (SÚMULA 7 DO STJ, SÚMULA 568 DO STJ, Súmula 568 do STJ) | unanimidade não identificada | Datajud: transitou",
+   "rank": "idade 0.79 · âncora persuasiva 1.15 · transitou em julgado 1.10 → 1.00x",
+   "fatores": {
+    "idade": 0.7937005259840998,
+    "âncora persuasiva": 1.15,
+    "transitou em julgado": 1.1
+   },
+   "bm25": -6.3789499399873275,
+   "pontos": 6.404664542081642,
+   "confianca": "dispositivo",
+   "ancora": "persuasiva",
+   "ancoras": "[\"SÚMULA 7 DO STJ\", \"SÚMULA 568 DO STJ\", \"Súmula 568 do STJ\"]",
+   "leis": "[\"art. 485 do CPC\", \"art. 1.007 do CPC\", \"art. 85 do CPC\", \"art. 919 do CPC\", \"art. 522 do CPC\", \"art. 523 do CPC\", \"Lei 9.307/1996\", \"Lei 9.306/1996\"]",
+   "unanime": null,
+   "efeito": "{\"transitou\": true, \"subiu\": false, \"sobrestado\": false}",
+   "ementa": "APELAÇÃO CÍVEL. EMBARGOS À EXECUÇÃO DE TÍTULO EXTRAJUDICIAL. CONTRATO DE FRANQUIA. SENTENÇA DE PROCEDÊNCIA DOS EMBARGOS E EXTINÇÃO DA DEMANDA EXPROPRIATÓRIA, COM FULCRO NO ARTIGO 485, INCISO VII, DO CÓDIGO DE PROCESSO CIVIL. INSURGÊNCIA DE AMBAS AS PARTES. RECURSO ADESIVO DAS EMBARGANTES. PREPARO NÃO RECOLHIDO NO PRAZO LEGAL. INTELIGÊNCIA DO ARTIGO 1.007, DO CÓDIGO DE PROCESSO CIVIL. RECONHECIMENT",
+   "url": "https://busca.tjsc.jus.br/jurisprudencia/html.do?id=321716488734889284987549166381&categoria=acordao_eproc"
+  },
+  {
+   "id": 11094,
+   "num": "5002148-16.2024.8.24.0000",
+   "classe": "Agravo de Instrumento",
+   "orgao": "Sexta Câmara de Direito Comercial",
+   "comarca": "Tribunal de Justiça de Santa Catarina",
+   "data": "2024-04-11",
+   "ano": 2024,
+   "res": "provido",
+   "nota": 2,
+   "porque": "Trata de extinção por recuperação judicial e ônus sucumbenciais.",
+   "proc": "âncora nacional persuasiva (Súmula n. 581 do STJ, Súmula 581 do STJ) | unanimidade não identificada | Datajud: transitou",
+   "rank": "idade 0.79 · âncora persuasiva 1.15 · transitou em julgado 1.10 → 1.00x",
+   "fatores": {
+    "idade": 0.7937005259840998,
+    "âncora persuasiva": 1.15,
+    "transitou em julgado": 1.1
+   },
+   "bm25": -6.188869878753537,
+   "pontos": 6.2138182366875,
+   "confianca": "texto completo",
+   "ancora": "persuasiva",
+   "ancoras": "[\"Súmula n. 581 do STJ\", \"Súmula 581 do STJ\"]",
+   "leis": "[\"art. 485 do CPC\", \"Lei 11.101/2005\"]",
+   "unanime": null,
+   "efeito": "{\"transitou\": true, \"subiu\": false, \"sobrestado\": false}",
+   "ementa": "AGRAVO DE INSTRUMENTO. EXECUÇÃO DE TÍTULO EXTRAJUDICIAL. DECISÃO INTERLOCUTÓRIA QUE EXTINGUIU A EXECUÇÃO POR PERDA SUPERVENIENTE DO INTERESSE PROCESSUAL EM RAZÃO DE HOMOLOGAÇÃO DO PLANO DE RECUPERAÇÃO JUDICIAL, NOS TERMOS DO ART. 485, VI, DO CÓDIGO DE PROCESSO CIVIL E CONDENOU A EXECUTADA AO PAGAMENTO DOS ÔNUS DE SUCUMBÊNCIA. INSURGÊNCIA DA EXECUTADA. PRETENDIDA A REDISTRIBUIÇÃO DOS ÔNUS SUCUMBENC",
+   "url": "https://busca.tjsc.jus.br/jurisprudencia/html.do?id=321712935277171667474444870376&categoria=acordao_eproc"
+  },
+  {
+   "id": 11919,
+   "num": "5011549-39.2024.8.24.0000",
+   "classe": "Agravo de Instrumento",
+   "orgao": "Sexta Câmara de Direito Comercial",
+   "comarca": "Tribunal de Justiça de Santa Catarina",
+   "data": "2024-04-11",
+   "ano": 2024,
+   "res": "provido",
+   "nota": 2,
+   "porque": "Trata de falecimento de executado e sucessão processual.",
+   "proc": "âncora só estadual | unanimidade não identificada | Datajud: transitou",
+   "rank": "idade 0.79 · transitou em julgado 1.10 → 0.87x",
+   "fatores": {
+    "idade": 0.7937005259840998,
+    "transitou em julgado": 1.1
+   },
+   "bm25": -6.378247281813608,
+   "pontos": 5.568660044675328,
+   "confianca": "ementa",
+   "ancora": "estadual",
+   "ancoras": "[]",
+   "leis": "[]",
+   "unanime": null,
+   "efeito": "{\"transitou\": true, \"subiu\": false, \"sobrestado\": false}",
+   "ementa": "AGRAVO DE INSTRUMENTO. EXECUÇÃO DE TÍTULO EXTRAJUDICIAL. DECISÃO EXTINTIVA DO PROCESSO SEM RESOLUÇÃO DE MÉRITO (ARTS. 313, § 2º, INCISO I, E 485, INCISO IV, DO CÓDIGO DE PROCESSO CIVIL). RECURSO DA EXEQUENTE. PRETENSO PROSSEGUIMENTO DO FEITO EM RELAÇÃO À EXECUTADA FALECIDA. ACOLHIMENTO. MORTE DE UMA DAS PARTES QUE ENSEJA A SUCESSÃO PROCESSUAL. FALECIMENTO QUE, NA HIPÓTESE, JUSTIFICOU A CONCESSÃO D",
+   "url": "https://busca.tjsc.jus.br/jurisprudencia/html.do?id=321712935277171667474446586743&categoria=acordao_eproc"
+  },
+  {
+   "id": 5086,
+   "num": "0305321-14.2014.8.24.0064",
+   "classe": "Apelação",
+   "orgao": "Sexta Câmara de Direito Comercial",
+   "comarca": "Tribunal de Justiça de Santa Catarina",
+   "data": "2025-07-24",
+   "ano": 2025,
+   "res": "desprovido",
+   "nota": 2,
+   "porque": "Trata de prescrição intercorrente em cédula de crédito bancário.",
+   "proc": "âncora nacional persuasiva (SÚMULA 106 DO STJ, SÚMULA N. 106) | unanimidade não identificada | Datajud: transitou, sobrestado",
+   "rank": "idade 0.89 · âncora persuasiva 1.15 · sobrestado 0.80 → 0.82x",
+   "fatores": {
+    "idade": 0.8908987181403393,
+    "âncora persuasiva": 1.15,
+    "sobrestado": 0.8
+   },
+   "bm25": -6.51380481246059,
+   "pontos": 5.338889129026511,
+   "confianca": "dispositivo",
+   "ancora": "persuasiva",
+   "ancoras": "[\"SÚMULA 106 DO STJ\", \"SÚMULA N. 106\"]",
+   "leis": "[\"art. 487 do CPC\", \"art. 924 do CPC\", \"art. 85 do CPC\", \"art. 939 do CC\", \"art. 189 do CC\", \"art. 206 do CC\", \"art. 202 do CC\", \"art. 240 do CPC\"]",
+   "unanime": null,
+   "efeito": "{\"transitou\": true, \"subiu\": false, \"sobrestado\": true}",
+   "ementa": "APELAÇÃO CÍVEL. AÇÃO DE BUSCA E APREENSÃO CONVERTIDA EM EXECUÇÃO DE TÍTULO EXTRAJUDICIAL. CÉDULA DE CRÉDITO BANCÁRIO. SENTENÇA QUE RECONHECEU A PRESCRIÇÃO DIRETA E EXTINGUIU A EXECUÇÃO. RECURSO DO BANCO EXEQUENTE. ALEGADA INVIABILIDADE DE RECONHECIMENTO DA PRESCRIÇÃO DIRETA. NÃO ACOLHIMENTO. PEDIDO DE CONVERSÃO EM EXECUÇÃO DE TÍTULO EXTRAJUDICIAL APÓS O TRANSCURSO DO PRAZO PRESCRICIONAL DE TRÊS AN",
+   "url": "https://busca.tjsc.jus.br/jurisprudencia/html.do?id=321753376397875409016013917111&categoria=acordao_eproc"
+  },
+  {
+   "id": 2021,
+   "num": "0038691-59.2009.8.24.0023",
+   "classe": "Apelação Cível",
+   "orgao": "Segunda Câmara de Direito Civil",
+   "comarca": "Capital",
+   "data": "2017-06-22",
+   "ano": 2017,
+   "res": "não conhecido",
+   "nota": 1,
+   "porque": "Trata de erro de via recursal em apelação/agravo.",
+   "proc": "âncora nacional persuasiva (SÚMULA 83/STJ, Súmula 83/STJ) | unânime | Datajud: transitou",
+   "rank": "idade 0.50 · âncora persuasiva 1.15 · transitou em julgado 1.10 → 0.63x",
+   "fatores": {
+    "idade": 0.5,
+    "âncora persuasiva": 1.15,
+    "transitou em julgado": 1.1
+   },
+   "bm25": -6.572426420915893,
+   "pontos": 4.157059711229302,
+   "confianca": "dispositivo",
+   "ancora": "persuasiva",
+   "ancoras": "[\"SÚMULA 83/STJ\", \"Súmula 83/STJ\"]",
+   "leis": "[]",
+   "unanime": 1,
+   "efeito": "{\"transitou\": true, \"subiu\": false, \"sobrestado\": false}",
+   "ementa": "APELAÇÃO CÍVEL. EXECUÇÃO DE TÍTULO EXTRAJUDICIAL. CONTRATO DE LOCAÇÃO. DESISTÊNCIA EM RELAÇÃO AOS LOCATÁRIOS. HOMOLOGAÇÃO. PROSSEGUIMENTO DA EXECUÇÃO EM FACE DO FIADOR. ATO JUDICIAL QUE NÃO PÔS FIM AO PROCESSO. DECISÃO ATACÁVEL VIA AGRAVO DE INSTRUMENTO. ERRO GROSSEIRO. INVIÁVEL A FUNGIBILIDADE RECURSAL. RECURSO NÃO CONHECIDO.",
+   "url": "https://busca.tjsc.jus.br/jurisprudencia/html.do?id=AABAg7AAEAACAT1AAB&categoria=acordao_5"
+  },
+  {
+   "id": 82,
+   "num": "0000123-02.2013.8.24.0033",
+   "classe": "Apelação Cível",
+   "orgao": "Segunda Câmara de Direito Civil",
+   "comarca": "Itajaí",
+   "data": "2018-11-22",
+   "ano": 2018,
+   "res": "não conhecido",
+   "nota": 1,
+   "porque": "Trata de incompetência de câmara recursal.",
+   "proc": "âncora nacional persuasiva (súmula 106 do STJ) | unanimidade não identificada | Datajud: transitou",
+   "rank": "idade 0.50 · âncora persuasiva 1.15 · transitou em julgado 1.10 → 0.63x",
+   "fatores": {
+    "idade": 0.5,
+    "âncora persuasiva": 1.15,
+    "transitou em julgado": 1.1
+   },
+   "bm25": -6.565288085100447,
+   "pontos": 4.152544713826033,
+   "confianca": "dispositivo",
+   "ancora": "persuasiva",
+   "ancoras": "[\"súmula 106 do STJ\"]",
+   "leis": "[\"art. 487 do CPC\"]",
+   "unanime": null,
+   "efeito": "{\"transitou\": true, \"subiu\": false, \"sobrestado\": false}",
+   "ementa": "APELAÇÃO CÍVEL. AÇÃO DE EXECUÇÃO DE TÍTULO EXTRAJUDICIAL. DUPLICATAS PRESCRITAS. PRESTAÇÃO DE SERVIÇO EDUCACIONAL. INSURGÊNCIA DA CREDORA. FUNDAÇÃO. INCOMPETÊNCIA DAS CÂMARAS DE DIREITO COMERCIAL. PRECEDENTES. REDISTRIBUIÇÃO A UMA DAS CÂMARAS DE DIREITO CIVIL. RECURSO NÃO CONHECIDO.",
+   "url": "https://busca.tjsc.jus.br/jurisprudencia/html.do?id=AABAg7AAGAAGSanAAN&categoria=acordao_5"
+  },
+  {
+   "id": 10473,
+   "num": "4033569-17.2019.8.24.0000",
+   "classe": "Agravo de Instrumento",
+   "orgao": "Segunda Câmara de Direito Civil",
+   "comarca": "Capital",
+   "data": "2020-05-28",
+   "ano": 2020,
+   "res": "desprovido",
+   "nota": 2,
+   "porque": "Trata de justiça gratuita para pessoa jurídica.",
+   "proc": "âncora nacional persuasiva (SÚMULA 481, Súmula 481, Súmula n. 248) | unânime | Datajud: transitou",
+   "rank": "idade 0.50 · âncora persuasiva 1.15 · transitou em julgado 1.10 → 0.63x",
+   "fatores": {
+    "idade": 0.5,
+    "âncora persuasiva": 1.15,
+    "transitou em julgado": 1.1
+   },
+   "bm25": -6.412076151178346,
+   "pontos": 4.055638165620304,
+   "confianca": "texto completo",
+   "ancora": "persuasiva",
+   "ancoras": "[\"SÚMULA 481\", \"Súmula 481\", \"Súmula n. 248\"]",
+   "leis": "[\"art. 1.015 do CPC\", \"art. 99 do CPC\", \"art. 557 do CPC\", \"Lei 13.105/2015\"]",
+   "unanime": 1,
+   "efeito": "{\"transitou\": true, \"subiu\": false, \"sobrestado\": false}",
+   "ementa": "AGRAVO DE INSTRUMENTO. EXECUÇÃO DE TÍTULO EXTRAJUDICIAL. DECISÃO QUE NÃO CONCEDEU O BENEFÍCIO DA JUSTIÇA GRATUITA À SOCIEDADE DE ADVOGADOS. DEFERIMENTO DO PARCELAMENTO DAS CUSTAS INICIAIS. RECURSO DO AUTOR. ALEGADA INSUFICIÊNCIA DE RECURSOS PARA O PAGAMENTO DAS DESPESAS PROCESSUAIS. NÃO ACOLHIMENTO. NECESSIDADE DE EFETIVA DEMONSTRAÇÃO DA HIPOSSUFICIÊNCIA ECONÔMICA. SÚMULA 481 DO SUPERIOR TRIBUNAL ",
+   "url": "https://busca.tjsc.jus.br/jurisprudencia/html.do?id=AABAg7AAIAAEoL3AAQ&categoria=acordao_5"
+  },
+  {
+   "id": 4385,
+   "num": "0302513-40.2017.8.24.0061",
+   "classe": "Embargos de Declaração",
+   "orgao": "Segunda Câmara de Direito Civil",
+   "comarca": "São Francisco do Sul",
+   "data": "2019-12-16",
+   "ano": 2019,
+   "res": "desprovido",
+   "nota": 1,
+   "porque": "Trata de embargos de declaração sobre multa e sucumbência.",
+   "proc": "âncora nacional persuasiva | unânime | Datajud: transitou, subiu",
+   "rank": "idade 0.50 · âncora persuasiva 1.15 · transitou em julgado 1.10 → 0.63x",
+   "fatores": {
+    "idade": 0.5,
+    "âncora persuasiva": 1.15,
+    "transitou em julgado": 1.1
+   },
+   "bm25": -6.291940138611958,
+   "pontos": 3.9796521376720633,
+   "confianca": "texto completo",
+   "ancora": "persuasiva",
+   "ancoras": "[]",
+   "leis": "[\"art. 917 do CPC\", \"art. 1.022 do CPC\", \"art. 492 do CPC\", \"art. 86 do CPC\"]",
+   "unanime": 1,
+   "efeito": "{\"transitou\": true, \"subiu\": true, \"sobrestado\": false}",
+   "ementa": "EMBARGOS DE DECLARAÇÃO EM APELAÇÃO CÍVEL. EMBARGOS À EXECUÇÃO. AÇÃO DE EXECUÇÃO DE TÍTULO EXTRAJUDICIAL. ACÓRDÃO QUE REFORMOU PARCIALMENTE A SENTENÇA PARA ALTERAR O PERCENTUAL RELATIVO A COBRANÇA DA MULTA E REDISTRIBUIU OS ÔNUS SUCUMBENCIAIS. INSURGÊNCIA DO EXEQUENTE/APELADO. ALEGADA A OCORRÊNCIA DE OMISSÃO, CONTRADIÇÃO E OBSCURIDADE ATINENTE À AUSÊNCIA DE PEDIDO EXPRESSO PELO APELANTE PARA REDUÇÃ",
+   "url": "https://busca.tjsc.jus.br/jurisprudencia/html.do?id=AABAg7AAHAAKEKKAAO&categoria=acordao_5"
+  },
+  {
+   "id": 1614,
+   "num": "0016516-70.2011.8.24.0033",
+   "classe": "Apelação Cível",
+   "orgao": "Segunda Câmara de Direito Civil",
+   "comarca": "Itajaí",
+   "data": "2020-02-20",
+   "ano": 2020,
+   "res": "desprovido",
+   "nota": 2,
+   "porque": "Trata de prescrição e citação em execução.",
+   "proc": "âncora nacional persuasiva (Súmula 106 do STJ, SÚMULA 7/STJ, Súmula 106/STJ) | unânime | Datajud: transitou",
+   "rank": "idade 0.50 · âncora persuasiva 1.15 · transitou em julgado 1.10 → 0.63x",
+   "fatores": {
+    "idade": 0.5,
+    "âncora persuasiva": 1.15,
+    "transitou em julgado": 1.1
+   },
+   "bm25": -6.27886899896895,
+   "pontos": 3.9713846418478616,
+   "confianca": "texto completo",
+   "ancora": "persuasiva",
+   "ancoras": "[\"Súmula 106 do STJ\", \"SÚMULA 7/STJ\", \"Súmula 106/STJ\", \"Súmula 7/STJ\"]",
+   "leis": "[\"art. 206 do CC\", \"art. 219 do CPC\", \"art. 85 do CPC\", \"art. 202 do CC\", \"art. 240 do CPC\", \"art. 12 do CPC\", \"art. 1.021 do CPC\"]",
+   "unanime": 1,
+   "efeito": "{\"transitou\": true, \"subiu\": false, \"sobrestado\": false}",
+   "ementa": "APELAÇÃO CÍVEL. AÇÃO DE EXECUÇÃO DE TÍTULO EXTRAJUDICIAL. INSTRUMENTO PARTICULAR DE CONFISSÃO DE DÍVIDA. SENTENÇA DE EXTINÇÃO COM FULCRO NA PRESCRIÇÃO. INCONFORMISMO DA EXEQUENTE. PRESCRIÇÃO. INÉRCIA DA EXEQUENTE EM PROMOVER A CITAÇÃO. COMUNICAÇÃO DE EXTRAVIO DE CARTA PRECATÓRIA DE MANDADO CITATÓRIO, POR DUAS VEZES. TERCEIRA CARTA PRECATÓRIA QUE SEQUER FOI DISTRIBUÍDA PELA EXEQUENTE. TERMO INICIAL",
+   "url": "https://busca.tjsc.jus.br/jurisprudencia/html.do?id=AABAg7AAHAANkr7AAN&categoria=acordao_5"
+  },
+  {
+   "id": 10405,
+   "num": "4030732-86.2019.8.24.0000",
+   "classe": "Agravo de Instrumento",
+   "orgao": "Segunda Câmara de Direito Civil",
+   "comarca": "São José",
+   "data": "2020-01-23",
+   "ano": 2020,
+   "res": "desprovido",
+   "nota": 2,
+   "porque": "Trata de impenhorabilidade de imóvel de aquisição.",
+   "proc": "âncora nacional persuasiva | unânime | Datajud: transitou",
+   "rank": "idade 0.50 · âncora persuasiva 1.15 · transitou em julgado 1.10 → 0.63x",
+   "fatores": {
+    "idade": 0.5,
+    "âncora persuasiva": 1.15,
+    "transitou em julgado": 1.1
+   },
+   "bm25": -6.265852055800471,
+   "pontos": 3.9631514252937974,
+   "confianca": "dispositivo",
+   "ancora": "persuasiva",
+   "ancoras": "[]",
+   "leis": "[\"art. 3º do CPC\", \"art. 1.015 do CPC\", \"art. 833 do CPC\", \"art. 6º da CF\", \"art. 373 do CPC\", \"Lei 8.009/1990\", \"Lei 9.514/1997\"]",
+   "unanime": 1,
+   "efeito": "{\"transitou\": true, \"subiu\": false, \"sobrestado\": false}",
+   "ementa": "AGRAVO DE INSTRUMENTO. AÇÃO DE EXECUÇÃO DE TÍTULO EXTRAJUDICIAL. DECISÃO QUE INDEFERIU PEDIDO DE TUTELA DE URGÊNCIA INCIDENTAL. INSURGÊNCIA DA EXECUTADA. MATÉRIAS DE MÉRITO RELATIVAS A INEXISTÊNCIA DE INADIMPLEMENTO CONTRATUAL E EXTINÇÃO DA MULTA POR DESCUMPRIMENTO. DECISÃO MONOCRÁTICA QUE JULGOU AS QUESTÕES PREJUDICADAS. AUSÊNCIA DE INTERPOSIÇÃO DE AGRAVO INTERNO. PRECLUSÃO. RECURSO NÃO CONHECIDO",
+   "url": "https://busca.tjsc.jus.br/jurisprudencia/html.do?id=AABAg7AAHAAMIV7AAH&categoria=acordao_5"
+  },
+  {
+   "id": 9492,
+   "num": "4002985-30.2020.8.24.0000",
+   "classe": "Agravo de Instrumento",
+   "orgao": "Segunda Câmara de Direito Civil",
+   "comarca": "Criciúma",
+   "data": "2020-08-27",
+   "ano": 2020,
+   "res": "desprovido",
+   "nota": 2,
+   "porque": "Trata de efeito suspensivo em embargos à execução.",
+   "proc": "âncora nacional persuasiva (SÚMULA 317 DO STJ, súmula 317) | unânime | Datajud: transitou",
+   "rank": "idade 0.50 · âncora persuasiva 1.15 · transitou em julgado 1.10 → 0.63x",
+   "fatores": {
+    "idade": 0.5,
+    "âncora persuasiva": 1.15,
+    "transitou em julgado": 1.1
+   },
+   "bm25": -6.252888972734035,
+   "pontos": 3.9549522752542776,
+   "confianca": "dispositivo",
+   "ancora": "persuasiva",
+   "ancoras": "[\"SÚMULA 317 DO STJ\", \"súmula 317\"]",
+   "leis": "[\"art. 313 do CPC\", \"art. 1.015 do CPC\", \"art. 1 do CPC\", \"art. 1.012 do CPC\"]",
+   "unanime": 1,
+   "efeito": "{\"transitou\": true, \"subiu\": false, \"sobrestado\": false}",
+   "ementa": "AGRAVO DE INSTRUMENTO. EXECUÇÃO DE TÍTULO EXTRAJUDICIAL. OPOSIÇÃO DE EMBARGOS. IMPROCEDÊNCIA DA RESISTÊNCIA DO DEVEDOR. PROSSEGUIMENTO DA EXECUÇÃO COM COMANDO DE AVALIAÇÃO DE BENS CONSTRITADOS. INSURGÊNCIA DA PARTE DEVEDORA. ALEGADA IMPOSSIBILIDADE DE PROSSEGUIMENTO DA EXECUCIONAL. AUSÊNCIA DE TRÂNSITO EM JULGADO DOS EMBARGOS. IRRELEVÂNCIA. TESE NÃO ACOLHIDA. SENTENÇA QUE REJEITA OS EMBARGOS DO DE",
+   "url": "https://busca.tjsc.jus.br/jurisprudencia/html.do?id=AABAg7AAIAAK4BxAAB&categoria=acordao_5"
+  },
+  {
+   "id": 3286,
+   "num": "0300804-71.2017.8.24.0189",
+   "classe": "Apelação Cível",
+   "orgao": "Segunda Câmara de Direito Civil",
+   "comarca": "Santa Rosa do Sul",
+   "data": "2019-10-31",
+   "ano": 2019,
+   "res": "desprovido",
+   "nota": 2,
+   "porque": "Trata de requisitos formais de título executivo (assinaturas).",
+   "proc": "âncora nacional persuasiva (SÚMULA 7/STJ, Súmula 7) | unânime | Datajud: transitou",
+   "rank": "idade 0.50 · âncora persuasiva 1.15 · transitou em julgado 1.10 → 0.63x",
+   "fatores": {
+    "idade": 0.5,
+    "âncora persuasiva": 1.15,
+    "transitou em julgado": 1.1
+   },
+   "bm25": -6.2399794161750295,
+   "pontos": 3.9467869807307063,
+   "confianca": "dispositivo",
+   "ancora": "persuasiva",
+   "ancoras": "[\"SÚMULA 7/STJ\", \"Súmula 7\"]",
+   "leis": "[\"art. 784 do CPC\", \"art. 798 do CPC\", \"art. 12 do CPC\", \"art. 481 do CC\", \"art. 585 do CPC\", \"art. 783 do CPC\", \"art. 485 do CPC\", \"art. 85 do CPC\"]",
+   "unanime": 1,
+   "efeito": "{\"transitou\": true, \"subiu\": false, \"sobrestado\": false}",
+   "ementa": "APELAÇÃO CÍVEL. AÇÃO DE EXECUÇÃO DE TÍTULO EXTRAJUDICIAL. CONTRATO DE COMPRA E VENDA DE IMÓVEL. SENTENÇA DE EXTINÇÃO POR AUSÊNCIA DE PRESSUPOSTO PROCESSUAL. INSURGÊNCIA DA EXEQUENTE. PRESSUPOSTO DE CONSTITUIÇÃO E DESENVOLVIMENTO VÁLIDO E REGULAR DO PROCESSO. AUSÊNCIA DE ASSINATURA DAS DUAS TESTEMUNHAS NO CONTRATO DE COMPRA E VENDA DE IMÓVEL. ADITAMENTO DA PETIÇÃO INICIAL, PARA FINS DE JUNTADA DE C",
+   "url": "https://busca.tjsc.jus.br/jurisprudencia/html.do?id=AABAg7AAHAAFARrAAM&categoria=acordao_5"
+  },
+  {
+   "id": 10429,
+   "num": "4031559-97.2019.8.24.0000",
+   "classe": "Agravo de Instrumento",
+   "orgao": "Segunda Câmara de Direito Civil",
+   "comarca": "Sombrio",
+   "data": "2020-06-18",
+   "ano": 2020,
+   "res": "desprovido",
+   "nota": 2,
+   "porque": "Trata de impenhorabilidade de bem de família ou pequena propriedade.",
+   "proc": "âncora nacional persuasiva | unânime | Datajud: transitou",
+   "rank": "idade 0.50 · âncora persuasiva 1.15 · transitou em julgado 1.10 → 0.63x",
+   "fatores": {
+    "idade": 0.5,
+    "âncora persuasiva": 1.15,
+    "transitou em julgado": 1.1
+   },
+   "bm25": -6.22071472055849,
+   "pontos": 3.934602060753245,
+   "confianca": "dispositivo",
+   "ancora": "persuasiva",
+   "ancoras": "[]",
+   "leis": "[\"art. 833 do CPC\", \"Lei 8.629/1993\", \"Lei 9.008/1990\"]",
+   "unanime": 1,
+   "efeito": "{\"transitou\": true, \"subiu\": false, \"sobrestado\": false}",
+   "ementa": "AGRAVO DE INSTRUMENTO. EXECUÇÃO DE TÍTULO EXTRAJUDICIAL. DECISÃO QUE REJEITOU A ARGUIÇÃO DE IMPENHORABILIDADE. INSURGÊNCIA DA PARTE DEVEDORA. ALEGAÇÃO DE QUE O IMÓVEL PENHORADO É A RESIDÊNCIA DO AGRAVANTE (BEM DE FAMÍLIA) E OBJETO DE PARTILHA EM AÇÃO DE RECONHECIMENTO E DISSOLUÇÃO DE UNIÃO ESTÁVEL. INSUBSISTÊNCIA. AUSÊNCIA DE INDICAÇÃO NO ROL DOS BENS PARTILHADOS E DE PROVA DE QUE O AGRAVANTE RESI",
+   "url": "https://busca.tjsc.jus.br/jurisprudencia/html.do?id=AABAg7AAIAAFia7AAA&categoria=acordao_5"
+  },
+  {
+   "id": 9295,
+   "num": "2015.071359-8",
+   "classe": "Agravo de Instrumento",
+   "orgao": "Câmara Especial Regional de Chapecó",
+   "comarca": "Chapecó",
+   "data": "2016-02-15",
+   "ano": 2016,
+   "res": "provido",
+   "nota": 2,
+   "porque": "Trata de penhora de proventos de aposentadoria.",
+   "proc": "âncora nacional persuasiva | unânime",
+   "rank": "idade 0.50 · âncora persuasiva 1.15 → 0.57x",
+   "fatores": {
+    "idade": 0.5,
+    "âncora persuasiva": 1.15
+   },
+   "bm25": -6.824720449232298,
+   "pontos": 3.924214258308571,
+   "confianca": "texto completo",
+   "ancora": "persuasiva",
+   "ancoras": "[]",
+   "leis": "[\"art. 649 do CPC\", \"art. 7º da CF\", \"art. 652 do CPC\"]",
+   "unanime": 1,
+   "efeito": null,
+   "ementa": "AGRAVO DE INSTRUMENTO. AÇÃO DE EXECUÇÃO DE TÍTULO EXTRAJUDICIAL. DECISÃO AGRAVADA QUE DETERMINOU A CONSTRIÇÃO DE 30% DOS PROVENTOS DE APOSENTADORIA DO AGRAVANTE. IMPENHORABILIDADE ABSOLUTA. EXEGESE DO ART. 649, INCISO IV DO CPC. RECURSO CONHECIDO E PROVIDO.",
+   "url": "https://busca.tjsc.jus.br/jurisprudencia/html.do?id=AAAbmQAACAANoc6AAG&categoria=acordao"
+  },
+  {
+   "id": 7544,
+   "num": "2013.002725-7",
+   "classe": "Ação Rescisória",
+   "orgao": "Câmara Especial Regional de Chapecó",
+   "comarca": "Modelo",
+   "data": "2015-06-22",
+   "ano": 2015,
+   "res": "extinto/homologado",
+   "nota": 1,
+   "porque": "Trata de ação rescisória e satisfação da obrigação.",
+   "proc": "âncora nacional persuasiva | unânime",
+   "rank": "idade 0.50 · âncora persuasiva 1.15 → 0.57x",
+   "fatores": {
+    "idade": 0.5,
+    "âncora persuasiva": 1.15
+   },
+   "bm25": -6.801682705422261,
+   "pontos": 3.9109675556177996,
+   "confianca": "texto completo",
+   "ancora": "persuasiva",
+   "ancoras": "[]",
+   "leis": "[\"art. 20 do CPC\", \"art. 485 do CPC\", \"art. 231 do CPC\", \"art. 741 do CPC\", \"art. 267 do CPC\", \"art. 3º do CPC\", \"art. 488 do CPC\"]",
+   "unanime": 1,
+   "efeito": null,
+   "ementa": "AÇÃO RESCISÓRIA. PRETENDIDA DESCONSTITUIÇÃO DA SENTENÇA QUE JULGOU EXTINTA AÇÃO DE EXECUÇÃO DE TÍTULO EXTRAJUDICIAL DIANTE DA SATISFAÇÃO DA OBRIGAÇÃO. PETIÇÃO CONFIRMANDO O CUMPRIMENTO DA OBRIGAÇÃO. PROCURADORA COM PODERES PARA DAR QUITAÇÃO. DESNECESSIDADE DE COMPROVAÇÃO DO PAGAMENTO. IMPROCEDÊNCIA DO PEDIDO.",
+   "url": "https://busca.tjsc.jus.br/jurisprudencia/html.do?id=AAAbmQAACAANrG1AAY&categoria=acordao"
+  },
+  {
+   "id": 9403,
+   "num": "4000808-93.2020.8.24.0000",
+   "classe": "Embargos de Declaração",
+   "orgao": "Segunda Câmara de Direito Civil",
+   "comarca": "Balneário Camboriú",
+   "data": "2020-10-01",
+   "ano": 2020,
+   "res": "provido",
+   "nota": 1,
+   "porque": "Trata de honorários advocatícios em exceção de pré-executividade.",
+   "proc": "âncora nacional persuasiva | unânime | Datajud: transitou, subiu",
+   "rank": "idade 0.50 · âncora persuasiva 1.15 · transitou em julgado 1.10 → 0.63x",
+   "fatores": {
+    "idade": 0.5,
+    "âncora persuasiva": 1.15,
+    "transitou em julgado": 1.1
+   },
+   "bm25": -6.182539994907875,
+   "pontos": 3.910456546779231,
+   "confianca": "dispositivo",
+   "ancora": "persuasiva",
+   "ancoras": "[]",
+   "leis": "[\"art. 85 do CPC\", \"art. 1.023 do CPC\", \"Lei 13.105/2015\", \"Lei 13.356/2016\"]",
+   "unanime": 1,
+   "efeito": "{\"transitou\": true, \"subiu\": true, \"sobrestado\": false}",
+   "ementa": "EMBARGOS DE DECLARAÇÃO. AGRAVO DE INSTRUMENTO. AÇÃO DE EXECUÇÃO DE TÍTULO EXTRAJUDICIAL. DESPESAS CONDOMINIAIS. APELO DO EMBARGADO/EXEQUENTE, QUE PRETENDIA A REFORMA DA DECISÃO PARA AFASTAR A DETERMINAÇÃO DE EXCLUSÃO DO EMBARGANTE, DESPROVIDO. ALEGADA A OCORRÊNCIA DE OMISSÃO NO TOCANTE AO ARBITRAMENTO DOS HONORÁRIOS RECURSAIS. PEDIDO EM SEDE DE CONTRARRAZÕES. SUBSISTÊNCIA. DECISÃO INTERLOCUTÓRIA D",
+   "url": "https://busca.tjsc.jus.br/jurisprudencia/html.do?id=AABAg7AAIAANNZEAAJ&categoria=acordao_5"
+  },
+  {
+   "id": 6488,
+   "num": "0503170-11.2013.8.24.0005",
+   "classe": "Apelação",
+   "orgao": "Segunda Câmara de Direito Civil",
+   "comarca": "Tribunal de Justiça de Santa Catarina",
+   "data": "2021-12-16",
+   "ano": 2021,
+   "res": "extinto/homologado",
+   "nota": 2,
+   "porque": "Trata de nulidade de título em embargos do devedor.",
+   "proc": "âncora só estadual | unanimidade não identificada | Datajud: transitou, subiu",
+   "rank": "idade 0.56 · transitou em julgado 1.10 → 0.62x",
+   "fatores": {
+    "idade": 0.5612310241546865,
+    "transitou em julgado": 1.1
+   },
+   "bm25": -6.269610326248848,
+   "pontos": 3.870569806896583,
+   "confianca": "dispositivo",
+   "ancora": "estadual",
+   "ancoras": "[]",
+   "leis": "[\"art. 927 do CPC\", \"art. 783 do CPC\", \"art. 803 do CPC\", \"art. 166 do CC\", \"art. 485 do CPC\", \"art. 487 do CPC\"]",
+   "unanime": null,
+   "efeito": "{\"transitou\": true, \"subiu\": true, \"sobrestado\": false}",
+   "ementa": "APELAÇÃO CÍVEL. EMBARGOS DO DEVEDOR. EXECUÇÃO DE TÍTULO EXTRAJUDICIAL. SENTENÇA QUE JULGA PROCEDENTES OS EMBARGOS. RECURSO DO EXEQUENTE. PREFACIAL. DEFENDIDA A APLICAÇÃO AO CASO DO ART. 927, V, DO CÓDIGO DE PROCESSO CIVIL. INSUBSISTÊNCIA. JULGADOS INDICADOS COMO PARADIGMAS QUE SÃO DECISÕES ISOLADAS, NÃO HAVENDO JULGAMENTO MEDIANTE PLENÁRIO OU ÓRGÃO ESPECIAL. TESE AFASTADA. MÉRITO. EXECUÇÃO DE TÍTU",
+   "url": "https://busca.tjsc.jus.br/jurisprudencia/html.do?id=321639831593902316132019285829&categoria=acordao_eproc"
+  },
+  {
+   "id": 7192,
+   "num": "2011.086421-9",
+   "classe": "Apelação Cível",
+   "orgao": "Câmara Especial Regional de Chapecó",
+   "comarca": "Anchieta",
+   "data": "2015-03-09",
+   "ano": 2015,
+   "res": "desprovido",
+   "nota": 2,
+   "porque": "Trata de extinção por abandono da causa (Súmula 240 STJ).",
+   "proc": "âncora nacional persuasiva (SÚMULA 240 DO STJ, Súmula 240, SÚMULA N° 240/STJ) | unânime",
+   "rank": "idade 0.50 · âncora persuasiva 1.15 → 0.57x",
+   "fatores": {
+    "idade": 0.5,
+    "âncora persuasiva": 1.15
+   },
+   "bm25": -6.711066347807007,
+   "pontos": 3.8588631499890287,
+   "confianca": "texto completo",
+   "ancora": "persuasiva",
+   "ancoras": "[\"SÚMULA 240 DO STJ\", \"Súmula 240\", \"SÚMULA N° 240/STJ\", \"SÚMULA 240\", \"Súmula 240 do STJ\"]",
+   "leis": "[\"art. 267 do CPC\", \"art. 612 do CPC\"]",
+   "unanime": 1,
+   "efeito": null,
+   "ementa": "APELAÇÃO CÍVEL. EXECUÇÃO DE TÍTULO EXTRAJUDICIAL. EXTINÇÃO DO FEITO POR ABANDONO DA CAUSA. RECURSO DA EXEQUENTE. NECESSIDADE DE APLICAÇÃO DA SÚMULA 240 DO STJ. FLEXIBILIZAÇÃO. CREDOR INTIMADO POR PROCURADOR E PESSOALMENTE PARA DAR ANDAMENTO AO FEITO. INÉRCIA. EXECUÇÃO POR INTERESSE DO CREDOR. DESNECESSÁRIA INICIATIVA DO DEVEDOR. ABANDONO CONFIGURADO. RECURSO CONHECIDO E DESPROVIDO.",
+   "url": "https://busca.tjsc.jus.br/jurisprudencia/html.do?id=AAAbmQAACAALMRAAAb&categoria=acordao"
+  },
+  {
+   "id": 10236,
+   "num": "4024635-07.2018.8.24.0000",
+   "classe": "Agravo de Instrumento",
+   "orgao": "Segunda Câmara de Direito Civil",
+   "comarca": "Biguaçu",
+   "data": "2019-01-31",
+   "ano": 2019,
+   "res": "desprovido",
+   "nota": 2,
+   "porque": "Trata de justiça gratuita para pessoa jurídica.",
+   "proc": "âncora nacional persuasiva (Súmula n. 481, Súmula n. 248) | unanimidade não identificada",
+   "rank": "idade 0.50 · âncora persuasiva 1.15 → 0.57x",
+   "fatores": {
+    "idade": 0.5,
+    "âncora persuasiva": 1.15
+   },
+   "bm25": -6.666657614216223,
+   "pontos": 3.833328128174328,
+   "confianca": "dispositivo",
+   "ancora": "persuasiva",
+   "ancoras": "[\"Súmula n. 481\", \"Súmula n. 248\"]",
+   "leis": "[\"art. 1.015 do CPC\", \"art. 5º da CF\", \"art. 98 do CPC\", \"art. 99 do CPC\", \"art. 69 do CC\", \"Lei 11.101/2005\"]",
+   "unanime": null,
+   "efeito": null,
+   "ementa": "AGRAVO DE INSTRUMENTO. EXECUÇÃO DE TÍTULO EXTRAJUDICIAL. JUSTIÇA GRATUITA INDEFERIDA. PRETENDIDA REFORMA DA DECISÃO. IMPOSSIBILIDADE. PESSOA JURÍDICA. HIPOSSUFICIÊNCIA FINANCEIRA NÃO DEMONSTRADA. ELEMENTOS QUE EVIDENCIAM A FALTA DOS PRESSUPOSTOS LEGAIS PARA A CONCESSÃO DO BENEFÍCIO. DECISÃO PRESERVADA. RECURSO CONHECIDO E DESPROVIDO.",
+   "url": "https://busca.tjsc.jus.br/jurisprudencia/html.do?id=AABAg7AAFAAEA+xAAB&categoria=acordao_5"
+  },
+  {
+   "id": 10262,
+   "num": "4025629-35.2018.8.24.0000",
+   "classe": "Agravo de Instrumento",
+   "orgao": "Segunda Câmara de Direito Civil",
+   "comarca": "Balneário Camboriú",
+   "data": "2019-01-31",
+   "ano": 2019,
+   "res": "desprovido",
+   "nota": 2,
+   "porque": "Trata de justiça gratuita para pessoa jurídica.",
+   "proc": "âncora nacional persuasiva (Súmula n. 481, Súmula n. 248) | unanimidade não identificada",
+   "rank": "idade 0.50 · âncora persuasiva 1.15 → 0.57x",
+   "fatores": {
+    "idade": 0.5,
+    "âncora persuasiva": 1.15
+   },
+   "bm25": -6.651985021448909,
+   "pontos": 3.8248913873331225,
+   "confianca": "dispositivo",
+   "ancora": "persuasiva",
+   "ancoras": "[\"Súmula n. 481\", \"Súmula n. 248\"]",
+   "leis": "[\"art. 1.015 do CPC\", \"art. 5º da CF\", \"art. 98 do CPC\", \"art. 99 do CPC\", \"art. 69 do CC\", \"Lei 11.101/2005\"]",
+   "unanime": null,
+   "efeito": null,
+   "ementa": "AGRAVO DE INSTRUMENTO. EXECUÇÃO DE TÍTULO EXTRAJUDICIAL. JUSTIÇA GRATUITA INDEFERIDA NA ORIGEM. PRETENDIDA REFORMA DA DECISÃO. IMPOSSIBILIDADE. PESSOA JURÍDICA. HIPOSSUFICIÊNCIA FINANCEIRA NÃO DEMONSTRADA. ELEMENTOS QUE EVIDENCIAM A FALTA DOS PRESSUPOSTOS LEGAIS PARA A CONCESSÃO DO BENEFÍCIO. DECISÃO MANTIDA. RECURSO CONHECIDO E DESPROVIDO.",
+   "url": "https://busca.tjsc.jus.br/jurisprudencia/html.do?id=AABAg7AAFAAEA+xAAC&categoria=acordao_5"
+  },
+  {
+   "id": 9842,
+   "num": "4013374-11.2019.8.24.0000",
+   "classe": "Agravo de Instrumento",
+   "orgao": "Segunda Câmara de Direito Civil",
+   "comarca": "Balneário Camboriú",
+   "data": "2019-08-29",
+   "ano": 2019,
+   "res": "desprovido",
+   "nota": 2,
+   "porque": "Trata de justiça gratuita para pessoa jurídica.",
+   "proc": "âncora nacional persuasiva (Súmula 481) | unânime",
+   "rank": "idade 0.50 · âncora persuasiva 1.15 → 0.57x",
+   "fatores": {
+    "idade": 0.5,
+    "âncora persuasiva": 1.15
+   },
+   "bm25": -6.637376872429124,
+   "pontos": 3.816491701646746,
+   "confianca": "texto completo",
+   "ancora": "persuasiva",
+   "ancoras": "[\"Súmula 481\"]",
+   "leis": "[\"art. 1.015 do CPC\", \"art. 99 do CPC\", \"art. 69 do CC\"]",
+   "unanime": 1,
+   "efeito": null,
+   "ementa": "AGRAVO DE INSTRUMENTO. AÇÃO DE EXECUÇÃO DE TÍTULO EXTRAJUDICIAL. GRATUIDADE DA JUSTIÇA INDEFERIDA. PESSOA JURÍDICA DE DIREITO PRIVADO (UNIVALI). PRETENDIDA REFORMA DA DECISÃO. NÃO ACOLHIMENTO. HIPOSSUFICIÊNCIA NÃO DEMONSTRADA. CONJUNTO PROBATÓRIO E CIRCUNSTÂNCIAS DOS AUTOS QUE INDICAM CONDIÇÃO FINANCEIRA PARA CUSTEAR A DEMANDA. REQUISITOS PARA A CONCESSÃO DA BENESSE NÃO PREENCHIDOS. PRECEDENTES DE",
+   "url": "https://busca.tjsc.jus.br/jurisprudencia/html.do?id=AABAg7AAGAAOQn0AAD&categoria=acordao_5"
+  },
+  {
+   "id": 9843,
+   "num": "4013377-63.2019.8.24.0000",
+   "classe": "Agravo de Instrumento",
+   "orgao": "Segunda Câmara de Direito Civil",
+   "comarca": "Balneário Camboriú",
+   "data": "2019-08-29",
+   "ano": 2019,
+   "res": "desprovido",
+   "nota": 2,
+   "porque": "Trata de justiça gratuita para pessoa jurídica.",
+   "proc": "âncora nacional persuasiva (Súmula 481) | unânime",
+   "rank": "idade 0.50 · âncora persuasiva 1.15 → 0.57x",
+   "fatores": {
+    "idade": 0.5,
+    "âncora persuasiva": 1.15
+   },
+   "bm25": -6.637376872429124,
+   "pontos": 3.816491701646746,
+   "confianca": "texto completo",
+   "ancora": "persuasiva",
+   "ancoras": "[\"Súmula 481\"]",
+   "leis": "[\"art. 1.015 do CPC\", \"art. 99 do CPC\", \"art. 69 do CC\"]",
+   "unanime": 1,
+   "efeito": null,
+   "ementa": "AGRAVO DE INSTRUMENTO. AÇÃO DE EXECUÇÃO DE TÍTULO EXTRAJUDICIAL. GRATUIDADE DA JUSTIÇA INDEFERIDA. PESSOA JURÍDICA DE DIREITO PRIVADO (UNIVALI). PRETENDIDA REFORMA DA DECISÃO. NÃO ACOLHIMENTO. HIPOSSUFICIÊNCIA NÃO DEMONSTRADA. CONJUNTO PROBATÓRIO E CIRCUNSTÂNCIAS DOS AUTOS QUE INDICAM CONDIÇÃO FINANCEIRA PARA CUSTEAR A DEMANDA. REQUISITOS PARA A CONCESSÃO DA BENESSE NÃO PREENCHIDOS. PRECEDENTES DE",
+   "url": "https://busca.tjsc.jus.br/jurisprudencia/html.do?id=AABAg7AAGAAOQkFAAL&categoria=acordao_5"
+  },
+  {
+   "id": 9906,
+   "num": "4015365-22.2019.8.24.0000",
+   "classe": "Agravo de Instrumento",
+   "orgao": "Segunda Câmara de Direito Civil",
+   "comarca": "Balneário Camboriú",
+   "data": "2019-08-29",
+   "ano": 2019,
+   "res": "desprovido",
+   "nota": 2,
+   "porque": "Trata de justiça gratuita para pessoa jurídica.",
+   "proc": "âncora nacional persuasiva (Súmula 481) | unânime",
+   "rank": "idade 0.50 · âncora persuasiva 1.15 → 0.57x",
+   "fatores": {
+    "idade": 0.5,
+    "âncora persuasiva": 1.15
+   },
+   "bm25": -6.637376872429124,
+   "pontos": 3.816491701646746,
+   "confianca": "texto completo",
+   "ancora": "persuasiva",
+   "ancoras": "[\"Súmula 481\"]",
+   "leis": "[\"art. 1.015 do CPC\", \"art. 99 do CPC\", \"art. 69 do CC\"]",
+   "unanime": 1,
+   "efeito": null,
+   "ementa": "AGRAVO DE INSTRUMENTO. AÇÃO DE EXECUÇÃO DE TÍTULO EXTRAJUDICIAL. GRATUIDADE DA JUSTIÇA INDEFERIDA. PESSOA JURÍDICA DE DIREITO PRIVADO (UNIVALI). PRETENDIDA REFORMA DA DECISÃO. NÃO ACOLHIMENTO. HIPOSSUFICIÊNCIA NÃO DEMONSTRADA. CONJUNTO PROBATÓRIO E CIRCUNSTÂNCIAS DOS AUTOS QUE INDICAM CONDIÇÃO FINANCEIRA PARA CUSTEAR A DEMANDA. REQUISITOS PARA A CONCESSÃO DA BENESSE NÃO PREENCHIDOS. PRECEDENTES DE",
+   "url": "https://busca.tjsc.jus.br/jurisprudencia/html.do?id=AABAg7AAGAAOQkFAAJ&categoria=acordao_5"
+  },
+  {
+   "id": 10428,
+   "num": "4031554-12.2018.8.24.0000",
+   "classe": "Agravo de Instrumento",
+   "orgao": "Segunda Câmara de Direito Civil",
+   "comarca": "Balneário Camboriú",
+   "data": "2019-02-28",
+   "ano": 2019,
+   "res": "desprovido",
+   "nota": 2,
+   "porque": "Trata de justiça gratuita para pessoa jurídica.",
+   "proc": "âncora nacional persuasiva (Súmula n. 481, Súmula n. 248) | unanimidade não identificada",
+   "rank": "idade 0.50 · âncora persuasiva 1.15 → 0.57x",
+   "fatores": {
+    "idade": 0.5,
+    "âncora persuasiva": 1.15
+   },
+   "bm25": -6.637376872429124,
+   "pontos": 3.816491701646746,
+   "confianca": "dispositivo",
+   "ancora": "persuasiva",
+   "ancoras": "[\"Súmula n. 481\", \"Súmula n. 248\"]",
+   "leis": "[\"art. 1.015 do CPC\", \"art. 5º da CF\", \"art. 98 do CPC\", \"art. 99 do CPC\", \"art. 69 do CC\", \"Lei 11.101/2005\"]",
+   "unanime": null,
+   "efeito": null,
+   "ementa": "AGRAVO DE INSTRUMENTO. EXECUÇÃO DE TÍTULO EXTRAJUDICIAL. JUSTIÇA GRATUITA INDEFERIDA NA ORIGEM. PRETENDIDA REFORMA DA DECISÃO. IMPOSSIBILIDADE. PESSOA JURÍDICA. HIPOSSUFICIÊNCIA FINANCEIRA NÃO DEMONSTRADA NO CASO. ELEMENTOS QUE EVIDENCIAM A FALTA DOS PRESSUPOSTOS LEGAIS PARA A CONCESSÃO DO BENEFÍCIO. DECISÃO MANTIDA. RECURSO CONHECIDO E DESPROVIDO.",
+   "url": "https://busca.tjsc.jus.br/jurisprudencia/html.do?id=AABAg7AAFAAGovnAAO&categoria=acordao_5"
+  },
+  {
+   "id": 7426,
+   "num": "2012.050180-8",
+   "classe": "Apelação Cível",
+   "orgao": "Câmara Especial Regional de Chapecó",
+   "comarca": "Seara",
+   "data": "2015-05-11",
+   "ano": 2015,
+   "res": "desprovido",
+   "nota": 2,
+   "porque": "Trata de extinção por abandono da causa (Súmula 240 STJ).",
+   "proc": "âncora nacional persuasiva (SÚMULA 240 DO STJ, Súmula 240, SÚMULA N° 240/STJ) | unânime",
+   "rank": "idade 0.50 · âncora persuasiva 1.15 → 0.57x",
+   "fatores": {
+    "idade": 0.5,
+    "âncora persuasiva": 1.15
+   },
+   "bm25": -6.572426420915893,
+   "pontos": 3.7791451920266383,
+   "confianca": "dispositivo",
+   "ancora": "persuasiva",
+   "ancoras": "[\"SÚMULA 240 DO STJ\", \"Súmula 240\", \"SÚMULA N° 240/STJ\", \"SÚMULA 240\", \"Súmula 240 do STJ\"]",
+   "leis": "[\"art. 267 do CPC\", \"art. 612 do CPC\"]",
+   "unanime": 1,
+   "efeito": null,
+   "ementa": "APELAÇÃO CÍVEL. EXECUÇÃO DE TÍTULO EXTRAJUDICIAL. EXTINÇÃO DO FEITO POR ABANDONO DA CAUSA. RECURSO DA EXEQUENTE. NECESSIDADE DE APLICAÇÃO DA SÚMULA 240 DO STJ. FLEXIBILIZAÇÃO. CREDOR INTIMADO POR PROCURADOR E PESSOALMENTE PARA DAR ANDAMENTO AO FEITO. INÉRCIA. EXECUÇÃO POR INTERESSE DO CREDOR. DESNECESSÁRIA INICIATIVA DO DEVEDOR. ABANDONO CONFIGURADO. RECURSO CONHECIDO E DESPROVIDO.",
+   "url": "https://busca.tjsc.jus.br/jurisprudencia/html.do?id=AAAbmQAACAALMZsAAM&categoria=acordao"
+  }
+ ],
+ "rede": {
+  "nos": [
+   {
+    "id": 13295,
+    "tipo": "decisao",
+    "numero": "5045030-56.2025.8.24.0000",
+    "classe": "Agravo de Instrumento",
+    "orgao": "Sexta Câmara de Direito Comercial",
+    "ano": 2025,
+    "data": "2025-07-24",
+    "resultado": "provido",
+    "nota": 5,
+    "pontos": 21.686590764752253,
+    "ancora": "persuasiva",
+    "unanime": null,
+    "precedente": false,
+    "lado": "",
+    "ancoras": [],
+    "leis": [
+     "art. 830 do CPC",
+     "art. 854 do CPC"
+    ]
+   },
+   {
+    "id": 12452,
+    "tipo": "decisao",
+    "numero": "5022533-82.2024.8.24.0000",
+    "classe": "Agravo de Instrumento",
+    "orgao": "Sexta Câmara de Direito Comercial",
+    "ano": 2024,
+    "data": "2024-06-13",
+    "resultado": "provido",
+    "nota": 5,
+    "pontos": 21.157859335835965,
+    "ancora": "persuasiva",
+    "unanime": null,
+    "precedente": false,
+    "lado": "",
+    "ancoras": [],
+    "leis": [
+     "art. 830 do CPC"
+    ]
+   },
+   {
+    "id": 13601,
+    "tipo": "decisao",
+    "numero": "5056148-63.2024.8.24.0000",
+    "classe": "Agravo de Instrumento",
+    "orgao": "Sexta Câmara de Direito Comercial",
+    "ano": 2024,
+    "data": "2024-10-10",
+    "resultado": "provido",
+    "nota": 5,
+    "pontos": 19.67100952464588,
+    "ancora": "persuasiva",
+    "unanime": null,
+    "precedente": false,
+    "lado": "",
+    "ancoras": [],
+    "leis": [
+     "art. 830 do CPC",
+     "art. 854 do CPC"
+    ]
+   },
+   {
+    "id": 11983,
+    "tipo": "decisao",
+    "numero": "5012737-67.2024.8.24.0000",
+    "classe": "Agravo de Instrumento",
+    "orgao": "Sexta Câmara de Direito Comercial",
+    "ano": 2024,
+    "data": "2024-04-25",
+    "resultado": "provido",
+    "nota": 5,
+    "pontos": 19.60749299881927,
+    "ancora": "persuasiva",
+    "unanime": null,
+    "precedente": false,
+    "lado": "",
+    "ancoras": [],
+    "leis": [
+     "art. 830 do CPC"
+    ]
+   },
+   {
+    "id": 13564,
+    "tipo": "decisao",
+    "numero": "5055086-85.2024.8.24.0000",
+    "classe": "Agravo de Instrumento",
+    "orgao": "Sexta Câmara de Direito Comercial",
+    "ano": 2024,
+    "data": "2024-10-10",
+    "resultado": "provido",
+    "nota": 5,
+    "pontos": 18.96649098574464,
+    "ancora": "persuasiva",
+    "unanime": null,
+    "precedente": false,
+    "lado": "",
+    "ancoras": [],
+    "leis": [
+     "art. 830 do CPC",
+     "art. 854 do CPC"
+    ]
+   },
+   {
+    "id": 12262,
+    "tipo": "decisao",
+    "numero": "5018404-34.2024.8.24.0000",
+    "classe": "Agravo de Instrumento",
+    "orgao": "Sexta Câmara de Direito Comercial",
+    "ano": 2024,
+    "data": "2024-06-13",
+    "resultado": "parcialmente provido",
+    "nota": 2,
+    "pontos": 17.77143936929013,
+    "ancora": "persuasiva",
+    "unanime": null,
+    "precedente": false,
+    "lado": "",
+    "ancoras": [
+     "SÚMULA 568/STJ",
+     "SÚMULA N. 284 DO STF",
+     "SÚMULA N. 7 DO STJ",
+     "SÚMULA N. 83 DO STJ"
+    ],
+    "leis": [
+     "art. 833 do CPC",
+     "art. 649 do CPC"
+    ]
+   },
+   {
+    "id": 13824,
+    "tipo": "decisao",
+    "numero": "5064136-38.2024.8.24.0000",
+    "classe": "Agravo de Instrumento",
+    "orgao": "Sexta Câmara de Direito Comercial",
+    "ano": 2025,
+    "data": "2025-01-30",
+    "resultado": "provido",
+    "nota": 5,
+    "pontos": 15.397806383715555,
+    "ancora": "persuasiva",
+    "unanime": null,
+    "precedente": false,
+    "lado": "",
+    "ancoras": [],
+    "leis": [
+     "art. 830 do CPC",
+     "art. 854 do CPC"
+    ]
+   },
+   {
+    "id": 11777,
+    "tipo": "decisao",
+    "numero": "5009469-13.2022.8.24.0020",
+    "classe": "Apelação",
+    "orgao": "Sexta Câmara de Direito Comercial",
+    "ano": 2025,
+    "data": "2025-03-13",
+    "resultado": "provido",
+    "nota": 2,
+    "pontos": 14.253089830677434,
+    "ancora": "persuasiva",
+    "unanime": null,
+    "precedente": false,
+    "lado": "",
+    "ancoras": [],
+    "leis": [
+     "art. 924 do CPC",
+     "art. 925 do CPC",
+     "art. 90 do CPC",
+     "art. 1.012 do CPC",
+     "art. 487 do CPC",
+     "art. 85 do CPC"
+    ]
+   },
+   {
+    "id": 10403,
+    "tipo": "decisao",
+    "numero": "4030693-89.2019.8.24.0000",
+    "classe": "Agravo de Instrumento",
+    "orgao": "Segunda Câmara de Direito Civil",
+    "ano": 2020,
+    "data": "2020-01-30",
+    "resultado": "desprovido",
+    "nota": 2,
+    "pontos": 11.457246890127502,
+    "ancora": "persuasiva",
+    "unanime": 1,
+    "precedente": false,
+    "lado": "",
+    "ancoras": [],
+    "leis": [
+     "art. 1.015 do CPC",
+     "art. 833 do CPC",
+     "art. 649 do CPC"
+    ]
+   },
+   {
+    "id": 13848,
+    "tipo": "decisao",
+    "numero": "5064917-65.2021.8.24.0000",
+    "classe": "Agravo de Instrumento",
+    "orgao": "Segunda Câmara de Direito Civil",
+    "ano": 2022,
+    "data": "2022-01-31",
+    "resultado": "desprovido",
+    "nota": 2,
+    "pontos": 9.518030367342291,
+    "ancora": "persuasiva",
+    "unanime": null,
+    "precedente": false,
+    "lado": "",
+    "ancoras": [],
+    "leis": [
+     "art. 835 do CPC",
+     "art. 847 do CPC",
+     "art. 1.015 do CPC",
+     "art. 805 do CPC"
+    ]
+   },
+   {
+    "id": 7847,
+    "tipo": "decisao",
+    "numero": "2013.073378-3",
+    "classe": "Agravo de Instrumento",
+    "orgao": "Câmara Especial Regional de Chapecó",
+    "ano": 2015,
+    "data": "2015-03-09",
+    "resultado": "desprovido",
+    "nota": 4,
+    "pontos": 8.934297131070082,
+    "ancora": "vinculante",
+    "unanime": 1,
+    "precedente": false,
+    "lado": "",
+    "ancoras": [],
+    "leis": [
+     "art. 655 do CPC",
+     "Lei 11.382/2006"
+    ]
+   },
+   {
+    "id": 10277,
+    "tipo": "decisao",
+    "numero": "4025972-31.2018.8.24.0000",
+    "classe": "Agravo de Instrumento",
+    "orgao": "Segunda Câmara de Direito Civil",
+    "ano": 2019,
+    "data": "2019-01-24",
+    "resultado": "desprovido",
+    "nota": 4,
+    "pontos": 8.858634223834173,
+    "ancora": "vinculante",
+    "unanime": 1,
+    "precedente": false,
+    "lado": "",
+    "ancoras": [
+     "Súmula n. 532"
+    ],
+    "leis": [
+     "art. 655 do CPC",
+     "Lei 11.382/2006"
+    ]
+   },
+   {
+    "id": 13054,
+    "tipo": "decisao",
+    "numero": "5037928-56.2020.8.24.0000",
+    "classe": "Agravo de Instrumento",
+    "orgao": "Segunda Câmara de Direito Civil",
+    "ano": 2021,
+    "data": "2021-10-21",
+    "resultado": "parcialmente provido",
+    "nota": 2,
+    "pontos": 8.642179324592899,
+    "ancora": "persuasiva",
+    "unanime": null,
+    "precedente": false,
+    "lado": "",
+    "ancoras": [],
+    "leis": [
+     "art. 507 do CPC",
+     "art. 141 do CPC",
+     "art. 1.015 do CPC",
+     "art. 505 do CPC",
+     "art. 267 do CPC"
+    ]
+   },
+   {
+    "id": 6169,
+    "tipo": "decisao",
+    "numero": "0320795-06.2014.8.24.0038",
+    "classe": "Apelação",
+    "orgao": "Sexta Câmara de Direito Comercial",
+    "ano": 2025,
+    "data": "2025-04-24",
+    "resultado": "desprovido",
+    "nota": 2,
+    "pontos": 8.157505447601459,
+    "ancora": "vinculante",
+    "unanime": null,
+    "precedente": false,
+    "lado": "",
+    "ancoras": [
+     "SÚMULA Nº 233 DO STJ",
+     "SÚMULA Nº 258 DO STJ",
+     "TEMA 587"
+    ],
+    "leis": [
+     "art. 803 do CPC",
+     "art. 485 do CPC",
+     "art. 82 do CPC",
+     "art. 85 do CPC",
+     "art. 927 do CPC",
+     "art. 921 do CPC"
+    ]
+   },
+   {
+    "id": 16899,
+    "tipo": "decisao",
+    "numero": "4013961-04.2017.8.24.0000",
+    "classe": "Agravo de Instrumento",
+    "orgao": "Segunda Câmara de Direito Civil",
+    "ano": 2018,
+    "data": "2018-10-29",
+    "resultado": "liminar/tutela indeferida",
+    "nota": 1,
+    "pontos": 8.112788323440364,
+    "ancora": "persuasiva",
+    "unanime": null,
+    "precedente": false,
+    "lado": "",
+    "ancoras": [],
+    "leis": [
+     "art. 1.015 do CPC",
+     "art. 1.019 do CPC",
+     "Lei 11.101/2005"
+    ]
+   },
+   {
+    "id": 13212,
+    "tipo": "decisao",
+    "numero": "5042500-49.2021.8.24.0023",
+    "classe": "Apelação",
+    "orgao": "Sexta Câmara de Direito Comercial",
+    "ano": 2024,
+    "data": "2024-05-23",
+    "resultado": "provido",
+    "nota": 2,
+    "pontos": 6.404664542081642,
+    "ancora": "persuasiva",
+    "unanime": null,
+    "precedente": false,
+    "lado": "",
+    "ancoras": [
+     "SÚMULA 568 DO STJ",
+     "SÚMULA 7 DO STJ"
+    ],
+    "leis": [
+     "art. 485 do CPC",
+     "art. 1.007 do CPC",
+     "art. 85 do CPC",
+     "art. 919 do CPC",
+     "art. 522 do CPC",
+     "art. 523 do CPC",
+     "Lei 9.307/1996",
+     "Lei 9.306/1996"
+    ]
+   },
+   {
+    "id": 11094,
+    "tipo": "decisao",
+    "numero": "5002148-16.2024.8.24.0000",
+    "classe": "Agravo de Instrumento",
+    "orgao": "Sexta Câmara de Direito Comercial",
+    "ano": 2024,
+    "data": "2024-04-11",
+    "resultado": "provido",
+    "nota": 2,
+    "pontos": 6.2138182366875,
+    "ancora": "persuasiva",
+    "unanime": null,
+    "precedente": false,
+    "lado": "",
+    "ancoras": [
+     "Súmula n. 581 do STJ"
+    ],
+    "leis": [
+     "art. 485 do CPC",
+     "Lei 11.101/2005"
+    ]
+   },
+   {
+    "id": 11919,
+    "tipo": "decisao",
+    "numero": "5011549-39.2024.8.24.0000",
+    "classe": "Agravo de Instrumento",
+    "orgao": "Sexta Câmara de Direito Comercial",
+    "ano": 2024,
+    "data": "2024-04-11",
+    "resultado": "provido",
+    "nota": 2,
+    "pontos": 5.568660044675328,
+    "ancora": "estadual",
+    "unanime": null,
+    "precedente": false,
+    "lado": "",
+    "ancoras": [],
+    "leis": []
+   },
+   {
+    "id": 5086,
+    "tipo": "decisao",
+    "numero": "0305321-14.2014.8.24.0064",
+    "classe": "Apelação",
+    "orgao": "Sexta Câmara de Direito Comercial",
+    "ano": 2025,
+    "data": "2025-07-24",
+    "resultado": "desprovido",
+    "nota": 2,
+    "pontos": 5.338889129026511,
+    "ancora": "persuasiva",
+    "unanime": null,
+    "precedente": false,
+    "lado": "",
+    "ancoras": [
+     "SÚMULA N. 106"
+    ],
+    "leis": [
+     "art. 487 do CPC",
+     "art. 924 do CPC",
+     "art. 85 do CPC",
+     "art. 939 do CC",
+     "art. 189 do CC",
+     "art. 206 do CC",
+     "art. 202 do CC",
+     "art. 240 do CPC"
+    ]
+   },
+   {
+    "id": 2021,
+    "tipo": "decisao",
+    "numero": "0038691-59.2009.8.24.0023",
+    "classe": "Apelação Cível",
+    "orgao": "Segunda Câmara de Direito Civil",
+    "ano": 2017,
+    "data": "2017-06-22",
+    "resultado": "não conhecido",
+    "nota": 1,
+    "pontos": 4.157059711229302,
+    "ancora": "persuasiva",
+    "unanime": 1,
+    "precedente": false,
+    "lado": "",
+    "ancoras": [
+     "SÚMULA 83/STJ"
+    ],
+    "leis": []
+   },
+   {
+    "id": 82,
+    "tipo": "decisao",
+    "numero": "0000123-02.2013.8.24.0033",
+    "classe": "Apelação Cível",
+    "orgao": "Segunda Câmara de Direito Civil",
+    "ano": 2018,
+    "data": "2018-11-22",
+    "resultado": "não conhecido",
+    "nota": 1,
+    "pontos": 4.152544713826033,
+    "ancora": "persuasiva",
+    "unanime": null,
+    "precedente": false,
+    "lado": "",
+    "ancoras": [
+     "súmula 106 do STJ"
+    ],
+    "leis": [
+     "art. 487 do CPC"
+    ]
+   },
+   {
+    "id": 10473,
+    "tipo": "decisao",
+    "numero": "4033569-17.2019.8.24.0000",
+    "classe": "Agravo de Instrumento",
+    "orgao": "Segunda Câmara de Direito Civil",
+    "ano": 2020,
+    "data": "2020-05-28",
+    "resultado": "desprovido",
+    "nota": 2,
+    "pontos": 4.055638165620304,
+    "ancora": "persuasiva",
+    "unanime": 1,
+    "precedente": false,
+    "lado": "",
+    "ancoras": [
+     "SÚMULA 481",
+     "Súmula n. 248"
+    ],
+    "leis": [
+     "art. 1.015 do CPC",
+     "art. 99 do CPC",
+     "art. 557 do CPC",
+     "Lei 13.105/2015"
+    ]
+   },
+   {
+    "id": 4385,
+    "tipo": "decisao",
+    "numero": "0302513-40.2017.8.24.0061",
+    "classe": "Embargos de Declaração",
+    "orgao": "Segunda Câmara de Direito Civil",
+    "ano": 2019,
+    "data": "2019-12-16",
+    "resultado": "desprovido",
+    "nota": 1,
+    "pontos": 3.9796521376720633,
+    "ancora": "persuasiva",
+    "unanime": 1,
+    "precedente": false,
+    "lado": "",
+    "ancoras": [],
+    "leis": [
+     "art. 917 do CPC",
+     "art. 1.022 do CPC",
+     "art. 492 do CPC",
+     "art. 86 do CPC"
+    ]
+   },
+   {
+    "id": 1614,
+    "tipo": "decisao",
+    "numero": "0016516-70.2011.8.24.0033",
+    "classe": "Apelação Cível",
+    "orgao": "Segunda Câmara de Direito Civil",
+    "ano": 2020,
+    "data": "2020-02-20",
+    "resultado": "desprovido",
+    "nota": 2,
+    "pontos": 3.9713846418478616,
+    "ancora": "persuasiva",
+    "unanime": 1,
+    "precedente": false,
+    "lado": "",
+    "ancoras": [
+     "SÚMULA 7/STJ",
+     "Súmula 106 do STJ"
+    ],
+    "leis": [
+     "art. 206 do CC",
+     "art. 219 do CPC",
+     "art. 85 do CPC",
+     "art. 202 do CC",
+     "art. 240 do CPC",
+     "art. 12 do CPC",
+     "art. 1.021 do CPC"
+    ]
+   },
+   {
+    "id": 10405,
+    "tipo": "decisao",
+    "numero": "4030732-86.2019.8.24.0000",
+    "classe": "Agravo de Instrumento",
+    "orgao": "Segunda Câmara de Direito Civil",
+    "ano": 2020,
+    "data": "2020-01-23",
+    "resultado": "desprovido",
+    "nota": 2,
+    "pontos": 3.9631514252937974,
+    "ancora": "persuasiva",
+    "unanime": 1,
+    "precedente": false,
+    "lado": "",
+    "ancoras": [],
+    "leis": [
+     "art. 3º do CPC",
+     "art. 1.015 do CPC",
+     "art. 833 do CPC",
+     "art. 6º da CF",
+     "art. 373 do CPC",
+     "Lei 8.009/1990",
+     "Lei 9.514/1997"
+    ]
+   },
+   {
+    "id": 9492,
+    "tipo": "decisao",
+    "numero": "4002985-30.2020.8.24.0000",
+    "classe": "Agravo de Instrumento",
+    "orgao": "Segunda Câmara de Direito Civil",
+    "ano": 2020,
+    "data": "2020-08-27",
+    "resultado": "desprovido",
+    "nota": 2,
+    "pontos": 3.9549522752542776,
+    "ancora": "persuasiva",
+    "unanime": 1,
+    "precedente": false,
+    "lado": "",
+    "ancoras": [
+     "súmula 317"
+    ],
+    "leis": [
+     "art. 313 do CPC",
+     "art. 1.015 do CPC",
+     "art. 1 do CPC",
+     "art. 1.012 do CPC"
+    ]
+   },
+   {
+    "id": 3286,
+    "tipo": "decisao",
+    "numero": "0300804-71.2017.8.24.0189",
+    "classe": "Apelação Cível",
+    "orgao": "Segunda Câmara de Direito Civil",
+    "ano": 2019,
+    "data": "2019-10-31",
+    "resultado": "desprovido",
+    "nota": 2,
+    "pontos": 3.9467869807307063,
+    "ancora": "persuasiva",
+    "unanime": 1,
+    "precedente": false,
+    "lado": "",
+    "ancoras": [
+     "Súmula 7"
+    ],
+    "leis": [
+     "art. 784 do CPC",
+     "art. 798 do CPC",
+     "art. 12 do CPC",
+     "art. 481 do CC",
+     "art. 585 do CPC",
+     "art. 783 do CPC",
+     "art. 485 do CPC",
+     "art. 85 do CPC"
+    ]
+   },
+   {
+    "id": 10429,
+    "tipo": "decisao",
+    "numero": "4031559-97.2019.8.24.0000",
+    "classe": "Agravo de Instrumento",
+    "orgao": "Segunda Câmara de Direito Civil",
+    "ano": 2020,
+    "data": "2020-06-18",
+    "resultado": "desprovido",
+    "nota": 2,
+    "pontos": 3.934602060753245,
+    "ancora": "persuasiva",
+    "unanime": 1,
+    "precedente": false,
+    "lado": "",
+    "ancoras": [],
+    "leis": [
+     "art. 833 do CPC",
+     "Lei 8.629/1993",
+     "Lei 9.008/1990"
+    ]
+   },
+   {
+    "id": 9295,
+    "tipo": "decisao",
+    "numero": "2015.071359-8",
+    "classe": "Agravo de Instrumento",
+    "orgao": "Câmara Especial Regional de Chapecó",
+    "ano": 2016,
+    "data": "2016-02-15",
+    "resultado": "provido",
+    "nota": 2,
+    "pontos": 3.924214258308571,
+    "ancora": "persuasiva",
+    "unanime": 1,
+    "precedente": false,
+    "lado": "",
+    "ancoras": [],
+    "leis": [
+     "art. 649 do CPC",
+     "art. 7º da CF",
+     "art. 652 do CPC"
+    ]
+   },
+   {
+    "id": 7544,
+    "tipo": "decisao",
+    "numero": "2013.002725-7",
+    "classe": "Ação Rescisória",
+    "orgao": "Câmara Especial Regional de Chapecó",
+    "ano": 2015,
+    "data": "2015-06-22",
+    "resultado": "extinto/homologado",
+    "nota": 1,
+    "pontos": 3.9109675556177996,
+    "ancora": "persuasiva",
+    "unanime": 1,
+    "precedente": false,
+    "lado": "",
+    "ancoras": [],
+    "leis": [
+     "art. 20 do CPC",
+     "art. 485 do CPC",
+     "art. 231 do CPC",
+     "art. 741 do CPC",
+     "art. 267 do CPC",
+     "art. 3º do CPC",
+     "art. 488 do CPC"
+    ]
+   },
+   {
+    "id": 9403,
+    "tipo": "decisao",
+    "numero": "4000808-93.2020.8.24.0000",
+    "classe": "Embargos de Declaração",
+    "orgao": "Segunda Câmara de Direito Civil",
+    "ano": 2020,
+    "data": "2020-10-01",
+    "resultado": "provido",
+    "nota": 1,
+    "pontos": 3.910456546779231,
+    "ancora": "persuasiva",
+    "unanime": 1,
+    "precedente": false,
+    "lado": "",
+    "ancoras": [],
+    "leis": [
+     "art. 85 do CPC",
+     "art. 1.023 do CPC",
+     "Lei 13.105/2015",
+     "Lei 13.356/2016"
+    ]
+   },
+   {
+    "id": 6488,
+    "tipo": "decisao",
+    "numero": "0503170-11.2013.8.24.0005",
+    "classe": "Apelação",
+    "orgao": "Segunda Câmara de Direito Civil",
+    "ano": 2021,
+    "data": "2021-12-16",
+    "resultado": "extinto/homologado",
+    "nota": 2,
+    "pontos": 3.870569806896583,
+    "ancora": "estadual",
+    "unanime": null,
+    "precedente": false,
+    "lado": "",
+    "ancoras": [],
+    "leis": [
+     "art. 927 do CPC",
+     "art. 783 do CPC",
+     "art. 803 do CPC",
+     "art. 166 do CC",
+     "art. 485 do CPC",
+     "art. 487 do CPC"
+    ]
+   },
+   {
+    "id": 7192,
+    "tipo": "decisao",
+    "numero": "2011.086421-9",
+    "classe": "Apelação Cível",
+    "orgao": "Câmara Especial Regional de Chapecó",
+    "ano": 2015,
+    "data": "2015-03-09",
+    "resultado": "desprovido",
+    "nota": 2,
+    "pontos": 3.8588631499890287,
+    "ancora": "persuasiva",
+    "unanime": 1,
+    "precedente": false,
+    "lado": "",
+    "ancoras": [
+     "Súmula 240"
+    ],
+    "leis": [
+     "art. 267 do CPC",
+     "art. 612 do CPC"
+    ]
+   },
+   {
+    "id": 10236,
+    "tipo": "decisao",
+    "numero": "4024635-07.2018.8.24.0000",
+    "classe": "Agravo de Instrumento",
+    "orgao": "Segunda Câmara de Direito Civil",
+    "ano": 2019,
+    "data": "2019-01-31",
+    "resultado": "desprovido",
+    "nota": 2,
+    "pontos": 3.833328128174328,
+    "ancora": "persuasiva",
+    "unanime": null,
+    "precedente": false,
+    "lado": "",
+    "ancoras": [
+     "Súmula n. 248",
+     "Súmula n. 481"
+    ],
+    "leis": [
+     "art. 1.015 do CPC",
+     "art. 5º da CF",
+     "art. 98 do CPC",
+     "art. 99 do CPC",
+     "art. 69 do CC",
+     "Lei 11.101/2005"
+    ]
+   },
+   {
+    "id": 10262,
+    "tipo": "decisao",
+    "numero": "4025629-35.2018.8.24.0000",
+    "classe": "Agravo de Instrumento",
+    "orgao": "Segunda Câmara de Direito Civil",
+    "ano": 2019,
+    "data": "2019-01-31",
+    "resultado": "desprovido",
+    "nota": 2,
+    "pontos": 3.8248913873331225,
+    "ancora": "persuasiva",
+    "unanime": null,
+    "precedente": false,
+    "lado": "",
+    "ancoras": [
+     "Súmula n. 248",
+     "Súmula n. 481"
+    ],
+    "leis": [
+     "art. 1.015 do CPC",
+     "art. 5º da CF",
+     "art. 98 do CPC",
+     "art. 99 do CPC",
+     "art. 69 do CC",
+     "Lei 11.101/2005"
+    ]
+   },
+   {
+    "id": 9842,
+    "tipo": "decisao",
+    "numero": "4013374-11.2019.8.24.0000",
+    "classe": "Agravo de Instrumento",
+    "orgao": "Segunda Câmara de Direito Civil",
+    "ano": 2019,
+    "data": "2019-08-29",
+    "resultado": "desprovido",
+    "nota": 2,
+    "pontos": 3.816491701646746,
+    "ancora": "persuasiva",
+    "unanime": 1,
+    "precedente": false,
+    "lado": "",
+    "ancoras": [
+     "Súmula 481"
+    ],
+    "leis": [
+     "art. 1.015 do CPC",
+     "art. 99 do CPC",
+     "art. 69 do CC"
+    ]
+   },
+   {
+    "id": 9843,
+    "tipo": "decisao",
+    "numero": "4013377-63.2019.8.24.0000",
+    "classe": "Agravo de Instrumento",
+    "orgao": "Segunda Câmara de Direito Civil",
+    "ano": 2019,
+    "data": "2019-08-29",
+    "resultado": "desprovido",
+    "nota": 2,
+    "pontos": 3.816491701646746,
+    "ancora": "persuasiva",
+    "unanime": 1,
+    "precedente": false,
+    "lado": "",
+    "ancoras": [
+     "Súmula 481"
+    ],
+    "leis": [
+     "art. 1.015 do CPC",
+     "art. 99 do CPC",
+     "art. 69 do CC"
+    ]
+   },
+   {
+    "id": 9906,
+    "tipo": "decisao",
+    "numero": "4015365-22.2019.8.24.0000",
+    "classe": "Agravo de Instrumento",
+    "orgao": "Segunda Câmara de Direito Civil",
+    "ano": 2019,
+    "data": "2019-08-29",
+    "resultado": "desprovido",
+    "nota": 2,
+    "pontos": 3.816491701646746,
+    "ancora": "persuasiva",
+    "unanime": 1,
+    "precedente": false,
+    "lado": "",
+    "ancoras": [
+     "Súmula 481"
+    ],
+    "leis": [
+     "art. 1.015 do CPC",
+     "art. 99 do CPC",
+     "art. 69 do CC"
+    ]
+   },
+   {
+    "id": 10428,
+    "tipo": "decisao",
+    "numero": "4031554-12.2018.8.24.0000",
+    "classe": "Agravo de Instrumento",
+    "orgao": "Segunda Câmara de Direito Civil",
+    "ano": 2019,
+    "data": "2019-02-28",
+    "resultado": "desprovido",
+    "nota": 2,
+    "pontos": 3.816491701646746,
+    "ancora": "persuasiva",
+    "unanime": null,
+    "precedente": false,
+    "lado": "",
+    "ancoras": [
+     "Súmula n. 248",
+     "Súmula n. 481"
+    ],
+    "leis": [
+     "art. 1.015 do CPC",
+     "art. 5º da CF",
+     "art. 98 do CPC",
+     "art. 99 do CPC",
+     "art. 69 do CC",
+     "Lei 11.101/2005"
+    ]
+   },
+   {
+    "id": 7426,
+    "tipo": "decisao",
+    "numero": "2012.050180-8",
+    "classe": "Apelação Cível",
+    "orgao": "Câmara Especial Regional de Chapecó",
+    "ano": 2015,
+    "data": "2015-05-11",
+    "resultado": "desprovido",
+    "nota": 2,
+    "pontos": 3.7791451920266383,
+    "ancora": "persuasiva",
+    "unanime": 1,
+    "precedente": false,
+    "lado": "",
+    "ancoras": [
+     "Súmula 240"
+    ],
+    "leis": [
+     "art. 267 do CPC",
+     "art. 612 do CPC"
+    ]
+   },
+   {
+    "id": "anc:sumula:83:stj",
+    "tipo": "ancora",
+    "rotulo": "SÚMULA N. 83 DO STJ",
+    "chave": "sumula:83:stj",
+    "grau": 2,
+    "vinculante": false
+   },
+   {
+    "id": "anc:sumula:7:stj",
+    "tipo": "ancora",
+    "rotulo": "SÚMULA N. 7 DO STJ",
+    "chave": "sumula:7:stj",
+    "grau": 4,
+    "vinculante": false
+   },
+   {
+    "id": "anc:sumula:568:stj",
+    "tipo": "ancora",
+    "rotulo": "SÚMULA 568/STJ",
+    "chave": "sumula:568:stj",
+    "grau": 2,
+    "vinculante": false
+   },
+   {
+    "id": "anc:sumula:106:stj",
+    "tipo": "ancora",
+    "rotulo": "SÚMULA N. 106",
+    "chave": "sumula:106:stj",
+    "grau": 3,
+    "vinculante": false
+   },
+   {
+    "id": "anc:sumula:481:?",
+    "tipo": "ancora",
+    "rotulo": "SÚMULA 481",
+    "chave": "sumula:481:?",
+    "grau": 7,
+    "vinculante": false
+   },
+   {
+    "id": "anc:sumula:248:?",
+    "tipo": "ancora",
+    "rotulo": "Súmula n. 248",
+    "chave": "sumula:248:?",
+    "grau": 4,
+    "vinculante": false
+   },
+   {
+    "id": "anc:sumula:240:stj",
+    "tipo": "ancora",
+    "rotulo": "Súmula 240",
+    "chave": "sumula:240:stj",
+    "grau": 2,
+    "vinculante": false
+   },
+   {
+    "id": "lei:art. 830 do CPC",
+    "tipo": "lei",
+    "rotulo": "art. 830 do CPC",
+    "chave": "art. 830 do CPC",
+    "grau": 6
+   },
+   {
+    "id": "lei:art. 854 do CPC",
+    "tipo": "lei",
+    "rotulo": "art. 854 do CPC",
+    "chave": "art. 854 do CPC",
+    "grau": 4
+   },
+   {
+    "id": "lei:art. 833 do CPC",
+    "tipo": "lei",
+    "rotulo": "art. 833 do CPC",
+    "chave": "art. 833 do CPC",
+    "grau": 4
+   },
+   {
+    "id": "lei:art. 649 do CPC",
+    "tipo": "lei",
+    "rotulo": "art. 649 do CPC",
+    "chave": "art. 649 do CPC",
+    "grau": 3
+   },
+   {
+    "id": "lei:art. 924 do CPC",
+    "tipo": "lei",
+    "rotulo": "art. 924 do CPC",
+    "chave": "art. 924 do CPC",
+    "grau": 2
+   },
+   {
+    "id": "lei:art. 1.012 do CPC",
+    "tipo": "lei",
+    "rotulo": "art. 1.012 do CPC",
+    "chave": "art. 1.012 do CPC",
+    "grau": 2
+   },
+   {
+    "id": "lei:art. 487 do CPC",
+    "tipo": "lei",
+    "rotulo": "art. 487 do CPC",
+    "chave": "art. 487 do CPC",
+    "grau": 4
+   },
+   {
+    "id": "lei:art. 85 do CPC",
+    "tipo": "lei",
+    "rotulo": "art. 85 do CPC",
+    "chave": "art. 85 do CPC",
+    "grau": 7
+   },
+   {
+    "id": "lei:art. 1.015 do CPC",
+    "tipo": "lei",
+    "rotulo": "art. 1.015 do CPC",
+    "chave": "art. 1.015 do CPC",
+    "grau": 13
+   },
+   {
+    "id": "lei:art. 655 do CPC",
+    "tipo": "lei",
+    "rotulo": "art. 655 do CPC",
+    "chave": "art. 655 do CPC",
+    "grau": 2
+   },
+   {
+    "id": "lei:Lei 11.382/2006",
+    "tipo": "lei",
+    "rotulo": "Lei 11.382/2006",
+    "chave": "Lei 11.382/2006",
+    "grau": 2
+   },
+   {
+    "id": "lei:art. 267 do CPC",
+    "tipo": "lei",
+    "rotulo": "art. 267 do CPC",
+    "chave": "art. 267 do CPC",
+    "grau": 4
+   },
+   {
+    "id": "lei:art. 803 do CPC",
+    "tipo": "lei",
+    "rotulo": "art. 803 do CPC",
+    "chave": "art. 803 do CPC",
+    "grau": 2
+   },
+   {
+    "id": "lei:art. 485 do CPC",
+    "tipo": "lei",
+    "rotulo": "art. 485 do CPC",
+    "chave": "art. 485 do CPC",
+    "grau": 6
+   },
+   {
+    "id": "lei:art. 927 do CPC",
+    "tipo": "lei",
+    "rotulo": "art. 927 do CPC",
+    "chave": "art. 927 do CPC",
+    "grau": 2
+   },
+   {
+    "id": "lei:Lei 11.101/2005",
+    "tipo": "lei",
+    "rotulo": "Lei 11.101/2005",
+    "chave": "Lei 11.101/2005",
+    "grau": 5
+   },
+   {
+    "id": "lei:art. 206 do CC",
+    "tipo": "lei",
+    "rotulo": "art. 206 do CC",
+    "chave": "art. 206 do CC",
+    "grau": 2
+   },
+   {
+    "id": "lei:art. 202 do CC",
+    "tipo": "lei",
+    "rotulo": "art. 202 do CC",
+    "chave": "art. 202 do CC",
+    "grau": 2
+   },
+   {
+    "id": "lei:art. 240 do CPC",
+    "tipo": "lei",
+    "rotulo": "art. 240 do CPC",
+    "chave": "art. 240 do CPC",
+    "grau": 2
+   },
+   {
+    "id": "lei:art. 99 do CPC",
+    "tipo": "lei",
+    "rotulo": "art. 99 do CPC",
+    "chave": "art. 99 do CPC",
+    "grau": 7
+   },
+   {
+    "id": "lei:Lei 13.105/2015",
+    "tipo": "lei",
+    "rotulo": "Lei 13.105/2015",
+    "chave": "Lei 13.105/2015",
+    "grau": 2
+   },
+   {
+    "id": "lei:art. 12 do CPC",
+    "tipo": "lei",
+    "rotulo": "art. 12 do CPC",
+    "chave": "art. 12 do CPC",
+    "grau": 2
+   },
+   {
+    "id": "lei:art. 3º do CPC",
+    "tipo": "lei",
+    "rotulo": "art. 3º do CPC",
+    "chave": "art. 3º do CPC",
+    "grau": 2
+   },
+   {
+    "id": "lei:art. 783 do CPC",
+    "tipo": "lei",
+    "rotulo": "art. 783 do CPC",
+    "chave": "art. 783 do CPC",
+    "grau": 2
+   },
+   {
+    "id": "lei:art. 612 do CPC",
+    "tipo": "lei",
+    "rotulo": "art. 612 do CPC",
+    "chave": "art. 612 do CPC",
+    "grau": 2
+   },
+   {
+    "id": "lei:art. 5º da CF",
+    "tipo": "lei",
+    "rotulo": "art. 5º da CF",
+    "chave": "art. 5º da CF",
+    "grau": 3
+   },
+   {
+    "id": "lei:art. 98 do CPC",
+    "tipo": "lei",
+    "rotulo": "art. 98 do CPC",
+    "chave": "art. 98 do CPC",
+    "grau": 3
+   },
+   {
+    "id": "lei:art. 69 do CC",
+    "tipo": "lei",
+    "rotulo": "art. 69 do CC",
+    "chave": "art. 69 do CC",
+    "grau": 6
+   }
+  ],
+  "arestas": [
+   {
+    "de": 12262,
+    "para": "anc:sumula:83:stj",
+    "tipo": "ancora",
+    "peso": 1.0,
+    "rotulo": "SÚMULA N. 83 DO STJ"
+   },
+   {
+    "de": 2021,
+    "para": "anc:sumula:83:stj",
+    "tipo": "ancora",
+    "peso": 1.0,
+    "rotulo": "SÚMULA N. 83 DO STJ"
+   },
+   {
+    "de": 12262,
+    "para": "anc:sumula:7:stj",
+    "tipo": "ancora",
+    "peso": 1.0,
+    "rotulo": "SÚMULA N. 7 DO STJ"
+   },
+   {
+    "de": 13212,
+    "para": "anc:sumula:7:stj",
+    "tipo": "ancora",
+    "peso": 1.0,
+    "rotulo": "SÚMULA N. 7 DO STJ"
+   },
+   {
+    "de": 1614,
+    "para": "anc:sumula:7:stj",
+    "tipo": "ancora",
+    "peso": 1.0,
+    "rotulo": "SÚMULA N. 7 DO STJ"
+   },
+   {
+    "de": 3286,
+    "para": "anc:sumula:7:stj",
+    "tipo": "ancora",
+    "peso": 1.0,
+    "rotulo": "SÚMULA N. 7 DO STJ"
+   },
+   {
+    "de": 12262,
+    "para": "anc:sumula:568:stj",
+    "tipo": "ancora",
+    "peso": 1.0,
+    "rotulo": "SÚMULA 568/STJ"
+   },
+   {
+    "de": 13212,
+    "para": "anc:sumula:568:stj",
+    "tipo": "ancora",
+    "peso": 1.0,
+    "rotulo": "SÚMULA 568/STJ"
+   },
+   {
+    "de": 5086,
+    "para": "anc:sumula:106:stj",
+    "tipo": "ancora",
+    "peso": 1.0,
+    "rotulo": "SÚMULA N. 106"
+   },
+   {
+    "de": 82,
+    "para": "anc:sumula:106:stj",
+    "tipo": "ancora",
+    "peso": 1.0,
+    "rotulo": "SÚMULA N. 106"
+   },
+   {
+    "de": 1614,
+    "para": "anc:sumula:106:stj",
+    "tipo": "ancora",
+    "peso": 1.0,
+    "rotulo": "SÚMULA N. 106"
+   },
+   {
+    "de": 10473,
+    "para": "anc:sumula:481:?",
+    "tipo": "ancora",
+    "peso": 1.0,
+    "rotulo": "SÚMULA 481"
+   },
+   {
+    "de": 10236,
+    "para": "anc:sumula:481:?",
+    "tipo": "ancora",
+    "peso": 1.0,
+    "rotulo": "SÚMULA 481"
+   },
+   {
+    "de": 10262,
+    "para": "anc:sumula:481:?",
+    "tipo": "ancora",
+    "peso": 1.0,
+    "rotulo": "SÚMULA 481"
+   },
+   {
+    "de": 9842,
+    "para": "anc:sumula:481:?",
+    "tipo": "ancora",
+    "peso": 1.0,
+    "rotulo": "SÚMULA 481"
+   },
+   {
+    "de": 9843,
+    "para": "anc:sumula:481:?",
+    "tipo": "ancora",
+    "peso": 1.0,
+    "rotulo": "SÚMULA 481"
+   },
+   {
+    "de": 9906,
+    "para": "anc:sumula:481:?",
+    "tipo": "ancora",
+    "peso": 1.0,
+    "rotulo": "SÚMULA 481"
+   },
+   {
+    "de": 10428,
+    "para": "anc:sumula:481:?",
+    "tipo": "ancora",
+    "peso": 1.0,
+    "rotulo": "SÚMULA 481"
+   },
+   {
+    "de": 10473,
+    "para": "anc:sumula:248:?",
+    "tipo": "ancora",
+    "peso": 1.0,
+    "rotulo": "Súmula n. 248"
+   },
+   {
+    "de": 10236,
+    "para": "anc:sumula:248:?",
+    "tipo": "ancora",
+    "peso": 1.0,
+    "rotulo": "Súmula n. 248"
+   },
+   {
+    "de": 10262,
+    "para": "anc:sumula:248:?",
+    "tipo": "ancora",
+    "peso": 1.0,
+    "rotulo": "Súmula n. 248"
+   },
+   {
+    "de": 10428,
+    "para": "anc:sumula:248:?",
+    "tipo": "ancora",
+    "peso": 1.0,
+    "rotulo": "Súmula n. 248"
+   },
+   {
+    "de": 7192,
+    "para": "anc:sumula:240:stj",
+    "tipo": "ancora",
+    "peso": 1.0,
+    "rotulo": "Súmula 240"
+   },
+   {
+    "de": 7426,
+    "para": "anc:sumula:240:stj",
+    "tipo": "ancora",
+    "peso": 1.0,
+    "rotulo": "Súmula 240"
+   },
+   {
+    "de": 13295,
+    "para": "lei:art. 830 do CPC",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "art. 830 do CPC"
+   },
+   {
+    "de": 12452,
+    "para": "lei:art. 830 do CPC",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "art. 830 do CPC"
+   },
+   {
+    "de": 13601,
+    "para": "lei:art. 830 do CPC",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "art. 830 do CPC"
+   },
+   {
+    "de": 11983,
+    "para": "lei:art. 830 do CPC",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "art. 830 do CPC"
+   },
+   {
+    "de": 13564,
+    "para": "lei:art. 830 do CPC",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "art. 830 do CPC"
+   },
+   {
+    "de": 13824,
+    "para": "lei:art. 830 do CPC",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "art. 830 do CPC"
+   },
+   {
+    "de": 13295,
+    "para": "lei:art. 854 do CPC",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "art. 854 do CPC"
+   },
+   {
+    "de": 13601,
+    "para": "lei:art. 854 do CPC",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "art. 854 do CPC"
+   },
+   {
+    "de": 13564,
+    "para": "lei:art. 854 do CPC",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "art. 854 do CPC"
+   },
+   {
+    "de": 13824,
+    "para": "lei:art. 854 do CPC",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "art. 854 do CPC"
+   },
+   {
+    "de": 12262,
+    "para": "lei:art. 833 do CPC",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "art. 833 do CPC"
+   },
+   {
+    "de": 10403,
+    "para": "lei:art. 833 do CPC",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "art. 833 do CPC"
+   },
+   {
+    "de": 10405,
+    "para": "lei:art. 833 do CPC",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "art. 833 do CPC"
+   },
+   {
+    "de": 10429,
+    "para": "lei:art. 833 do CPC",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "art. 833 do CPC"
+   },
+   {
+    "de": 12262,
+    "para": "lei:art. 649 do CPC",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "art. 649 do CPC"
+   },
+   {
+    "de": 10403,
+    "para": "lei:art. 649 do CPC",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "art. 649 do CPC"
+   },
+   {
+    "de": 9295,
+    "para": "lei:art. 649 do CPC",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "art. 649 do CPC"
+   },
+   {
+    "de": 11777,
+    "para": "lei:art. 924 do CPC",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "art. 924 do CPC"
+   },
+   {
+    "de": 5086,
+    "para": "lei:art. 924 do CPC",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "art. 924 do CPC"
+   },
+   {
+    "de": 11777,
+    "para": "lei:art. 1.012 do CPC",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "art. 1.012 do CPC"
+   },
+   {
+    "de": 9492,
+    "para": "lei:art. 1.012 do CPC",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "art. 1.012 do CPC"
+   },
+   {
+    "de": 11777,
+    "para": "lei:art. 487 do CPC",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "art. 487 do CPC"
+   },
+   {
+    "de": 5086,
+    "para": "lei:art. 487 do CPC",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "art. 487 do CPC"
+   },
+   {
+    "de": 82,
+    "para": "lei:art. 487 do CPC",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "art. 487 do CPC"
+   },
+   {
+    "de": 6488,
+    "para": "lei:art. 487 do CPC",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "art. 487 do CPC"
+   },
+   {
+    "de": 11777,
+    "para": "lei:art. 85 do CPC",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "art. 85 do CPC"
+   },
+   {
+    "de": 6169,
+    "para": "lei:art. 85 do CPC",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "art. 85 do CPC"
+   },
+   {
+    "de": 13212,
+    "para": "lei:art. 85 do CPC",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "art. 85 do CPC"
+   },
+   {
+    "de": 5086,
+    "para": "lei:art. 85 do CPC",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "art. 85 do CPC"
+   },
+   {
+    "de": 1614,
+    "para": "lei:art. 85 do CPC",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "art. 85 do CPC"
+   },
+   {
+    "de": 3286,
+    "para": "lei:art. 85 do CPC",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "art. 85 do CPC"
+   },
+   {
+    "de": 9403,
+    "para": "lei:art. 85 do CPC",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "art. 85 do CPC"
+   },
+   {
+    "de": 10403,
+    "para": "lei:art. 1.015 do CPC",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "art. 1.015 do CPC"
+   },
+   {
+    "de": 13848,
+    "para": "lei:art. 1.015 do CPC",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "art. 1.015 do CPC"
+   },
+   {
+    "de": 13054,
+    "para": "lei:art. 1.015 do CPC",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "art. 1.015 do CPC"
+   },
+   {
+    "de": 16899,
+    "para": "lei:art. 1.015 do CPC",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "art. 1.015 do CPC"
+   },
+   {
+    "de": 10473,
+    "para": "lei:art. 1.015 do CPC",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "art. 1.015 do CPC"
+   },
+   {
+    "de": 10405,
+    "para": "lei:art. 1.015 do CPC",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "art. 1.015 do CPC"
+   },
+   {
+    "de": 9492,
+    "para": "lei:art. 1.015 do CPC",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "art. 1.015 do CPC"
+   },
+   {
+    "de": 10236,
+    "para": "lei:art. 1.015 do CPC",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "art. 1.015 do CPC"
+   },
+   {
+    "de": 10262,
+    "para": "lei:art. 1.015 do CPC",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "art. 1.015 do CPC"
+   },
+   {
+    "de": 9842,
+    "para": "lei:art. 1.015 do CPC",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "art. 1.015 do CPC"
+   },
+   {
+    "de": 9843,
+    "para": "lei:art. 1.015 do CPC",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "art. 1.015 do CPC"
+   },
+   {
+    "de": 9906,
+    "para": "lei:art. 1.015 do CPC",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "art. 1.015 do CPC"
+   },
+   {
+    "de": 10428,
+    "para": "lei:art. 1.015 do CPC",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "art. 1.015 do CPC"
+   },
+   {
+    "de": 7847,
+    "para": "lei:art. 655 do CPC",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "art. 655 do CPC"
+   },
+   {
+    "de": 10277,
+    "para": "lei:art. 655 do CPC",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "art. 655 do CPC"
+   },
+   {
+    "de": 7847,
+    "para": "lei:Lei 11.382/2006",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "Lei 11.382/2006"
+   },
+   {
+    "de": 10277,
+    "para": "lei:Lei 11.382/2006",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "Lei 11.382/2006"
+   },
+   {
+    "de": 13054,
+    "para": "lei:art. 267 do CPC",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "art. 267 do CPC"
+   },
+   {
+    "de": 7544,
+    "para": "lei:art. 267 do CPC",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "art. 267 do CPC"
+   },
+   {
+    "de": 7192,
+    "para": "lei:art. 267 do CPC",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "art. 267 do CPC"
+   },
+   {
+    "de": 7426,
+    "para": "lei:art. 267 do CPC",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "art. 267 do CPC"
+   },
+   {
+    "de": 6169,
+    "para": "lei:art. 803 do CPC",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "art. 803 do CPC"
+   },
+   {
+    "de": 6488,
+    "para": "lei:art. 803 do CPC",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "art. 803 do CPC"
+   },
+   {
+    "de": 6169,
+    "para": "lei:art. 485 do CPC",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "art. 485 do CPC"
+   },
+   {
+    "de": 13212,
+    "para": "lei:art. 485 do CPC",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "art. 485 do CPC"
+   },
+   {
+    "de": 11094,
+    "para": "lei:art. 485 do CPC",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "art. 485 do CPC"
+   },
+   {
+    "de": 3286,
+    "para": "lei:art. 485 do CPC",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "art. 485 do CPC"
+   },
+   {
+    "de": 7544,
+    "para": "lei:art. 485 do CPC",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "art. 485 do CPC"
+   },
+   {
+    "de": 6488,
+    "para": "lei:art. 485 do CPC",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "art. 485 do CPC"
+   },
+   {
+    "de": 6169,
+    "para": "lei:art. 927 do CPC",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "art. 927 do CPC"
+   },
+   {
+    "de": 6488,
+    "para": "lei:art. 927 do CPC",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "art. 927 do CPC"
+   },
+   {
+    "de": 16899,
+    "para": "lei:Lei 11.101/2005",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "Lei 11.101/2005"
+   },
+   {
+    "de": 11094,
+    "para": "lei:Lei 11.101/2005",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "Lei 11.101/2005"
+   },
+   {
+    "de": 10236,
+    "para": "lei:Lei 11.101/2005",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "Lei 11.101/2005"
+   },
+   {
+    "de": 10262,
+    "para": "lei:Lei 11.101/2005",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "Lei 11.101/2005"
+   },
+   {
+    "de": 10428,
+    "para": "lei:Lei 11.101/2005",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "Lei 11.101/2005"
+   },
+   {
+    "de": 5086,
+    "para": "lei:art. 206 do CC",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "art. 206 do CC"
+   },
+   {
+    "de": 1614,
+    "para": "lei:art. 206 do CC",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "art. 206 do CC"
+   },
+   {
+    "de": 5086,
+    "para": "lei:art. 202 do CC",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "art. 202 do CC"
+   },
+   {
+    "de": 1614,
+    "para": "lei:art. 202 do CC",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "art. 202 do CC"
+   },
+   {
+    "de": 5086,
+    "para": "lei:art. 240 do CPC",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "art. 240 do CPC"
+   },
+   {
+    "de": 1614,
+    "para": "lei:art. 240 do CPC",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "art. 240 do CPC"
+   },
+   {
+    "de": 10473,
+    "para": "lei:art. 99 do CPC",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "art. 99 do CPC"
+   },
+   {
+    "de": 10236,
+    "para": "lei:art. 99 do CPC",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "art. 99 do CPC"
+   },
+   {
+    "de": 10262,
+    "para": "lei:art. 99 do CPC",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "art. 99 do CPC"
+   },
+   {
+    "de": 9842,
+    "para": "lei:art. 99 do CPC",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "art. 99 do CPC"
+   },
+   {
+    "de": 9843,
+    "para": "lei:art. 99 do CPC",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "art. 99 do CPC"
+   },
+   {
+    "de": 9906,
+    "para": "lei:art. 99 do CPC",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "art. 99 do CPC"
+   },
+   {
+    "de": 10428,
+    "para": "lei:art. 99 do CPC",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "art. 99 do CPC"
+   },
+   {
+    "de": 10473,
+    "para": "lei:Lei 13.105/2015",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "Lei 13.105/2015"
+   },
+   {
+    "de": 9403,
+    "para": "lei:Lei 13.105/2015",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "Lei 13.105/2015"
+   },
+   {
+    "de": 1614,
+    "para": "lei:art. 12 do CPC",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "art. 12 do CPC"
+   },
+   {
+    "de": 3286,
+    "para": "lei:art. 12 do CPC",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "art. 12 do CPC"
+   },
+   {
+    "de": 10405,
+    "para": "lei:art. 3º do CPC",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "art. 3º do CPC"
+   },
+   {
+    "de": 7544,
+    "para": "lei:art. 3º do CPC",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "art. 3º do CPC"
+   },
+   {
+    "de": 3286,
+    "para": "lei:art. 783 do CPC",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "art. 783 do CPC"
+   },
+   {
+    "de": 6488,
+    "para": "lei:art. 783 do CPC",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "art. 783 do CPC"
+   },
+   {
+    "de": 7192,
+    "para": "lei:art. 612 do CPC",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "art. 612 do CPC"
+   },
+   {
+    "de": 7426,
+    "para": "lei:art. 612 do CPC",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "art. 612 do CPC"
+   },
+   {
+    "de": 10236,
+    "para": "lei:art. 5º da CF",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "art. 5º da CF"
+   },
+   {
+    "de": 10262,
+    "para": "lei:art. 5º da CF",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "art. 5º da CF"
+   },
+   {
+    "de": 10428,
+    "para": "lei:art. 5º da CF",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "art. 5º da CF"
+   },
+   {
+    "de": 10236,
+    "para": "lei:art. 98 do CPC",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "art. 98 do CPC"
+   },
+   {
+    "de": 10262,
+    "para": "lei:art. 98 do CPC",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "art. 98 do CPC"
+   },
+   {
+    "de": 10428,
+    "para": "lei:art. 98 do CPC",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "art. 98 do CPC"
+   },
+   {
+    "de": 10236,
+    "para": "lei:art. 69 do CC",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "art. 69 do CC"
+   },
+   {
+    "de": 10262,
+    "para": "lei:art. 69 do CC",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "art. 69 do CC"
+   },
+   {
+    "de": 9842,
+    "para": "lei:art. 69 do CC",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "art. 69 do CC"
+   },
+   {
+    "de": 9843,
+    "para": "lei:art. 69 do CC",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "art. 69 do CC"
+   },
+   {
+    "de": 9906,
+    "para": "lei:art. 69 do CC",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "art. 69 do CC"
+   },
+   {
+    "de": 10428,
+    "para": "lei:art. 69 do CC",
+    "tipo": "lei",
+    "peso": 1.0,
+    "rotulo": "art. 69 do CC"
+   },
+   {
+    "de": 13295,
+    "para": 13824,
+    "tipo": "texto",
+    "peso": 0.6568,
+    "rotulo": null
+   },
+   {
+    "de": 13295,
+    "para": 13564,
+    "tipo": "texto",
+    "peso": 0.6081,
+    "rotulo": null
+   },
+   {
+    "de": 13295,
+    "para": 13601,
+    "tipo": "texto",
+    "peso": 0.6081,
+    "rotulo": null
+   },
+   {
+    "de": 12452,
+    "para": 13564,
+    "tipo": "texto",
+    "peso": 0.7354,
+    "rotulo": null
+   },
+   {
+    "de": 12452,
+    "para": 13601,
+    "tipo": "texto",
+    "peso": 0.7354,
+    "rotulo": null
+   },
+   {
+    "de": 12452,
+    "para": 13824,
+    "tipo": "texto",
+    "peso": 0.6634,
+    "rotulo": null
+   },
+   {
+    "de": 13564,
+    "para": 13601,
+    "tipo": "texto",
+    "peso": 1.0,
+    "rotulo": null
+   },
+   {
+    "de": 13601,
+    "para": 13824,
+    "tipo": "texto",
+    "peso": 0.8025,
+    "rotulo": null
+   },
+   {
+    "de": 11983,
+    "para": 12452,
+    "tipo": "texto",
+    "peso": 0.6434,
+    "rotulo": null
+   },
+   {
+    "de": 11983,
+    "para": 13564,
+    "tipo": "texto",
+    "peso": 0.5783,
+    "rotulo": null
+   },
+   {
+    "de": 11983,
+    "para": 13601,
+    "tipo": "texto",
+    "peso": 0.5783,
+    "rotulo": null
+   },
+   {
+    "de": 13564,
+    "para": 13824,
+    "tipo": "texto",
+    "peso": 0.8025,
+    "rotulo": null
+   },
+   {
+    "de": 12262,
+    "para": 12452,
+    "tipo": "texto",
+    "peso": 0.1767,
+    "rotulo": null
+   },
+   {
+    "de": 11983,
+    "para": 12262,
+    "tipo": "texto",
+    "peso": 0.1475,
+    "rotulo": null
+   },
+   {
+    "de": 12262,
+    "para": 13564,
+    "tipo": "texto",
+    "peso": 0.1451,
+    "rotulo": null
+   },
+   {
+    "de": 7847,
+    "para": 10277,
+    "tipo": "texto",
+    "peso": 0.7443,
+    "rotulo": null
+   },
+   {
+    "de": 6169,
+    "para": 11094,
+    "tipo": "texto",
+    "peso": 0.1398,
+    "rotulo": null
+   },
+   {
+    "de": 11983,
+    "para": 13212,
+    "tipo": "texto",
+    "peso": 0.1218,
+    "rotulo": null
+   },
+   {
+    "de": 11094,
+    "para": 12452,
+    "tipo": "texto",
+    "peso": 0.1304,
+    "rotulo": null
+   },
+   {
+    "de": 11094,
+    "para": 11983,
+    "tipo": "texto",
+    "peso": 0.1213,
+    "rotulo": null
+   },
+   {
+    "de": 10262,
+    "para": 10473,
+    "tipo": "texto",
+    "peso": 0.1608,
+    "rotulo": null
+   },
+   {
+    "de": 10428,
+    "para": 10473,
+    "tipo": "texto",
+    "peso": 0.1568,
+    "rotulo": null
+   },
+   {
+    "de": 10236,
+    "para": 10473,
+    "tipo": "texto",
+    "peso": 0.1441,
+    "rotulo": null
+   },
+   {
+    "de": 1614,
+    "para": 3286,
+    "tipo": "texto",
+    "peso": 0.1339,
+    "rotulo": null
+   },
+   {
+    "de": 9295,
+    "para": 10405,
+    "tipo": "texto",
+    "peso": 0.1202,
+    "rotulo": null
+   },
+   {
+    "de": 7192,
+    "para": 7426,
+    "tipo": "texto",
+    "peso": 1.0,
+    "rotulo": null
+   },
+   {
+    "de": 10236,
+    "para": 10262,
+    "tipo": "texto",
+    "peso": 0.8725,
+    "rotulo": null
+   },
+   {
+    "de": 10236,
+    "para": 10428,
+    "tipo": "texto",
+    "peso": 0.8141,
+    "rotulo": null
+   },
+   {
+    "de": 9906,
+    "para": 10236,
+    "tipo": "texto",
+    "peso": 0.2347,
+    "rotulo": null
+   },
+   {
+    "de": 10262,
+    "para": 10428,
+    "tipo": "texto",
+    "peso": 0.9368,
+    "rotulo": null
+   },
+   {
+    "de": 9906,
+    "para": 10262,
+    "tipo": "texto",
+    "peso": 0.2596,
+    "rotulo": null
+   },
+   {
+    "de": 9842,
+    "para": 9906,
+    "tipo": "texto",
+    "peso": 1.0,
+    "rotulo": null
+   },
+   {
+    "de": 9842,
+    "para": 9843,
+    "tipo": "texto",
+    "peso": 1.0,
+    "rotulo": null
+   },
+   {
+    "de": 9842,
+    "para": 10262,
+    "tipo": "texto",
+    "peso": 0.2596,
+    "rotulo": null
+   },
+   {
+    "de": 9843,
+    "para": 9906,
+    "tipo": "texto",
+    "peso": 1.0,
+    "rotulo": null
+   },
+   {
+    "de": 9843,
+    "para": 10262,
+    "tipo": "texto",
+    "peso": 0.2596,
+    "rotulo": null
+   },
+   {
+    "de": 9906,
+    "para": 10428,
+    "tipo": "texto",
+    "peso": 0.253,
+    "rotulo": null
+   }
+  ],
+  "resumo": {
+   "n_decisoes": 40,
+   "n_ancoras": 7,
+   "n_leis": 28,
+   "n_arestas": 164,
+   "por_ancora": 24,
+   "por_lei": 103,
+   "por_texto": 37,
+   "isolados": 2,
+   "ancoras_distintas": 14,
+   "leis_distintas": 75
+  }
+ },
+ "pesos": {
+  "config": {
+   "rerank": {
+    "ativo": true,
+    "meia_vida_anos": 6.0,
+    "piso_recencia": 0.5,
+    "ancora": {
+     "vinculante": 1.35,
+     "persuasiva": 1.15,
+     "estadual": 1.0
+    },
+    "nao_unanime": 0.85,
+    "transitou": 1.1,
+    "subiu_sem_transito": 0.9,
+    "sobrestado": 0.8
+   },
+   "peso_confianca": {
+    "dispositivo": 1.0,
+    "texto completo": 0.7,
+    "ementa": 0.5,
+    "-": 0.2
+   },
+   "peso_knn": 0.5,
+   "confianca": {
+    "corte_margem": 0.35,
+    "min_precedentes": 3,
+    "concordancia_minima": 0.55,
+    "desacordo_maximo": 0.45,
+    "reamostragens": 400
+   },
+   "calibrado": true
+  },
+  "precedentes": [
+   {
+    "id": 13295,
+    "numero": "5045030-56.2025.8.24.0000",
+    "resultado": "provido",
+    "ano": 2025,
+    "bm25": -19.242984261384144,
+    "base": 19.242984261384144,
+    "fatores": {
+     "idade": 0.8908987181403393,
+     "âncora persuasiva": 1.15,
+     "transitou em julgado": 1.1
+    },
+    "produto_fatores": 1.127,
+    "pontos": 21.686590764752253,
+    "peso_confianca": 1.0,
+    "rotulo_confianca": "dispositivo",
+    "nota": 5,
+    "nota_norm": 1.0,
+    "peso_final": 21.686590764752253,
+    "fracao_do_total": 0.1659
+   },
+   {
+    "id": 12452,
+    "numero": "5022533-82.2024.8.24.0000",
+    "resultado": "provido",
+    "ano": 2024,
+    "bm25": -21.072910946983786,
+    "base": 21.072910946983786,
+    "fatores": {
+     "idade": 0.7937005259840998,
+     "âncora persuasiva": 1.15,
+     "transitou em julgado": 1.1
+    },
+    "produto_fatores": 1.004,
+    "pontos": 21.157859335835965,
+    "peso_confianca": 1.0,
+    "rotulo_confianca": "dispositivo",
+    "nota": 5,
+    "nota_norm": 1.0,
+    "peso_final": 21.157859335835965,
+    "fracao_do_total": 0.1619
+   },
+   {
+    "id": 13601,
+    "numero": "5056148-63.2024.8.24.0000",
+    "resultado": "provido",
+    "ano": 2024,
+    "bm25": -19.59203080852481,
+    "base": 19.59203080852481,
+    "fatores": {
+     "idade": 0.7937005259840998,
+     "âncora persuasiva": 1.15,
+     "transitou em julgado": 1.1
+    },
+    "produto_fatores": 1.004,
+    "pontos": 19.67100952464588,
+    "peso_confianca": 1.0,
+    "rotulo_confianca": "dispositivo",
+    "nota": 5,
+    "nota_norm": 1.0,
+    "peso_final": 19.67100952464588,
+    "fracao_do_total": 0.1505
+   },
+   {
+    "id": 11983,
+    "numero": "5012737-67.2024.8.24.0000",
+    "resultado": "provido",
+    "ano": 2024,
+    "bm25": -19.528769300299405,
+    "base": 19.528769300299405,
+    "fatores": {
+     "idade": 0.7937005259840998,
+     "âncora persuasiva": 1.15,
+     "transitou em julgado": 1.1
+    },
+    "produto_fatores": 1.004,
+    "pontos": 19.60749299881927,
+    "peso_confianca": 1.0,
+    "rotulo_confianca": "dispositivo",
+    "nota": 5,
+    "nota_norm": 1.0,
+    "peso_final": 19.60749299881927,
+    "fracao_do_total": 0.15
+   },
+   {
+    "id": 13564,
+    "numero": "5055086-85.2024.8.24.0000",
+    "resultado": "provido",
+    "ano": 2024,
+    "bm25": -18.890340897692518,
+    "base": 18.890340897692518,
+    "fatores": {
+     "idade": 0.7937005259840998,
+     "âncora persuasiva": 1.15,
+     "transitou em julgado": 1.1
+    },
+    "produto_fatores": 1.004,
+    "pontos": 18.96649098574464,
+    "peso_confianca": 1.0,
+    "rotulo_confianca": "dispositivo",
+    "nota": 5,
+    "nota_norm": 1.0,
+    "peso_final": 18.96649098574464,
+    "fracao_do_total": 0.1451
+   },
+   {
+    "id": 13824,
+    "numero": "5064136-38.2024.8.24.0000",
+    "resultado": "provido",
+    "ano": 2025,
+    "bm25": -13.66280892722253,
+    "base": 13.66280892722253,
+    "fatores": {
+     "idade": 0.8908987181403393,
+     "âncora persuasiva": 1.15,
+     "transitou em julgado": 1.1
+    },
+    "produto_fatores": 1.127,
+    "pontos": 15.397806383715555,
+    "peso_confianca": 1.0,
+    "rotulo_confianca": "dispositivo",
+    "nota": 5,
+    "nota_norm": 1.0,
+    "peso_final": 15.397806383715555,
+    "fracao_do_total": 0.1178
+   },
+   {
+    "id": 7847,
+    "numero": "2013.073378-3",
+    "resultado": "desprovido",
+    "ano": 2015,
+    "bm25": -13.235995749733455,
+    "base": 13.235995749733455,
+    "fatores": {
+     "idade": 0.5,
+     "âncora vinculante": 1.35
+    },
+    "produto_fatores": 0.675,
+    "pontos": 8.934297131070082,
+    "peso_confianca": 1.0,
+    "rotulo_confianca": "dispositivo",
+    "nota": 4,
+    "nota_norm": 0.8,
+    "peso_final": 7.147437704856066,
+    "fracao_do_total": 0.0547
+   },
+   {
+    "id": 10277,
+    "numero": "4025972-31.2018.8.24.0000",
+    "resultado": "desprovido",
+    "ano": 2019,
+    "bm25": -13.123902553828403,
+    "base": 13.123902553828403,
+    "fatores": {
+     "idade": 0.5,
+     "âncora vinculante": 1.35
+    },
+    "produto_fatores": 0.675,
+    "pontos": 8.858634223834173,
+    "peso_confianca": 1.0,
+    "rotulo_confianca": "dispositivo",
+    "nota": 4,
+    "nota_norm": 0.8,
+    "peso_final": 7.0869073790673385,
+    "fracao_do_total": 0.0542
+   }
+  ],
+  "agregacao": {
+   "knn": 89.1,
+   "floresta": 69.4,
+   "conjunto": 79.3,
+   "calibrado": 98.3,
+   "intervalo": [
+    88.9,
+    99.0
+   ],
+   "fonte": "conjunto",
+   "acordo": true,
+   "decide": true,
+   "confianca": {
+    "decide": true,
+    "faixa": "decide",
+    "margem": 0.483,
+    "concordancia": 0.891,
+    "desacordo": 0.197,
+    "n_precedentes": 8,
+    "por_que": []
+   }
+  }
+ }
+}

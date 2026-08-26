@@ -4,6 +4,7 @@ import { NavLink, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { ROTULO_PAPEL, get, type Usuario } from './api'
 import { useCerebro } from './cerebro'
 import { Acervo } from './paginas/Acervo'
+import { Apresentacao } from './paginas/Apresentacao'
 import { Cerebros } from './paginas/Cerebros'
 import { Comparacao } from './paginas/Comparacao'
 import { Comparacoes } from './paginas/Comparacoes'
@@ -105,6 +106,18 @@ function Lateral({ u }: { u: Usuario }) {
 }
 
 export function App() {
+  const local = useLocation()
+
+  // ANTES do useEu(): a apresentação comercial é a única rota que não exige
+  // conta — o link vai para quem está sendo apresentado ao produto, e essa
+  // pessoa não tem cadastro. Se ela caísse no teste de sessão abaixo, seria
+  // mandada para /entrar e nunca veria a tela de senha própria dela.
+  if (local.pathname === '/apresentacao') return <Apresentacao />
+
+  return <Sistema />
+}
+
+function Sistema() {
   const { data: u, isLoading, isError } = useEu()
   const local = useLocation()
 

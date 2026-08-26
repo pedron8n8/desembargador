@@ -25,7 +25,7 @@ from src.rag import (busca, calibrar, cli, conversa, deriva, estatisticas,
                      extrair, feedback, floresta, grafo, rede, rerank)
 from src.rag.llm import config
 
-from . import auth, esquema, execucao, serial
+from . import apresentacao, auth, esquema, execucao, serial
 
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DIST = os.path.join(RAIZ, "frontend", "dist")
@@ -64,6 +64,12 @@ async def lifespan(_app):
 
 app = FastAPI(title="Segundo Cérebro — TJSC", lifespan=lifespan, docs_url=None,
               redoc_url=None, openapi_url=None)
+
+# A apresentacao comercial e' a UNICA rota que nao exige conta: quem recebe o
+# link nao tem cadastro. Ela traz a propria senha e o proprio cookie, e nenhuma
+# rota abaixo aceita esse cookie. Entra aqui, antes de tudo, porque o mount da
+# SPA no fim do arquivo e' catch-all.
+app.include_router(apresentacao.router)
 
 
 # ------------------------------------------------------------------ auth

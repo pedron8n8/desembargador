@@ -70,7 +70,120 @@ def _ancora(teor):
     return "estadual", ids
 
 
+# ------------------------------------------------------------------- leis
+
+# Dispositivo legal e' outra natureza de autoridade: a ancora diz que outro
+# TRIBUNAL ja' decidiu assim, a lei diz o que o legislador escreveu. Juntar as
+# duas num balde so' seria afirmar que se equivalem. Por isso coluna propria no
+# indice, no' proprio no grafo, e bloco proprio no prompt do redator.
+#
+# Extracao literal, sem catalogo de normas: sai o que o acordao ESCREVEU. Se o
+# tribunal errou o numero — e erra: um acordao do acervo cita "Lei 98.906/94"
+# onde quis dizer 8.906/94 — o rotulo sai errado igual. Consertar em silencio
+# seria a ficha divergir do documento que ela descreve.
+
+# O carimbo de assinatura fecha TODO documento do TJSC e cita a Lei 11.419/2006.
+# Nao e' fundamento — e' rodape de sistema. Cai na FONTE e nao na tela: uma lei
+# presente em todo precedente viraria a mais citada do acervo e envenenaria a
+# contagem que vai para o redator. Recorta-se o BLOCO, e nao o numero da lei:
+# quem citar a 11.419 de verdade, no meio do voto, continua sendo contado.
+#
+# Sao dois carimbos, e o segundo so' apareceu depois de indexar o acervo inteiro:
+# o eproc escreve "Documento eletronico assinado por FULANO, ... na forma do
+# artigo 1o, inciso III, da Lei 11.419"; os acordaos antigos escrevem apenas
+# "Documento assinado digitalmente / Lei n. 11.419/2006". Cobrindo so' o
+# primeiro, sobravam 2.952 decisoes citando a lei do processo eletronico como se
+# fosse fundamento — teria sido a 2a norma mais citada do acervo.
+_RUIDO = re.compile(
+    r"(?i)Documento\s+(?:eletr[ôo]nico\s+)?assinado\s+(?:por|digitalmente).{0,500}",
+    re.S)
+
+# Ordem importa: "codigo de processo civil" tem de ser tentado antes de "codigo
+# civil", senao o segundo casa dentro do primeiro e o art. 487 do CPC vira CC.
+#
+# O artigo ("do"/"da") vai junto porque o rotulo e' lido por advogado: codigo e'
+# masculino, Constituicao e CLT sao femininas, e "art. 5o do CF" denuncia na
+# primeira linha que quem escreveu a tela nao le' o que ela imprime.
+_CODIGOS = (
+    (r"c[óo]digos?\s+de\s+processo\s+civil|\bN?CPC\b", "CPC", "do"),
+    (r"c[óo]digos?\s+de\s+defesa\s+do\s+consumidor|\bCDC\b", "CDC", "do"),
+    (r"c[óo]digos?\s+de\s+processo\s+penal|\bCPP\b", "CPP", "do"),
+    (r"c[óo]digos?\s+tribut[áa]rios?\s+nacional|\bCTN\b", "CTN", "do"),
+    (r"consolida[çc][ãa]o\s+das\s+leis\s+do\s+trabalho|\bCLT\b", "CLT", "da"),
+    (r"constitui[çc][ãa]o\s+(?:federal|da\s+rep[úu]blica)|\bCF\s*/\s*88\b|\bCRFB\b",
+     "CF", "da"),
+    (r"c[óo]digos?\s+civil|\bCC\b", "CC", "do"),
+    (r"c[óo]digos?\s+penal|\bCP\b", "CP", "do"),
+)
+_CODIGO = re.compile("(?i)(?:%s)" % "|".join(
+    "(?P<c%d>%s)" % (i, c[0]) for i, c in enumerate(_CODIGOS)))
+_SIGLA = {"c%d" % i: (c[2], c[1]) for i, c in enumerate(_CODIGOS)}
+
+# O espaco em volta do numero e' "branco menos quebra de linha", e as duas
+# metades custaram um erro cada. Com \s puro, um "art. 5" no fim da linha engolia
+# a quebra e a janela abaixo comecava no paragrafo SEGUINTE — o artigo casava com
+# a sigla do proximo assunto. Com [ \t] puro, "artigo\xa085" parava de casar: o
+# inteiro teor do TJSC usa espaco inquebravel o tempo todo. Um erro foi pego pelo
+# self-check, o outro pelo confronto com os acordaos do acervo.
+_ART = re.compile(
+    r"(?i)\bart(?:igos?|s?\.|\.|s)[^\S\r\n]*(\d{1,3}(?:\.\d{3})?)"
+    r"[^\S\r\n]*([ºo°]?)")
+
+# "Decreto-Lei n. 911/69" NAO e' "Lei 911/69": sao normas diferentes, e a busca
+# e apreensao de bem alienado fiduciariamente mora na primeira. O prefixo entra
+# no rotulo, senao a tela cita a norma errada com a cara de quem conferiu.
+_LEI = re.compile(
+    r"(?i)\b(decretos?[\s-]*)?lei\s+(?:complementar\s+)?(?:n[.ºo°]*\s*)?"
+    r"(\d{1,3}(?:\.\d{3})?)\s*(?:[/-]\s*|,?\s*de\s+\d{1,2}\s+de\s+\w+\s+de\s+)"
+    r"(\d{2,4})")
+
+
+def leis(teor, limite=8):
+    """Os dispositivos legais citados, no rotulo canonico.
+
+    "art. 830 do Código de Processo Civil" e "art. 830, CPC" sao a mesma coisa e
+    tem de sair com a mesma cara — senao a contagem que chega ao redator conta
+    duas leis onde ha' uma.
+
+    A sigla so' vale se estiver PERTO do artigo: a janela de 90 caracteres nao
+    atravessa quebra de linha nem ponto-e-virgula. Sem esse limite um "art. 5"
+    solto no fim de um paragrafo gruda no primeiro "CPC" do paragrafo seguinte,
+    e a ficha passa a afirmar uma citacao que o acordao nao fez.
+
+    O teto de 8 e' o mesmo de _ancora, pela mesma razao: isto vai para dentro de
+    um prompt, e uma lista de 40 artigos afoga o que importa.
+    """
+    if not teor:
+        return []
+    t = _RUIDO.sub(" ", teor)
+    achados = []
+    for m in _ART.finditer(t):
+        janela = t[m.end():m.end() + 90].split("\n")[0].split(";")[0]
+        c = _CODIGO.search(janela)
+        if not c:
+            continue
+        artigo, sigla = _SIGLA[c.lastgroup]
+        achados.append("art. %s%s %s %s" % (
+            m.group(1), "º" if m.group(2) else "", artigo, sigla))
+    for m in _LEI.finditer(t):
+        ano = m.group(3)
+        if len(ano) == 2:
+            # o acervo vai de 2000 a 2026 e cita norma de 1916 em diante; 30 e'
+            # o corte que separa "/16" de Codigo Civil de "/16" de lei recente
+            ano = ("19" if int(ano) > 30 else "20") + ano
+        achados.append("%sLei %s/%s" % (
+            "Decreto-" if m.group(1) else "", m.group(2), ano))
+    saida = []
+    for a in achados:
+        if a not in saida:
+            saida.append(a)
+        if len(saida) >= limite:
+            break
+    return saida
+
+
 # ------------------------------------------------------------ unanimidade
+
 
 # Ordem importa: "por maioria, vencido o Des. X" costuma vir junto de um
 # "a unanimidade" de outro capitulo do julgamento. Divergencia manda.
@@ -120,6 +233,7 @@ def ficha(teor, movimentos=()):
     ef = _efeito(movimentos)
     return {"ancora": anc,
             "ancoras": ids,
+            "leis": leis(teor),
             "unanime": _unanimidade(teor),
             "efeito": ef}
 
@@ -288,7 +402,46 @@ if __name__ == "__main__":
     assert _ancora("precedente desta Segunda Câmara de Direito Civil")[0] == "estadual"
     assert "Tema 1059/STJ" in _ancora("aplica-se o Tema 1059/STJ ao caso")[1]
 
+    # --- leis: as quatro grafias do mesmo artigo caem no mesmo rotulo
+    for v in ("art. 830 do Código de Processo Civil", "artigo 830 do CPC",
+              "art. 830, caput, do CPC", "arts. 830 e seguintes do NCPC"):
+        assert leis(v) == ["art. 830 do CPC"], (v, leis(v))
+    assert leis("art. 6º do CDC e art. 421 do Código Civil") == \
+        ["art. 6º do CDC", "art. 421 do CC"]
+    # codigo e' "do", Constituicao e CLT sao "da"
+    assert leis("art. 5º da Constituição Federal") == ["art. 5º da CF"]
+    # "codigo de processo civil" contem "civil": a ordem de _CODIGOS decide
+    assert leis("nos termos do art. 487 do Código de Processo Civil") == \
+        ["art. 487 do CPC"]
+    # Decreto-Lei 911 e Lei 911 sao normas diferentes
+    assert leis("o art. 3º do Decreto-Lei n. 911/69 autoriza") == \
+        ["Decreto-Lei 911/1969"], leis("o art. 3º do Decreto-Lei n. 911/69 autoriza")
+    assert leis("na forma da Lei n. 11.101/2005") == ["Lei 11.101/2005"]
+    # artigo sem codigo por perto nao vira citacao — e a janela nao atravessa
+    # a quebra de linha atras de uma sigla do paragrafo seguinte
+    assert leis("descumpriu o art. 5 do contrato") == []
+    assert leis("violou o art. 5\nOutro tema: aplica-se o CPC") == []
+    # o inteiro teor do TJSC separa "artigo" do numero com espaco inquebravel
+    assert leis("nos termos do artigo\xa085, § 11, do Código de Processo Civil") == \
+        ["art. 85 do CPC"]
+    # os DOIS carimbos de assinatura: o do eproc e o dos acordaos antigos.
+    # Nenhum e' fundamento, e o segundo custou uma reindexacao para aparecer.
+    assert leis("Documento eletrônico assinado por FULANO, Desembargador Relator, "
+                "na forma do artigo 1º, inciso III, da Lei 11.419, de 19 de "
+                "dezembro de 2006. A conferência") == []
+    assert leis("Rubens Schulz \n Relator \n Documento assinado digitalmente \n "
+                "Lei n. 11.419/2006 \n") == []
+    # mas a mesma lei citada de verdade, fora do carimbo, continua contando
+    assert leis("aplica-se a Lei 11.419/2006 ao processo eletrônico") == \
+        ["Lei 11.419/2006"]
+    assert leis("") == [] and leis(None) == []
+
+    # a ficha carrega as leis junto do resto — e' a unica porta do modulo
+    f = ficha("nos termos do art. 830 do CPC, à unanimidade")
+    assert f["leis"] == ["art. 830 do CPC"] and f["unanime"] == 1, f
+
     assert _unanimidade("decidiu, por maioria, vencido o Des. Fulano") == 0
+
     assert _unanimidade("ACORDAM, à unanimidade, em negar provimento") == 1
     assert _unanimidade("texto sem qualquer marca de votacao") is None
     # divergencia manda sobre unanimidade: um capitulo unanime nao apaga o outro

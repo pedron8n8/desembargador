@@ -186,6 +186,11 @@ REGRAS DURAS:
   direito, fatos e precedentes citados pelo número.
 - Fundamente APENAS com o que está nos precedentes abaixo e no caso. Não invente
   número de processo, súmula, tese de repetitivo, nem citação de outro tribunal.
+- Ancore a fundamentação nos DISPOSITIVOS LEGAIS listados no histórico do
+  argumento: são os artigos que os próprios precedentes deste tribunal invocam
+  para esta matéria. Cite pelo artigo e pelo diploma. NÃO cite artigo que não
+  esteja nessa lista nem apareça no caso — não há aqui o texto de lei nenhuma
+  para você conferir, então artigo lembrado de memória entra errado.
 - Não invente REGIME JURÍDICO: se o caso não diz qual lei rege o contrato, o
   título ou o procedimento, não afirme qual é. Trate como ponto a esclarecer.
 - Enfrente TODOS os pedidos e preliminares, um a um. Omitir pedido é o erro mais
@@ -585,6 +590,23 @@ def _texto_precedente(db, p, limite):
                teor or p["dispositivo"] or "(inteiro teor indisponível)"))
 
 
+def _leis_dos_precedentes(prec):
+    """[(dispositivo, quantos dos precedentes o citam)], do mais citado ao menos.
+
+    Contagem, nao opiniao — e' o mesmo contrato do resto de _bloco_procedencia.
+    O sistema nao tem o TEXTO de lei nenhuma; o que ele sabe e' quais artigos as
+    decisoes reais deste tribunal invocam nesta materia. Entregar essa lista ao
+    redator troca "artigo que o modelo lembrou" por "artigo que o acervo cita",
+    que e' a unica ancoragem legal honesta sem um corpus de legislacao.
+    """
+    from . import rede
+    n = {}
+    for p in prec:
+        for lei in rede.leis_de(p):
+            n[lei] = n.get(lei, 0) + 1
+    return sorted(n.items(), key=lambda kv: (-kv[1], kv[0]))
+
+
 def _bloco_procedencia(estado):
     """O historico do argumento, para o redator saber com o que esta' lidando."""
     p = estado.get("perfil") or {}
@@ -596,6 +618,14 @@ def _bloco_procedencia(estado):
               % (p["usos"], p["primeiro_ano"], p["ultimo_ano"], p["reforma_pct"]),
               "- %d delas se ancoram em precedente nacional (súmula/tema/IRDR)"
               % p.get("com_ancora_nacional", 0)]
+    prec = estado.get("precedentes") or []
+    leis = _leis_dos_precedentes(prec)
+    if leis:
+        linhas.append(
+            "- DISPOSITIVOS LEGAIS invocados pelos precedentes recuperados "
+            "(contagem, não opinião) — fundamente NESTES: %s"
+            % "; ".join("%s (%d de %d)" % (lei, n, len(prec))
+                        for lei, n in leis[:8]))
     if p.get("por_orgao"):
         linhas.append("- câmaras: %s" % "; ".join(
             "%s (%d)" % (o, n) for o, n in p["por_orgao"][:3]))

@@ -30,6 +30,15 @@ CREATE INDEX IF NOT EXISTS ix_sessao_email ON sessao(email);
 CREATE TABLE IF NOT EXISTS tentativa (email TEXT, ip TEXT, quando TEXT);
 CREATE INDEX IF NOT EXISTS ix_tentativa ON tentativa(email, quando);
 
+-- A apresentacao comercial e' uma rota publica com senha unica compartilhada:
+-- quem recebe o link nao tem conta. Tabela SEPARADA da `sessao` de proposito —
+-- um cookie de apresentacao nunca pode virar sessao de usuario, e "derrubar
+-- todos os acessos a apresentacao agora" e' um DELETE que nao toca em ninguem
+-- logado no sistema.
+CREATE TABLE IF NOT EXISTS sessao_apresentacao (
+  token_hash TEXT PRIMARY KEY,           -- sha256 do token; o token NUNCA e' salvo
+  criado_em TEXT, expira_em TEXT, ip TEXT, agente TEXT);
+
 -- Confidencialidade sem migrar o feedback.db: thread sem dono e' de quem rodou
 -- pela CLI, e so' o admin ve.
 CREATE TABLE IF NOT EXISTS dono (thread TEXT PRIMARY KEY, email TEXT);

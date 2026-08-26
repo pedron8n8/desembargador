@@ -54,7 +54,10 @@ def montar_consulta(termos):
 CAMPOS = ("id", "numero", "tipo", "classe", "orgao", "comarca", "data", "ano",
           "url", "resultado", "confianca", "tem_teor", "ementa", "dispositivo",
           # ficha de procedencia — quem consome e' o rerank (src/rag/rerank.py)
-          "ancora", "ancoras_json", "unanime", "efeito")
+          "ancora", "ancoras_json", "unanime", "efeito",
+          # os dispositivos legais nao pesam no rerank: vao inteiros para o bloco
+          # de procedencia do redator (src/rag/grafo.py) e para o grafo da tela
+          "leis_json")
 
 _conexoes = {}
 

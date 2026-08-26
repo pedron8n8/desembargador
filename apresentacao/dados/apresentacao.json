@@ -1,0 +1,489 @@
+{
+ "caso": {
+  "numero": "5024128-82.2025.8.24.0000",
+  "consulta": "demo-arresto",
+  "peca": "caso-arresto-execucao.txt",
+  "excluir": [
+   12522
+  ],
+  "julgado_em": "24/04/2025",
+  "orgao": "6ª Câmara de Direito Comercial",
+  "materia": "Execução de título extrajudicial — arresto online via Sisbajud",
+  "real": "provido"
+ },
+ "triagem": {
+  "elegiveis_2025": 1369,
+  "pre_filtrados_decidiriam": 245,
+  "consultados": 7,
+  "decidiram": 2,
+  "cobertura_medida": 0.378
+ },
+ "acervo": {
+  "decisoes": 20363,
+  "ancora": {
+   "estadual": 7070,
+   "persuasiva": 10341,
+   "vinculante": 2952
+  },
+  "merito": 14657,
+  "reformas": 4891,
+  "taxa_reforma": 0.3336972095244593,
+  "nao_unanimes": 724,
+  "com_efeito": 11386,
+  "relator": "Rubens Schulz",
+  "tribunal": "TJSC"
+ },
+ "leitura": {
+  "classe": "Agravo de Instrumento",
+  "materia": "Execução de título extrajudicial e arresto eletrônico",
+  "tese": "É cabível a consulta e o arresto de ativos financeiros via Sisbajud para assegurar a efetividade da execução.",
+  "pedidos": [
+   "Reformar a decisão que indeferiu o arresto online",
+   "Autorizar a consulta e o arresto de bens via Sisbajud"
+  ]
+ },
+ "prognostico": {
+  "decide": true,
+  "p": 0.98,
+  "intervalo": [
+   0.89,
+   0.99
+  ],
+  "estimadores": {
+   "knn": 0.8909999999999999,
+   "floresta": 0.6940000000000001,
+   "conjunto": 0.7929999999999999
+  },
+  "concordam": true,
+  "resultado": "provido"
+ },
+ "execucao": {
+  "etapas": [
+   {
+    "no": "triagem",
+    "modelo": "openai/gpt-5.6-luna",
+    "entrada": 608,
+    "saida": 350
+   },
+   {
+    "no": "triar",
+    "modelo": "google/gemini-3.5-flash-lite",
+    "entrada": 13570,
+    "saida": 1498
+   },
+   {
+    "no": "redigir",
+    "modelo": "deepseek/deepseek-v3.2",
+    "entrada": 17074,
+    "saida": 1529
+   },
+   {
+    "no": "revisar",
+    "modelo": "x-ai/grok-4.3",
+    "entrada": 3029,
+    "saida": 762
+   },
+   {
+    "no": "juiz_efetivo",
+    "modelo": "openai/gpt-5.6-terra",
+    "entrada": 2055,
+    "saida": 316
+   }
+  ],
+  "candidatos": 40,
+  "aprovados": 8,
+  "segundos": 71,
+  "consulta_fts": "\"arresto online\" OR \"arresto via Sisbajud\" OR \"consulta Sisbajud\" OR \"bloqueio de ativos financeiros\" OR \"execução de título extrajudicial\" OR \"arresto cautelar de bens\" OR \"penhora eletrônica de ativos\" OR \"efetividade da execução\""
+ },
+ "juiz": {
+  "nota": 4.25,
+  "modelo": "openai/gpt-5.6-terra",
+  "criterios": {
+   "cobertura": 4,
+   "fidelidade": 3,
+   "coerencia": 5,
+   "ancoragem": 5
+  },
+  "critica": "O ponto mais fraco é a fidelidade, pois a minuta cita o REsp 1.112.943/MA, precedente ausente da lista fornecida."
+ },
+ "precedentes": [
+  {
+   "num": "5045030-56.2025.8.24.0000",
+   "classe": "Agravo de Instrumento",
+   "comarca": "Tribunal de Justiça de Santa Catarina",
+   "data": "2025-07-24",
+   "res": "provido",
+   "nota": 5,
+   "porque": "Mesma questão sobre arresto executivo via Sisbajud e devedor não localizado.",
+   "proc": "âncora nacional persuasiva | unanimidade não identificada | Datajud: transitou",
+   "rank": "idade 0.89 · âncora persuasiva 1.15 · transitou em julgado 1.10 → 1.13x",
+   "ementa": "AGRAVO DE INSTRUMENTO. EXECUÇÃO DE TÍTULO EXTRAJUDICIAL. DECISÃO QUE INDEFERIU O PEDIDO DE ARRESTO EXECUTIVO. INSURGÊNCIA DO EXEQUENTE. ADMISSIBILIDADE. DEFERIMENTO DE RENAJUD E INFOJUG. NÃO CONHECIMENTO NO PONTO. QUESTÃO NÃO APRECIADA NO DECISÓRIO. ANÁLISE QUE IMPLICARIA EM SUPRESSÃO DE INSTÂNCIA. MÉRITO. PLEITO PARA DEFERIMENTO DO ARRESTO ONLINE VIA SISBAJUD. SUBSISTÊNCIA. DEVEDOR QUE NÃO FORA L",
+   "url": "https://busca.tjsc.jus.br/jurisprudencia/html.do?id=321753376397875409016011660599&categoria=acordao_eproc",
+   "ano": 2025,
+   "fator": 1.13
+  },
+  {
+   "num": "5022533-82.2024.8.24.0000",
+   "classe": "Agravo de Instrumento",
+   "comarca": "Tribunal de Justiça de Santa Catarina",
+   "data": "2024-06-13",
+   "res": "provido",
+   "nota": 5,
+   "porque": "Trata exatamente de arresto online via Sisbajud com devedor não localizado.",
+   "proc": "âncora nacional persuasiva | unanimidade não identificada | Datajud: transitou",
+   "rank": "idade 0.79 · âncora persuasiva 1.15 · transitou em julgado 1.10 → 1.00x",
+   "ementa": "AGRAVO DE INSTRUMENTO. EXECUÇÃO DE TÍTULO EXTRAJUDICIAL. DECISÃO QUE INDEFERIU O PEDIDO DE ARRESTO ONLINE DE VALORES DEPOSITADOS EM CONTAS EM NOME DA EXECUTADA. INSURGÊNCIA DO EXEQUENTE. PLEITO PARA DEFERIMENTO DO ARRESTO ONLINE VIA SISBAJUD. SUBSISTÊNCIA. DEVEDOR QUE NÃO FORA LOCALIZADO POR OFICIAL DE JUSTIÇA. DESNECESSIDADE DE EXAURIMENTO DE TODOS OS MEIOS DE LOCALIZAÇÃO DA EXECUTADA. POSSIBILID",
+   "url": "https://busca.tjsc.jus.br/jurisprudencia/html.do?id=321718377179089231797680615058&categoria=acordao_eproc",
+   "ano": 2024,
+   "fator": 1.0
+  },
+  {
+   "num": "5056148-63.2024.8.24.0000",
+   "classe": "Agravo de Instrumento",
+   "comarca": "Tribunal de Justiça de Santa Catarina",
+   "data": "2024-10-10",
+   "res": "provido",
+   "nota": 5,
+   "porque": "Envolve o cabimento de arresto online via Sisbajud após devedor não ser citado.",
+   "proc": "âncora nacional persuasiva | unanimidade não identificada | Datajud: transitou",
+   "rank": "idade 0.79 · âncora persuasiva 1.15 · transitou em julgado 1.10 → 1.00x",
+   "ementa": "AGRAVO DE INSTRUMENTO. EXECUÇÃO DE TÍTULO EXTRAJUDICIAL. DECISÃO QUE INDEFERIU O PEDIDO DE ARRESTO DE VALORES POR MEIO DO SISBAJUD. INSURGÊNCIA DO EXEQUENTE. PLEITO PARA DEFERIMENTO DO ARRESTO ONLINE VIA SISBAJUD. SUBSISTÊNCIA. DEVEDOR QUE NÃO FORA LOCALIZADO POR OFICIAL DE JUSTIÇA NO ENDEREÇO INFORMADO NA CÉDULA DE CRÉDITO BANCÁRIO. DESNECESSIDADE DE EXAURIMENTO DE TODOS OS MEIOS DE LOCALIZAÇÃO D",
+   "url": "https://busca.tjsc.jus.br/jurisprudencia/html.do?id=321728574301554757065458597638&categoria=acordao_eproc",
+   "ano": 2024,
+   "fator": 1.0
+  },
+  {
+   "num": "5012737-67.2024.8.24.0000",
+   "classe": "Agravo de Instrumento",
+   "comarca": "Tribunal de Justiça de Santa Catarina",
+   "data": "2024-04-25",
+   "res": "provido",
+   "nota": 5,
+   "porque": "Mesma tese jurídica sobre arresto executivo via Sisbajud sem exaurimento de buscas.",
+   "proc": "âncora nacional persuasiva | unanimidade não identificada | Datajud: transitou",
+   "rank": "idade 0.79 · âncora persuasiva 1.15 · transitou em julgado 1.10 → 1.00x",
+   "ementa": "AGRAVO DE INSTRUMENTO. EXECUÇÃO DE TÍTULO EXTRAJUDICIAL. DECISÃO QUE INDEFERIU O PEDIDO DE ARRESTO ONLINE DE VALORES DEPOSITADOS EM CONTAS EM NOME DO EXECUTADO. INSURGÊNCIA DO EXEQUENTE. PLEITO PARA DEFERIMENTO DO ARRESTO EXECUTIVO ONLINE VIA SISBAJUD. SUBSISTÊNCIA. INTELIGÊNCIA DO ARTIGO 830, DO CÓDIGO DE PROCESSO CIVIL. DEVEDOR NÃO FORA LOCALIZADO POR OFICIAL DE JUSTIÇA NO ENDEREÇO FORNECIDO NO ",
+   "url": "https://busca.tjsc.jus.br/jurisprudencia/html.do?id=321714399550784311028760290057&categoria=acordao_eproc",
+   "ano": 2024,
+   "fator": 1.0
+  },
+  {
+   "num": "5055086-85.2024.8.24.0000",
+   "classe": "Agravo de Instrumento",
+   "comarca": "Tribunal de Justiça de Santa Catarina",
+   "data": "2024-10-10",
+   "res": "provido",
+   "nota": 5,
+   "porque": "Mesma discussão sobre arresto online via Sisbajud ante a não localização do devedor.",
+   "proc": "âncora nacional persuasiva | unanimidade não identificada | Datajud: transitou",
+   "rank": "idade 0.79 · âncora persuasiva 1.15 · transitou em julgado 1.10 → 1.00x",
+   "ementa": "AGRAVO DE INSTRUMENTO. EXECUÇÃO DE TÍTULO EXTRAJUDICIAL. DECISÃO QUE INDEFERIU O PEDIDO DE ARRESTO DE VALORES POR MEIO DO SISBAJUD. INSURGÊNCIA DO EXEQUENTE. PLEITO PARA DEFERIMENTO DO ARRESTO ONLINE VIA SISBAJUD. SUBSISTÊNCIA. DEVEDOR QUE NÃO FORA LOCALIZADO POR OFICIAL DE JUSTIÇA NO ENDEREÇO INFORMADO NA CÉDULA DE CRÉDITO BANCÁRIO. DESNECESSIDADE DE EXAURIMENTO DE TODOS OS MEIOS DE LOCALIZAÇÃO D",
+   "url": "https://busca.tjsc.jus.br/jurisprudencia/html.do?id=321728574301554757065459093472&categoria=acordao_eproc",
+   "ano": 2024,
+   "fator": 1.0
+  },
+  {
+   "num": "5064136-38.2024.8.24.0000",
+   "classe": "Agravo de Instrumento",
+   "comarca": "Tribunal de Justiça de Santa Catarina",
+   "data": "2025-01-30",
+   "res": "provido",
+   "nota": 5,
+   "porque": "Discute arresto online via Sisbajud quando o devedor não é localizado.",
+   "proc": "âncora nacional persuasiva | unanimidade não identificada | Datajud: transitou",
+   "rank": "idade 0.89 · âncora persuasiva 1.15 · transitou em julgado 1.10 → 1.13x",
+   "ementa": "AGRAVO DE INSTRUMENTO. CUMPRIMENTO DE SENTENÇA. DECISÃO QUE INDEFERIU O PEDIDO DE ARRESTO DE VALORES POR MEIO DO SISBAJUD. INSURGÊNCIA DO EXEQUENTE. PLEITO PARA DEFERIMENTO DO ARRESTO ONLINE VIA SISBAJUD. SUBSISTÊNCIA. DEVEDOR QUE NÃO FORA LOCALIZADO POR OFICIAL DE JUSTIÇA NO ENDEREÇO INFORMADO EM PETIÇÃO. DESNECESSIDADE DE EXAURIMENTO DE TODOS OS MEIOS DE LOCALIZAÇÃO DO EXECUTADO. POSSIBILIDADE D",
+   "url": "https://busca.tjsc.jus.br/jurisprudencia/html.do?id=321738259049472292030548054720&categoria=acordao_eproc",
+   "ano": 2025,
+   "fator": 1.13
+  },
+  {
+   "num": "2013.073378-3",
+   "classe": "Agravo de Instrumento",
+   "comarca": "Chapecó",
+   "data": "2015-03-09",
+   "res": "desprovido",
+   "nota": 4,
+   "porque": "Trata de penhora online via Bacenjud sem esgotamento de bens.",
+   "proc": "âncora nacional vinculante | unânime",
+   "rank": "idade 0.50 · âncora vinculante 1.35 → 0.68x",
+   "ementa": "AGRAVO DE INSTRUMENTO. CUMPRIMENTO DE SENTENÇA. PENHORA ON LINE EFETUADA EM CONTA CORRENTE DA AGRAVANTE. SISTEMA BACEN-JUD. DESNECESSIDADE DE ESGOTAMENTO DA BUSCA DE OUTROS BENS DA DEVEDORA ANTES DO BLOQUEIO ELETRÔNICO. EXCESSO DE EXECUÇÃO. MATÉRIA NÃO ANALISADA NA DECISÃO AGRAVADA. IMPOSSIBILIDADE DE CONHECIMENTO DO RECURSO NO PONTO, SOB PENA DE SUPRESSÃO DE INSTÂNCIA E OFENSA AOS PRINCÍPIOS DO D",
+   "url": "https://busca.tjsc.jus.br/jurisprudencia/html.do?id=AAAbmQAACAALMMAAAB&categoria=acordao",
+   "ano": 2015,
+   "fator": 0.68
+  },
+  {
+   "num": "4025972-31.2018.8.24.0000",
+   "classe": "Agravo de Instrumento",
+   "comarca": "São José",
+   "data": "2019-01-24",
+   "res": "desprovido",
+   "nota": 4,
+   "porque": "Trata de penhora online e efetividade da execução via Bacenjud.",
+   "proc": "âncora nacional vinculante (Súmula n. 532) | unânime",
+   "rank": "idade 0.50 · âncora vinculante 1.35 → 0.68x",
+   "ementa": "AGRAVO DE INSTRUMENTO. CUMPRIMENTO DE SENTENÇA. INSURGÊNCIA DO EXEQUENTE QUANTO A DUAS DECISÕES INTERLOCUTÓRIAS. OCORRÊNCIA DE PRECLUSÃO TEMPORAL COM RELAÇÃO À PRIMEIRA. INTEMPESTIVIDADE VERIFICADA. RECURSO NÃO CONHECIDO NESSE PONTO. PENHORA ON LINE EFETUADA EM CONTA CORRENTE DO BANCO AGRAVANTE. SISTEMA BACEN-JUD. AUSÊNCIA DE AFRONTA AO PRINCÍPIO DA MENOR ONEROSIDADE DA EXECUÇÃO AO DEVEDOR. Com a ",
+   "url": "https://busca.tjsc.jus.br/jurisprudencia/html.do?id=AABAg7AAFAACqT0AAE&categoria=acordao_5",
+   "ano": 2019,
+   "fator": 0.68
+  }
+ ],
+ "pesos": {
+  "config": {
+   "rerank": {
+    "ativo": true,
+    "meia_vida_anos": 6.0,
+    "piso_recencia": 0.5,
+    "ancora": {
+     "vinculante": 1.35,
+     "persuasiva": 1.15,
+     "estadual": 1.0
+    },
+    "nao_unanime": 0.85,
+    "transitou": 1.1,
+    "subiu_sem_transito": 0.9,
+    "sobrestado": 0.8
+   },
+   "peso_confianca": {
+    "dispositivo": 1.0,
+    "texto completo": 0.7,
+    "ementa": 0.5,
+    "-": 0.2
+   },
+   "peso_knn": 0.5,
+   "confianca": {
+    "corte_margem": 0.35,
+    "min_precedentes": 3,
+    "concordancia_minima": 0.55,
+    "desacordo_maximo": 0.45,
+    "reamostragens": 400
+   },
+   "calibrado": true
+  },
+  "precedentes": [
+   {
+    "id": 13295,
+    "numero": "5045030-56.2025.8.24.0000",
+    "resultado": "provido",
+    "ano": 2025,
+    "bm25": -19.242984261384144,
+    "base": 19.242984261384144,
+    "fatores": {
+     "idade": 0.8908987181403393,
+     "âncora persuasiva": 1.15,
+     "transitou em julgado": 1.1
+    },
+    "produto_fatores": 1.127,
+    "pontos": 21.686590764752253,
+    "peso_confianca": 1.0,
+    "rotulo_confianca": "dispositivo",
+    "nota": 5,
+    "nota_norm": 1.0,
+    "peso_final": 21.686590764752253,
+    "fracao_do_total": 0.1659
+   },
+   {
+    "id": 12452,
+    "numero": "5022533-82.2024.8.24.0000",
+    "resultado": "provido",
+    "ano": 2024,
+    "bm25": -21.072910946983786,
+    "base": 21.072910946983786,
+    "fatores": {
+     "idade": 0.7937005259840998,
+     "âncora persuasiva": 1.15,
+     "transitou em julgado": 1.1
+    },
+    "produto_fatores": 1.004,
+    "pontos": 21.157859335835965,
+    "peso_confianca": 1.0,
+    "rotulo_confianca": "dispositivo",
+    "nota": 5,
+    "nota_norm": 1.0,
+    "peso_final": 21.157859335835965,
+    "fracao_do_total": 0.1619
+   },
+   {
+    "id": 13601,
+    "numero": "5056148-63.2024.8.24.0000",
+    "resultado": "provido",
+    "ano": 2024,
+    "bm25": -19.59203080852481,
+    "base": 19.59203080852481,
+    "fatores": {
+     "idade": 0.7937005259840998,
+     "âncora persuasiva": 1.15,
+     "transitou em julgado": 1.1
+    },
+    "produto_fatores": 1.004,
+    "pontos": 19.67100952464588,
+    "peso_confianca": 1.0,
+    "rotulo_confianca": "dispositivo",
+    "nota": 5,
+    "nota_norm": 1.0,
+    "peso_final": 19.67100952464588,
+    "fracao_do_total": 0.1505
+   },
+   {
+    "id": 11983,
+    "numero": "5012737-67.2024.8.24.0000",
+    "resultado": "provido",
+    "ano": 2024,
+    "bm25": -19.528769300299405,
+    "base": 19.528769300299405,
+    "fatores": {
+     "idade": 0.7937005259840998,
+     "âncora persuasiva": 1.15,
+     "transitou em julgado": 1.1
+    },
+    "produto_fatores": 1.004,
+    "pontos": 19.60749299881927,
+    "peso_confianca": 1.0,
+    "rotulo_confianca": "dispositivo",
+    "nota": 5,
+    "nota_norm": 1.0,
+    "peso_final": 19.60749299881927,
+    "fracao_do_total": 0.15
+   },
+   {
+    "id": 13564,
+    "numero": "5055086-85.2024.8.24.0000",
+    "resultado": "provido",
+    "ano": 2024,
+    "bm25": -18.890340897692518,
+    "base": 18.890340897692518,
+    "fatores": {
+     "idade": 0.7937005259840998,
+     "âncora persuasiva": 1.15,
+     "transitou em julgado": 1.1
+    },
+    "produto_fatores": 1.004,
+    "pontos": 18.96649098574464,
+    "peso_confianca": 1.0,
+    "rotulo_confianca": "dispositivo",
+    "nota": 5,
+    "nota_norm": 1.0,
+    "peso_final": 18.96649098574464,
+    "fracao_do_total": 0.1451
+   },
+   {
+    "id": 13824,
+    "numero": "5064136-38.2024.8.24.0000",
+    "resultado": "provido",
+    "ano": 2025,
+    "bm25": -13.66280892722253,
+    "base": 13.66280892722253,
+    "fatores": {
+     "idade": 0.8908987181403393,
+     "âncora persuasiva": 1.15,
+     "transitou em julgado": 1.1
+    },
+    "produto_fatores": 1.127,
+    "pontos": 15.397806383715555,
+    "peso_confianca": 1.0,
+    "rotulo_confianca": "dispositivo",
+    "nota": 5,
+    "nota_norm": 1.0,
+    "peso_final": 15.397806383715555,
+    "fracao_do_total": 0.1178
+   },
+   {
+    "id": 7847,
+    "numero": "2013.073378-3",
+    "resultado": "desprovido",
+    "ano": 2015,
+    "bm25": -13.235995749733455,
+    "base": 13.235995749733455,
+    "fatores": {
+     "idade": 0.5,
+     "âncora vinculante": 1.35
+    },
+    "produto_fatores": 0.675,
+    "pontos": 8.934297131070082,
+    "peso_confianca": 1.0,
+    "rotulo_confianca": "dispositivo",
+    "nota": 4,
+    "nota_norm": 0.8,
+    "peso_final": 7.147437704856066,
+    "fracao_do_total": 0.0547
+   },
+   {
+    "id": 10277,
+    "numero": "4025972-31.2018.8.24.0000",
+    "resultado": "desprovido",
+    "ano": 2019,
+    "bm25": -13.123902553828403,
+    "base": 13.123902553828403,
+    "fatores": {
+     "idade": 0.5,
+     "âncora vinculante": 1.35
+    },
+    "produto_fatores": 0.675,
+    "pontos": 8.858634223834173,
+    "peso_confianca": 1.0,
+    "rotulo_confianca": "dispositivo",
+    "nota": 4,
+    "nota_norm": 0.8,
+    "peso_final": 7.0869073790673385,
+    "fracao_do_total": 0.0542
+   }
+  ],
+  "agregacao": {
+   "knn": 89.1,
+   "floresta": 69.4,
+   "conjunto": 79.3,
+   "calibrado": 98.3,
+   "intervalo": [
+    88.9,
+    99.0
+   ],
+   "fonte": "conjunto",
+   "acordo": true,
+   "decide": true,
+   "confianca": {
+    "decide": true,
+    "faixa": "decide",
+    "margem": 0.483,
+    "concordancia": 0.891,
+    "desacordo": 0.197,
+    "n_precedentes": 8,
+    "por_que": []
+   }
+  }
+ },
+ "base_legal": {
+  "linhas": [
+   {
+    "lei": "art. 830 do CPC",
+    "na_minuta": true,
+    "no_real": true,
+    "precedentes": 6
+   },
+   {
+    "lei": "art. 854 do CPC",
+    "na_minuta": false,
+    "no_real": true,
+    "precedentes": 4
+   }
+  ],
+  "aprovados": 8,
+  "disponiveis": [
+   {
+    "lei": "art. 830 do CPC",
+    "precedentes": 6
+   },
+   {
+    "lei": "art. 854 do CPC",
+    "precedentes": 4
+   },
+   {
+    "lei": "Lei 11.382/2006",
+    "precedentes": 2
+   },
+   {
+    "lei": "art. 655 do CPC",
+    "precedentes": 2
+   }
+  ]
+ }
+}

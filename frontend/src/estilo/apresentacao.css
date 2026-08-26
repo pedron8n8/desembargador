@@ -1,0 +1,1053 @@
+/* A apresentação tem mundo visual PRÓPRIO.
+ *
+ * Não herda tokens.css nem app.css de propósito: o sistema é uma ferramenta de
+ * trabalho, feita para ser lida oito horas por dia; isto aqui é lido uma vez,
+ * na frente de alguém, e precisa de peso. Tudo abaixo mora sob `.apr`, então
+ * nada vaza para o resto do app.
+ *
+ * Paleta: papel de processo virado do avesso — grafite frio com um verde-tribunal
+ * que só aparece onde há afirmação verificada. Nada de gradiente roxo.
+ */
+
+.apr {
+  --tinta: #e8eceb;
+  --tinta-2: #a5b3b2;
+  --tinta-3: #6d7d7d;
+  --fundo: #080c0d;
+  --painel: #0e1416;
+  --painel-2: #131b1d;
+  --linha: #1e2a2c;
+  --linha-forte: #2c3d40;
+  --verde: #4ec5b3;
+  --verde-fundo: #0f2a28;
+  --ambar: #d9a441;
+  --ambar-fundo: #2a2114;
+  --vermelho: #e2705f;
+
+  --serif: 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif;
+  --sans: ui-sans-serif, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --mono: ui-monospace, 'Cascadia Mono', 'SF Mono', Consolas, monospace;
+
+  position: fixed;
+  inset: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+  background: var(--fundo);
+  color: var(--tinta);
+  font-family: var(--serif);
+  font-size: 17px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Fundo vivo: uma malha que lembra a rede de precedentes, sem custar nada.
+ * Dois radiais + uma grade fina.
+ *
+ * Ele DERIVA agora. A versão anterior deste comentário dizia o contrário —
+ * "fundo que se mexe atrás de texto jurídico vira distração" — e continua certo
+ * para o produto. Aqui não: a apresentação é lida uma vez, na frente de alguém,
+ * e precisa respirar. A deriva é de 40 segundos e só nos radiais; a grade fica
+ * parada, porque é ela que dá a régua. Em prefers-reduced-motion tudo para. */
+.apr::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(60rem 40rem at 15% -10%, rgb(78 197 179 / 9%), transparent 60%),
+    radial-gradient(50rem 35rem at 90% 10%, rgb(78 197 179 / 5%), transparent 55%),
+    linear-gradient(var(--linha) 1px, transparent 1px) 0 0 / 100% 4.5rem,
+    linear-gradient(90deg, var(--linha) 1px, transparent 1px) 0 0 / 4.5rem 100%;
+  opacity: 0.5;
+  mask-image: linear-gradient(180deg, #000 0%, transparent 75%);
+  background-position: 0 0, 0 0, 0 0, 0 0;
+}
+
+.apr > * { position: relative; }
+
+.apr-largura {
+  max-width: 74rem;
+  margin: 0 auto;
+  padding: 0 clamp(1rem, 4vw, 3rem);
+}
+
+/* ---------------------------------------------------------------- portão */
+
+.apr-portao {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 2rem;
+}
+
+.apr-portao form {
+  width: min(26rem, 100%);
+  background: var(--painel);
+  border: 1px solid var(--linha-forte);
+  padding: clamp(1.75rem, 4vw, 2.75rem);
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.apr-portao h1 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+.apr-portao p { margin: 0; color: var(--tinta-3); font-size: 0.9375rem; }
+
+.apr-portao input {
+  width: 100%;
+  padding: 0.75rem 0.9rem;
+  background: var(--fundo);
+  border: 1px solid var(--linha-forte);
+  color: var(--tinta);
+  font-family: var(--mono);
+  font-size: 1rem;
+  letter-spacing: 0.08em;
+}
+
+.apr-portao input:focus-visible { outline: 2px solid var(--verde); outline-offset: 1px; }
+
+.apr-btn {
+  padding: 0.75rem 1.1rem;
+  background: var(--verde);
+  color: #04100f;
+  border: 0;
+  font-family: var(--sans);
+  font-size: 0.9375rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.apr-btn:disabled { opacity: 0.5; cursor: default; }
+.apr-btn:focus-visible { outline: 2px solid var(--tinta); outline-offset: 2px; }
+
+.apr-erro {
+  color: var(--vermelho);
+  font-family: var(--sans);
+  font-size: 0.875rem;
+  margin: 0;
+}
+
+/* ---------------------------------------------------------------- capa */
+
+.apr-capa {
+  min-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2rem;
+  padding: 5rem 0 4rem;
+}
+
+.apr-marca {
+  font-family: var(--sans);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--verde);
+}
+
+.apr-capa h1 {
+  font-size: clamp(2.5rem, 7vw, 4.75rem);
+  line-height: 1.02;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  margin: 0;
+  max-width: 22ch;
+  text-wrap: balance;
+}
+
+.apr-capa .apr-dek {
+  font-size: clamp(1.0625rem, 2.2vw, 1.375rem);
+  color: var(--tinta-2);
+  max-width: 58ch;
+  margin: 0;
+  text-wrap: pretty;
+}
+
+.apr-numeros {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: 1px;
+  background: var(--linha);
+  border: 1px solid var(--linha);
+  margin-top: 1rem;
+}
+
+.apr-numero {
+  background: var(--painel);
+  padding: 1.1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.apr-numero b {
+  font-family: var(--sans);
+  font-size: 1.75rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  color: var(--tinta);
+}
+
+.apr-numero span {
+  font-family: var(--sans);
+  font-size: 0.75rem;
+  color: var(--tinta-3);
+  line-height: 1.35;
+}
+
+/* ---------------------------------------------------------------- seções */
+
+.apr-secao { padding: clamp(3.5rem, 8vw, 6rem) 0; border-top: 1px solid var(--linha); }
+
+.apr-cab { display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 2.5rem; }
+
+.apr-cab .apr-etapa {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  color: var(--verde);
+  letter-spacing: 0.1em;
+}
+
+.apr-cab h2 {
+  font-size: clamp(1.75rem, 4vw, 2.5rem);
+  line-height: 1.12;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  margin: 0;
+  max-width: 24ch;
+  text-wrap: balance;
+}
+
+.apr-cab p { margin: 0; color: var(--tinta-2); max-width: 62ch; text-wrap: pretty; }
+
+.apr p, .apr li { text-wrap: pretty; }
+
+.apr-secao > p { max-width: 62ch; color: var(--tinta-2); }
+
+/* ------------------------------------------------------------- confronto */
+
+.apr-confronto {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 24rem), 1fr));
+  gap: 1px;
+  background: var(--linha);
+  border: 1px solid var(--linha-forte);
+}
+
+.apr-coluna { background: var(--painel); display: flex; flex-direction: column; }
+
+.apr-coluna > header {
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--linha-forte);
+  background: var(--painel-2);
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.apr-coluna > header strong {
+  font-family: var(--sans);
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.apr-coluna > header span { font-family: var(--sans); font-size: 0.75rem; color: var(--tinta-3); }
+.apr-coluna.real > header { border-left: 3px solid var(--tinta-3); }
+.apr-coluna.gerada > header { border-left: 3px solid var(--verde); }
+
+.apr-texto {
+  padding: 1.25rem;
+  max-height: 32rem;
+  overflow-y: auto;
+  font-size: 0.9375rem;
+  line-height: 1.65;
+  white-space: pre-wrap;
+  color: var(--tinta-2);
+}
+
+.apr-texto strong, .apr-texto b { color: var(--tinta); }
+
+/* alinhamento item a item */
+.apr-linhas { display: flex; flex-direction: column; gap: 1px; background: var(--linha); border: 1px solid var(--linha-forte); margin-top: 1.5rem; }
+
+.apr-linha {
+  background: var(--painel);
+  display: grid;
+  grid-template-columns: 12rem 1fr 1fr auto;
+  gap: 1.25rem;
+  padding: 1rem 1.25rem;
+  align-items: start;
+}
+
+@media (width <= 60rem) {
+  .apr-linha { grid-template-columns: 1fr; gap: 0.5rem; }
+}
+
+.apr-linha > .rot {
+  font-family: var(--sans);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--tinta-3);
+}
+
+.apr-linha q { font-size: 0.875rem; color: var(--tinta-2); quotes: '“' '”'; }
+.apr-linha.bate q.g { color: var(--tinta); }
+.apr-linha .nota { grid-column: 1 / -1; font-family: var(--sans); font-size: 0.8125rem; color: var(--ambar); }
+
+.apr-selo {
+  font-family: var(--sans);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0.15rem 0.5rem;
+  border: 1px solid currentcolor;
+  white-space: nowrap;
+  align-self: start;
+}
+
+.apr-selo.sim { color: var(--verde); background: var(--verde-fundo); }
+.apr-selo.nao { color: var(--ambar); background: var(--ambar-fundo); }
+
+/* ------------------------------------------------------------- grafo */
+
+.apr-grafo {
+  display: grid;
+  grid-template-columns: 1fr 22rem;
+  gap: 1px;
+  background: var(--linha);
+  border: 1px solid var(--linha-forte);
+  min-height: 34rem;
+}
+
+@media (width <= 62rem) { .apr-grafo { grid-template-columns: 1fr; } }
+
+.apr-tela {
+  background: var(--painel);
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+}
+
+/* o mapa centraliza na coluna: quando o painel lateral cresce (uma ementa
+ * inteira cabe lá), a linha do grid cresce junto, e um SVG ancorado no topo
+ * deixaria uma faixa morta embaixo */
+.apr-tela svg { display: block; width: 100%; height: auto; touch-action: none; }
+
+.apr-no { cursor: pointer; }
+.apr-no text {
+  font-family: var(--sans);
+  font-size: 9px;
+  fill: var(--tinta-2);
+  pointer-events: none;
+  user-select: none;
+}
+
+.apr-no.sel text, .apr-no:hover text { fill: var(--tinta); }
+.apr-aresta { stroke: var(--linha-forte); stroke-width: 1; fill: none; }
+
+/* três naturezas de ligação, três traços. O tracejado curto é semelhança de
+ * ementa: é PISTA, e traço cheio leria como afirmação. */
+.apr-aresta.ancora { stroke: #46606d; }
+.apr-aresta.texto { stroke: #35494c; stroke-dasharray: 2 7; }
+.apr-aresta.acesa { stroke: var(--verde); stroke-width: 1.6; }
+.apr-aresta.ancora.acesa { stroke: #9dbcd0; }
+.apr-aresta.texto.acesa { stroke: #8ec9a6; stroke-width: 1.2; }
+
+.apr-painel {
+  background: var(--painel-2);
+  padding: 1.5rem 1.35rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  max-height: 40rem;
+  overflow-y: auto;
+}
+
+.apr-painel h3 {
+  font-family: var(--sans);
+  font-size: 1rem;
+  font-weight: 700;
+  margin: 0;
+  letter-spacing: 0.01em;
+}
+
+.apr-painel .tipo {
+  font-family: var(--mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--verde);
+}
+
+.apr-painel p { margin: 0; font-size: 0.9375rem; color: var(--tinta-2); }
+
+.apr-painel dl {
+  margin: 0;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.35rem 0.9rem;
+  font-family: var(--sans);
+  font-size: 0.8125rem;
+}
+
+.apr-painel dt { color: var(--tinta-3); }
+.apr-painel dd { margin: 0; color: var(--tinta); font-variant-numeric: tabular-nums; }
+
+.apr-painel pre {
+  margin: 0;
+  padding: 0.8rem;
+  background: var(--fundo);
+  border: 1px solid var(--linha);
+  font-family: var(--mono);
+  font-size: 0.6875rem;
+  line-height: 1.5;
+  color: var(--tinta-2);
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.apr-dica {
+  font-family: var(--sans);
+  font-size: 0.8125rem;
+  color: var(--tinta-3);
+  margin: 0.75rem 0 0;
+}
+
+.apr-legenda {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1.1rem;
+  font-family: var(--sans);
+  font-size: 0.75rem;
+  color: var(--tinta-3);
+  padding: 0.8rem 1.1rem;
+  border-top: 1px solid var(--linha);
+  grid-column: 1 / -1;
+  background: var(--painel);
+}
+
+.apr-legenda i { display: inline-block; width: 0.6rem; height: 0.6rem; border-radius: 50%; margin-right: 0.35rem; vertical-align: baseline; }
+
+/* --------------------------------------------------------------- a conta
+ *
+ * A seção 03 reencena a aritmética do prognóstico. Todo número que aparece aqui
+ * está congelado em dados/apresentacao.json (api/serial.pesos): o que o JS faz
+ * é REVELAR uma linha por vez, nunca calcular. O acumulador da última coluna é
+ * soma parcial de peso, e por isso pode ser lido como conta, não como efeito.
+ *
+ * Nada nesta seção depende de JS para ficar legível: o estado apagado é opacity
+ * 0.28, não display: none. Se o relógio parar no meio, a tabela continua inteira
+ * na tela — e a conta parada é sempre pior que a conta toda. */
+
+.apr-conta { margin-top: 1.5rem; }
+
+.apr-formula {
+  caption-side: top;
+  text-align: left;
+  padding: 0.7rem 0.9rem;
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  color: var(--tinta-3);
+  border-bottom: 1px solid var(--linha-forte);
+}
+
+.apr-linha-conta { opacity: 0.28; transition: opacity 280ms ease; }
+.apr-linha-conta.acesa { opacity: 1; }
+.apr-linha-conta.acesa td.destaque { color: var(--verde); }
+
+.apr-tabela td.sim { color: var(--verde); }
+.apr-tabela td.nao { color: var(--ambar); }
+
+/* --- a escada dos estimadores: k-NN, floresta, conjunto, calibração, faixa */
+
+/* os cinco degraus são uma sequência, e uma sequência que quebra em 4 + 1 deixa
+ * uma célula vazia do tamanho de um degrau — o leitor procura o que falta ali.
+ * 10.5rem é o mínimo que faz os cinco caberem lado a lado na medida da página. */
+.apr-escada {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 10.5rem), 1fr));
+  gap: 1px;
+  background: var(--linha);
+  border: 1px solid var(--linha-forte);
+  margin-top: 1.5rem;
+}
+
+.apr-degrau {
+  background: var(--painel);
+  padding: 1.1rem 1.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  opacity: 0.3;
+  transition: opacity 320ms ease, background 320ms ease;
+}
+
+.apr-degrau.acesa { opacity: 1; background: var(--painel-2); }
+
+.apr-degrau .rot {
+  font-family: var(--sans);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--tinta-3);
+}
+
+.apr-degrau b {
+  font-family: var(--sans);
+  font-size: 1.6rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  color: var(--tinta-2);
+  transition: color 320ms ease;
+}
+
+.apr-degrau.acesa b { color: var(--verde); }
+.apr-degrau p { margin: 0; font-size: 0.875rem; color: var(--tinta-2); }
+
+/* --- o portão: cinco cortes, e o sistema só crava se passar em todos */
+
+.apr-crivo {
+  border: 1px solid var(--linha-forte);
+  border-left: 3px solid var(--tinta-3);
+  background: var(--painel);
+  padding: 1.2rem 1.4rem;
+  margin-top: 1.5rem;
+  max-width: 62rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  opacity: 0.35;
+  transition: opacity 320ms ease, border-color 320ms ease;
+}
+
+.apr-crivo.acesa { opacity: 1; border-left-color: var(--verde); }
+
+.apr-crivo .rot {
+  font-family: var(--sans);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--tinta-3);
+}
+
+.apr-crivo ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 1px; background: var(--linha); }
+
+.apr-crivo li {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  background: var(--painel-2);
+  padding: 0.5rem 0.8rem;
+  font-family: var(--sans);
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--tinta-2);
+}
+
+.apr-crivo li span { flex: 1; }
+.apr-crivo li b { font-weight: 700; }
+.apr-crivo li small { color: var(--tinta-3); font-size: 0.6875rem; }
+.apr-crivo.acesa li.sim b { color: var(--verde); }
+.apr-crivo.acesa li.nao b { color: var(--ambar); }
+
+/* o corte aprovado ganha um traço à esquerda — cor sozinha não basta para
+ * quem não a distingue, e este é o painel que diz por que o sistema falou */
+.apr-crivo li { border-left: 2px solid transparent; }
+.apr-crivo.acesa li.sim { border-left-color: var(--verde); }
+.apr-crivo.acesa li.nao { border-left-color: var(--ambar); }
+
+.apr-crivo p { margin: 0; font-size: 0.9375rem; color: var(--tinta-2); }
+
+.apr-repetir { align-self: flex-start; margin-top: 1.2rem; }
+
+/* ------------------------------------------------------------- tabelas */
+
+
+.apr-tabela { overflow-x: auto; border: 1px solid var(--linha-forte); background: var(--painel); }
+
+.apr-tabela table {
+  border-collapse: collapse;
+  width: 100%;
+  font-family: var(--sans);
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.apr-tabela th, .apr-tabela td {
+  padding: 0.6rem 0.9rem;
+  text-align: left;
+  border-bottom: 1px solid var(--linha);
+  white-space: nowrap;
+}
+
+.apr-tabela thead th {
+  font-size: 0.6875rem;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--tinta-3);
+  border-bottom: 1px solid var(--linha-forte);
+}
+
+.apr-tabela .num { text-align: right; }
+.apr-tabela .destaque { color: var(--verde); font-weight: 700; }
+.apr-tabela tbody tr:last-child td { border-bottom: 0; }
+
+/* ------------------------------------------------------------- avisos */
+
+.apr-aviso {
+  border: 1px solid var(--ambar);
+  border-left-width: 3px;
+  background: var(--ambar-fundo);
+  padding: 1rem 1.2rem;
+  max-width: 62rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.apr-aviso .rot {
+  font-family: var(--sans);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ambar);
+}
+
+.apr-aviso p { margin: 0; font-size: 0.9375rem; color: var(--tinta-2); }
+
+.apr-cartoes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr));
+  gap: 1px;
+  background: var(--linha);
+  border: 1px solid var(--linha-forte);
+}
+
+.apr-cartao {
+  background: var(--painel);
+  padding: 1.35rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.apr-cartao h3 {
+  font-family: var(--sans);
+  font-size: 0.9375rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.apr-cartao p { margin: 0; font-size: 0.9rem; color: var(--tinta-2); }
+.apr-cartao b.grande { font-family: var(--sans); font-size: 2rem; font-weight: 700; color: var(--verde); letter-spacing: -0.02em; }
+
+.apr-rodape {
+  border-top: 1px solid var(--linha);
+  padding: 3rem 0 5rem;
+  font-family: var(--sans);
+  font-size: 0.8125rem;
+  color: var(--tinta-3);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.apr-sair {
+  background: none;
+  border: 1px solid var(--linha-forte);
+  color: var(--tinta-3);
+  font-family: var(--sans);
+  font-size: 0.8125rem;
+  padding: 0.4rem 0.8rem;
+  cursor: pointer;
+}
+
+.apr-sair:hover { color: var(--tinta); border-color: var(--tinta-3); }
+
+@media (prefers-reduced-motion: no-preference) {
+  .apr-no circle, .apr-no rect, .apr-aresta { transition: opacity 140ms ease, stroke 140ms ease; }
+  .apr-btn, .apr-sair { transition: opacity 120ms ease, color 120ms ease; }
+}
+
+/* ---------------------------------------------------------------- cinema
+ *
+ * Tudo abaixo é movimento, e movimento aqui é EXCEÇÃO declarada: DESIGN.md
+ * proíbe animação de entrada em gráfico, e este arquivo não tinha um @keyframes
+ * sequer. A exceção vale para /apresentacao e só para ela — é a única superfície
+ * do projeto que é vista uma vez, na frente de alguém, e que precisa de tempo e
+ * de profundidade para um mapa de 60 nós se deixar ler.
+ *
+ * Regra que não se abre: nada disto anima em prefers-reduced-motion. O bloco
+ * final desliga o arquivo inteiro.
+ *
+ * Vocabulário: transform e opacity (compostos pela GPU), stroke-dashoffset
+ * (repinta, por isso só no que está aceso) e um blur — um só, na nebulosa. */
+
+@keyframes apr-aparece {
+  from { opacity: 0; transform: translateY(2.25rem); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes apr-entra-lado {
+  from { opacity: 0; transform: translateX(-1.5rem); }
+  to { opacity: 1; transform: none; }
+}
+
+/* o nó nasce do próprio centro: escala a partir do ponto onde ele já está */
+@keyframes apr-nasce {
+  from { opacity: 0; transform: scale(0.2); }
+  to { opacity: 1; transform: none; }
+}
+
+/* deriva orbital, dois eixos com sinais opostos — e o atraso por índice é o que
+ * impede os 48 documentos de balançarem em bloco e virarem gelatina */
+@keyframes apr-deriva {
+  from { transform: translate(-3px, 2px); }
+  to { transform: translate(3px, -2px); }
+}
+
+@keyframes apr-nebulosa {
+  from { transform: translate(-2%, 1%) scale(1); opacity: 0.75; }
+  to { transform: translate(2%, -1%) scale(1.12); opacity: 1; }
+}
+
+@keyframes apr-malha {
+  from { background-position: 0 0, 0 0, 0 0, 0 0; }
+  to { background-position: 3% 2%, -3% -1%, 0 0, 0 0; }
+}
+
+/* energia correndo pelo fio. Só no que está aceso: stroke-dashoffset repinta, e
+ * 121 arestas repintando a 60 quadros por segundo é conta que não fecha */
+@keyframes apr-fluxo { to { stroke-dashoffset: -32; } }
+
+@keyframes apr-painel-entra {
+  from { opacity: 0; transform: translateY(0.5rem); }
+  to { opacity: 1; transform: none; }
+}
+
+/* -------------------------------------------------- entrada por rolagem */
+
+/* O caminho bom: linha do tempo de rolagem nativa, sem uma linha de JS. O
+ * scroller é o .apr (position: fixed; overflow-y: auto), e view() acha o
+ * container sozinho — por isso nada aqui precisa saber disso. */
+@supports (animation-timeline: view()) {
+  .apr-capa h1,
+  .apr-capa .apr-dek,
+  .apr-numero,
+  .apr-cab,
+  .apr-aviso,
+  .apr-confronto,
+  .apr-cartao,
+  .apr-tabela,
+  .apr-grafo,
+  .apr-dica,
+  .apr-descartados {
+    animation: apr-aparece linear both;
+    animation-timeline: view();
+    animation-range: entry 4% cover 30%;
+  }
+
+  /* os KPIs e os cartões entram em cascata, não em bloco */
+.apr-descartados .apr-tabela, .apr-descartados .apr-dica { animation: none; }
+
+  .apr-numero:nth-child(2), .apr-cartao:nth-child(2) { animation-range: entry 4% cover 34%; }
+  .apr-numero:nth-child(3), .apr-cartao:nth-child(3) { animation-range: entry 4% cover 38%; }
+  .apr-numero:nth-child(4), .apr-cartao:nth-child(4) { animation-range: entry 4% cover 42%; }
+}
+
+/* O caminho de trás: onde não houver linha do tempo (Firefox, hoje), o React
+ * põe .sem-timeline e um IntersectionObserver revela. Repare que o estado
+ * escondido mora SÓ dentro de .sem-timeline: se o JS não rodar, a página
+ * continua inteira e legível — que é o que não se pode perder. */
+.apr.sem-timeline .apr-capa h1,
+.apr.sem-timeline .apr-capa .apr-dek,
+.apr.sem-timeline .apr-numero,
+.apr.sem-timeline .apr-cab,
+.apr.sem-timeline .apr-aviso,
+.apr.sem-timeline .apr-confronto,
+.apr.sem-timeline .apr-cartao,
+.apr.sem-timeline .apr-tabela,
+.apr.sem-timeline .apr-grafo,
+.apr.sem-timeline .apr-dica,
+.apr.sem-timeline .apr-descartados {
+  opacity: 0;
+  transform: translateY(2.25rem);
+  transition: opacity 700ms ease, transform 700ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.apr.sem-timeline .visivel { opacity: 1; transform: none; }
+
+.apr.sem-timeline .apr-descartados .apr-tabela,
+.apr.sem-timeline .apr-descartados .apr-dica { opacity: 1; transform: none; transition: none; }
+
+/* -------------------------------------------------- cortes de cena */
+
+/* A fronteira entre duas seções não é uma linha reta: é uma varredura em
+ * diagonal, onda ou zigue-zague, ciclando de três em três. As formas moram num
+ * <svg> de defs no topo da página; aqui só se escolhe qual recorta qual cena. */
+.apr-formas { position: absolute; width: 0; height: 0; overflow: hidden; }
+
+.apr-cena {
+  position: absolute;
+  left: 50%;
+  width: 100vw;
+  top: -6rem;
+  bottom: 0;
+  transform: translateX(-50%);
+  z-index: -1;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, rgb(78 197 179 / 7%) 0%, rgb(78 197 179 / 2%) 26%, transparent 62%);
+}
+
+.apr-secao:nth-of-type(3n + 1) .apr-cena { clip-path: url("#apr-corte-diagonal"); }
+.apr-secao:nth-of-type(3n + 2) .apr-cena { clip-path: url("#apr-corte-onda"); }
+.apr-secao:nth-of-type(3n) .apr-cena { clip-path: url("#apr-corte-zigue"); }
+
+/* a seção do cérebro é a mais fria da página: o mapa precisa do escuro */
+.apr-secao:nth-of-type(2) .apr-cena {
+  background:
+    linear-gradient(180deg, rgb(127 155 179 / 8%) 0%, rgb(78 197 179 / 3%) 30%, transparent 66%);
+}
+
+/* -------------------------------------------------- o grafo, com vida */
+
+.apr-tela::before {
+  content: '';
+  position: absolute;
+  inset: -12%;
+  pointer-events: none;
+  background:
+    radial-gradient(30rem 22rem at 46% 50%, rgb(78 197 179 / 22%), transparent 68%),
+    radial-gradient(20rem 15rem at 74% 30%, rgb(217 164 65 / 13%), transparent 70%),
+    radial-gradient(24rem 18rem at 22% 72%, rgb(127 155 179 / 12%), transparent 70%);
+  filter: blur(44px);
+  animation: apr-nebulosa 38s ease-in-out infinite alternate;
+}
+
+.apr-tela svg { position: relative; }
+
+/* a câmera: clicar num nó leva a vista até ele. Não centraliza de todo, de
+ * propósito — tirar o contexto de um mapa é tirar o mapa. */
+.apr-camera {
+  transform-origin: 0 0;
+  transition: transform 850ms cubic-bezier(0.22, 0.85, 0.25, 1);
+}
+
+/* só os documentos derivam. O pipeline é diagrama, e diagrama fica quieto. */
+.apr-no.orbe .apr-orbita {
+  animation: apr-deriva 17s ease-in-out infinite alternate;
+  animation-delay: calc(var(--i, 0) * -430ms);
+}
+
+.apr-no .apr-halo { pointer-events: none; }
+
+/* Nascimento escalonado, disparado quando o mapa entra em vista.
+ *
+ * `backwards`, nunca `both`: com `both` a animação SEGURA opacity: 1 depois de
+ * terminar, e aí ela ganha do atributo `opacity` que o React escreve para
+ * apagar a vizinhança — o mapa nasce bonito e nunca mais consegue focar nada.
+ * Com `backwards` o nó fica no estado inicial durante o atraso, anima, e depois
+ * devolve a propriedade a quem é dono dela. */
+.apr-grafo.visivel .apr-no {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: apr-nasce 620ms cubic-bezier(0.2, 0.9, 0.3, 1) backwards;
+  animation-delay: calc(var(--i, 0) * 14ms);
+}
+
+.apr-aresta.acesa {
+  stroke-dasharray: 14 10;
+  animation: apr-fluxo 1.4s linear infinite;
+}
+
+.apr-painel { animation: apr-painel-entra 320ms ease both; }
+
+/* -------------------------------------------------- capa, abas, fundo */
+
+.apr-marca { animation: apr-entra-lado 900ms 120ms ease-out both; }
+
+.apr-aba { animation: apr-painel-entra 420ms ease both; }
+
+.apr::before { animation: apr-malha 40s ease-in-out infinite alternate; }
+
+/* -------------------------------------------------- os descartados */
+
+.apr-descartados { margin-top: 1.5rem; }
+
+.apr-descartados > summary {
+  font-family: var(--sans);
+  font-size: 0.875rem;
+  color: var(--tinta-2);
+  cursor: pointer;
+  padding: 0.6rem 0.9rem;
+  border: 1px solid var(--linha-forte);
+  background: var(--painel);
+  list-style: none;
+}
+
+.apr-descartados > summary::-webkit-details-marker { display: none; }
+.apr-descartados > summary::before { content: "▸ "; color: var(--verde); }
+.apr-descartados[open] > summary::before { content: "▾ "; }
+.apr-descartados > summary:hover { color: var(--tinta); border-color: var(--tinta-3); }
+.apr-descartados[open] > summary { border-bottom: 0; }
+.apr-descartados .apr-tabela { border-top: 0; }
+
+/* -------------------------------------------------- arrastar o mapa */
+
+/* `transparent`, não `none`: fill nenhum não recebe ponteiro, e esta placa
+ * existe só para receber. */
+.apr-vazio { fill: transparent; cursor: grab; }
+.apr-tela.arrastando .apr-vazio { cursor: grabbing; }
+.apr-no { cursor: grab; }
+.apr-tela.arrastando .apr-no { cursor: grabbing; }
+
+/* a aresta não é alvo: linha fina come clique do vazio e o mapa deixa de
+ * deselecionar em metade da tela */
+.apr-aresta { pointer-events: none; }
+
+/* enquanto se arrasta, a câmera não interpola — 850ms de suavização durante um
+ * arrasto é o mapa andando atrás do mouse */
+.apr-camera.arrastando { transition: none; }
+
+/* -------------------------------------------------- mais transições */
+
+@keyframes apr-linha-entra {
+  from { opacity: 0; transform: translateX(-0.9rem); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes apr-abre {
+  from { opacity: 0; transform: translateY(-0.6rem); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes apr-progresso {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+/* A régua de progresso: uma linha de 2px no topo que anda com a rolagem.
+ * scroll() sem argumento pega o scroller mais próximo, que é o .apr. Zero JS, e
+ * onde a linha do tempo não existir a barra simplesmente não aparece. */
+.apr-progresso {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  z-index: 5;
+  background: var(--verde);
+  transform-origin: 0 50%;
+  transform: scaleX(0);
+  pointer-events: none;
+}
+
+@supports (animation-timeline: scroll()) {
+  .apr-progresso {
+    animation: apr-progresso linear both;
+    animation-timeline: scroll();
+  }
+
+  /* a linha da tabela entra sozinha, em cascata, conforme sobe pela tela */
+  .apr-tabela tbody tr,
+  .apr-linhas .apr-linha {
+    animation: apr-linha-entra linear both;
+    animation-timeline: view();
+    animation-range: entry 0% cover 22%;
+  }
+
+  .apr-cab .apr-etapa {
+    animation: apr-linha-entra linear both;
+    animation-timeline: view();
+    animation-range: entry 2% cover 26%;
+  }
+
+  /* menos dentro do <details>, que nasce fechado: sem caixa não há linha do
+   * tempo, e `both` deixaria a linha em opacity 0 justamente ao abrir */
+  .apr-descartados tbody tr { animation: none; }
+
+  /* e menos na tabela da conta, onde a opacidade da linha é DADO: ela diz se
+   * aquele precedente já entrou na soma. Animação ganha de declaração normal na
+   * cascata, então sem esta linha o `apr-linha-entra` reescrevia o estado aceso
+   * conforme a rolagem e a conta acendia sozinha, fora de ordem. */
+  .apr-conta tbody tr { animation: none; }
+}
+
+/* o conteúdo dos descartados desliza quando o <details> abre */
+.apr-descartados[open] > .apr-tabela,
+.apr-descartados[open] > .apr-dica {
+  animation: apr-abre 380ms cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+}
+
+.apr-descartados[open] > .apr-dica { animation-delay: 90ms; }
+
+/* estados de ponteiro: 1px de deslocamento, que é o quanto um documento
+ * impresso pode se mexer sem virar aplicativo */
+.apr-numero, .apr-cartao, .apr-linha, .apr-tabela tbody tr, .apr-selo {
+  transition: transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    background-color 220ms ease, color 220ms ease;
+}
+
+.apr-cartao:hover, .apr-numero:hover { transform: translateY(-2px); }
+.apr-tabela tbody tr:hover { background: var(--painel-2); }
+.apr-linha:hover { transform: translateX(2px); }
+.apr-selo { transform-origin: center; }
+.apr-linha:hover .apr-selo { transform: scale(1.06); }
+
+/* o botão de aba do confronto ganha o traço que mostra qual está aberta */
+.apr-sair { transition: opacity 160ms ease, color 160ms ease, border-color 160ms ease; }
+
+/* -------------------------------------------------- o botão de desligar
+ *
+ * Não é cortesia: é o contrato. Quem pede menos movimento recebe a página
+ * inteira, parada, sem perder um dado. */
+@media (prefers-reduced-motion: reduce) {
+  .apr { scroll-behavior: auto; }
+
+  .apr *,
+  .apr *::before,
+  .apr *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .apr.sem-timeline .apr-capa h1,
+  .apr.sem-timeline .apr-capa .apr-dek,
+  .apr.sem-timeline .apr-numero,
+  .apr.sem-timeline .apr-cab,
+  .apr.sem-timeline .apr-aviso,
+  .apr.sem-timeline .apr-confronto,
+  .apr.sem-timeline .apr-cartao,
+  .apr.sem-timeline .apr-tabela,
+  .apr.sem-timeline .apr-grafo,
+  .apr.sem-timeline .apr-dica,
+  .apr.sem-timeline .apr-descartados {
+    opacity: 1;
+    transform: none;
+  }
+
+  .apr-camera { transform: none !important; }
+}
