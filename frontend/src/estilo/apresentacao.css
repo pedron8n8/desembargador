@@ -747,7 +747,125 @@
   to { opacity: 1; transform: none; }
 }
 
+/* --------------------------------------------------------------- a árvore
+ *
+ * A seção 03 mostra o mesmo cérebro da seção 02, mas ACONTECENDO: um nó de cada
+ * vez, na ordem em que o sistema executa. Reusa .apr-tela e .apr-aresta do
+ * grafo — é o mesmo vocabulário visual de propósito, porque é o mesmo cérebro.
+ *
+ * O que NÃO reusa é .apr-grafo, e isso é deliberado: aquele seletor carrega o
+ * nascimento escalonado (.apr-grafo.visivel .apr-no) e a deriva orbital, e as
+ * duas brigariam com o acender passo a passo, que aqui é a informação. */
+
+.apr-arvore {
+  display: grid;
+  grid-template-columns: 1fr 20rem;
+  gap: 1px;
+  background: var(--linha);
+  border: 1px solid var(--linha-forte);
+  margin-top: 1.5rem;
+}
+
+@media (width <= 62rem) { .apr-arvore { grid-template-columns: 1fr; } }
+
+.apr-tela-arvore { padding: 0.5rem; }
+
+/* sem a nebulosa aqui. Ela é um blur de 44px animando por 38s, e a página
+ * passaria a manter DUAS — uma por .apr-tela — compostas ao mesmo tempo. O
+ * grafo da seção 02 já dá a atmosfera; esta seção é diagrama, e diagrama que
+ * disputa GPU com o próprio conteúdo perde as duas coisas. */
+.apr-tela-arvore::before { content: none; }
+
+/* Apagado é 0.13, não invisível: a árvore inteira tem de estar na tela desde o
+ * primeiro quadro. O que a animação mostra é a ORDEM, e não a existência dos
+ * nós — se eles fossem aparecendo do nada, o tamanho do funil (40 → 8) só seria
+ * legível no fim, que é justamente quando ninguém está mais contando. */
+.apr-no-arv { opacity: 0.13; transition: opacity 260ms ease; }
+.apr-no-arv.acesa { opacity: 1; }
+
+.apr-arv-rot {
+  font-family: var(--sans);
+  font-size: 12px;
+  fill: var(--tinta-2);
+  user-select: none;
+}
+
+.apr-no-arv.tronco.acesa .apr-arv-rot { fill: var(--tinta); }
+
+/* 15px no viewBox, e não 9: a coluna do SVG mede cerca de 0,6 da largura do
+ * viewBox, então tudo aqui chega à tela reduzido nessa proporção. 15 vira ~9px
+ * lidos; 9 viraria 5,5 e não seria texto, seria textura. */
+.apr-folha-rot {
+  font-family: var(--mono);
+  font-size: 15px;
+  fill: var(--tinta);
+  user-select: none;
+}
+
+/* o anel da folha que está sendo lida agora */
+.apr-folha-foco { fill: none; stroke: var(--verde); stroke-width: 1.4; opacity: 0.8; }
+
+/* a linha de corte da analogia: tracejada, porque é limiar e não ligação */
+.apr-corte { opacity: 0; transition: opacity 400ms ease; }
+.apr-corte.acesa { opacity: 1; }
+.apr-corte line { stroke: var(--ambar); stroke-width: 1; stroke-dasharray: 5 6; }
+
+.apr-corte text {
+  font-family: var(--sans);
+  font-size: 15px;
+  fill: var(--ambar);
+  user-select: none;
+}
+
+.apr-corte text + text { fill: var(--tinta-3); }
+
+/* as 40 ligações de leitura são muitas: finas e apagadas, ou viram um leque
+ * opaco que esconde as próprias folhas */
+.apr-aresta.folha { stroke: #243436; }
+.apr-aresta.folha.acesa { stroke: #46606d; stroke-width: 1; animation: none; }
+
+.apr-narracao {
+  background: var(--painel);
+  padding: 1.4rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  align-content: start;
+}
+
+.apr-passo {
+  font-family: var(--mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--tinta-3);
+}
+
+.apr-narracao h3 {
+  margin: 0;
+  font-family: var(--sans);
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--verde);
+}
+
+.apr-narracao p {
+  margin: 0;
+  font-size: 0.9375rem;
+  color: var(--tinta-2);
+  /* a narração troca de tamanho a cada passo; sem piso, o painel pula e a
+   * árvore ao lado pula junto */
+  min-height: 7rem;
+}
+
+.apr-barra { height: 2px; background: var(--linha-forte); }
+.apr-barra i { display: block; height: 100%; background: var(--verde); transition: width 260ms linear; }
+
+.apr-narracao .apr-sair { align-self: flex-start; }
+
 /* -------------------------------------------------- entrada por rolagem */
+
 
 /* O caminho bom: linha do tempo de rolagem nativa, sem uma linha de JS. O
  * scroller é o .apr (position: fixed; overflow-y: auto), e view() acha o

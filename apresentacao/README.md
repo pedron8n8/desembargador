@@ -38,8 +38,9 @@ fontes/        os documentos, na íntegra, como estavam quando a página foi mon
                    inclusive os 32 reprovados, que o relatório .md não imprime
 
 dados/         o JSON que a página consome — GERADO, não editado à mão
-  apresentacao.json   o caso, o acervo, o prognóstico, o rastro de execução, o juiz
-  grafo.json          nós e arestas do cérebro (etapas + os 40 lidos + âncoras)
+  apresentacao.json   o caso, o acervo, o prognóstico, o rastro de execução, o juiz,
+                      a cascata de pesos e a base legal da minuta
+  grafo.json          nós e arestas do cérebro (etapas + os 40 lidos + âncoras + leis)
   confronto.json      decisão real × decisão gerada, alinhadas item a item
 
 montar.py      gera dados/ a partir de fontes/ e dos bancos
@@ -79,6 +80,51 @@ Uma nota que a tela precisa dizer certo: **quem reprova é a nota de analogia, n
 conta de rerank.** O rerank decidiu quais 40 dos 80 do BM25 chegaram a ser lidos, e
 desempata dentro da mesma nota. Chamar a conta de "o que descartou" seria a tela
 mentindo.
+
+### A cascata do prognóstico, e por que ela é congelada
+
+O congelado carrega também `pesos`, que é o retorno de **`api/serial.pesos`** — a
+mesma função que serve a aba Pesos de `/consulta/:thread`. Por precedente: bm25,
+fatores do rerank, pontos, peso de confiança, nota normalizada, peso final e
+fração do total; mais a agregação (k-NN, floresta, conjunto, calibrado, intervalo)
+e o dossiê do portão de confiança.
+
+A seção **04 · A CONTA** reencena esses números passo a passo. Ela não recalcula
+nada: refazer a aritmética em TypeScript para poder animá-la seria manter duas
+contas do mesmo prognóstico, e no dia em que divergissem a tela mentiria sem
+avisar. O acumulador que sobe na última coluna é soma parcial dos pesos
+congelados, e fecha exatamente nos 89,1% que o relatório imprimiu — se um dia não
+fechar, é porque a tela deixou de ser a conta do pipeline.
+
+### As duas seções de movimento
+
+**02 · O CÉREBRO** é o mapa parado, com força d3, para ser explorado com o mouse.
+**03 · A ÁRVORE, RODANDO** é o mesmo cérebro acontecendo: layout à mão (a ordem é
+a informação, e uma simulação que a embaralha a cada carregamento tiraria
+justamente o que se quer mostrar), um nó de cada vez, na ordem de execução, com os
+40 lidos acendendo um por um até sobrarem 8.
+
+Nas duas, os nós **já estão na tela desde o primeiro quadro**, apagados. O que a
+animação mostra é a ordem, não a existência: se as folhas fossem aparecendo do
+nada, o tamanho do funil 40 → 8 só seria legível no fim, que é justamente quando
+ninguém está mais contando.
+
+### As leis
+
+`sinais.leis()` extrai o dispositivo legal do inteiro teor, e `indexar` o guarda em
+`decisao.leis_json` — 90% do acervo tem pelo menos um. Isso serve a três lugares:
+a lista dos artigos que os precedentes recuperados invocam entra no prompt do
+redator (`grafo._bloco_procedencia`), a lei vira **nó próprio** no grafo (losango,
+separado do quadrado da âncora — são autoridades diferentes) e a seção 01 mostra em
+que dispositivos a minuta se apoiou, ao lado do que o acórdão real citou.
+
+O checkpoint da demo é **anterior** à coluna `leis_json`, então `--congelar` busca
+as leis no índice, por id. Não é recalcular a consulta: a extração é determinística
+sobre o mesmo inteiro teor, e o id é o mesmo dos dois lados.
+
+Uma coisa que o sistema **não** tem: o texto de lei nenhuma. Ele sabe em que
+artigos as decisões reais desta câmara se apoiam nesta matéria, e é só isso que
+afirma — a tela diz essa frase com todas as letras.
 
 ## A apresentação não fala em dinheiro
 
@@ -126,7 +172,9 @@ uma demonstração que o escondesse seria uma vitrine montada.
 | rota e senha | `api/apresentacao.py` (self-check: `python -m api.apresentacao`) |
 | tabela de sessão | `api/esquema.py` → `sessao_apresentacao` |
 | a página | `frontend/src/paginas/Apresentacao.tsx` |
-| o grafo | `frontend/src/comp/GrafoCerebro.tsx` |
+| o grafo (seção 02) | `frontend/src/comp/GrafoCerebro.tsx` |
+| a árvore rodando (03) | `frontend/src/comp/ArvoreAoVivo.tsx` |
+| a conta do prognóstico (04) | `frontend/src/comp/ContaAoVivo.tsx` |
 | o confronto | `frontend/src/comp/Confronto.tsx` |
 | o visual | `frontend/src/estilo/apresentacao.css` (mundo próprio, sob `.apr`) |
 

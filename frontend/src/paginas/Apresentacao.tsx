@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useRef, useState } from 'react'
 
 import { del, get, post } from '../api'
+import { ArvoreAoVivo } from '../comp/ArvoreAoVivo'
 import { Confronto, type DadosConfronto } from '../comp/Confronto'
 import { ContaAoVivo, type Pesos } from '../comp/ContaAoVivo'
 import { GrafoCerebro, type DadosGrafo } from '../comp/GrafoCerebro'
@@ -388,11 +389,31 @@ export function Apresentacao() {
         </p>
       </section>
 
+      {/* -------------------------------------------------------- a árvore */}
+      <section className="apr-secao apr-largura">
+        <div className="apr-cena" aria-hidden="true" />
+        <div className="apr-cab">
+          <span className="apr-etapa">03 · A ÁRVORE, RODANDO</span>
+          <h2>O mesmo cérebro, agora acontecendo — um nó de cada vez</h2>
+          <p>
+            O mapa acima está parado, para ser explorado. Este é o mesmo cérebro em
+            execução, na ordem real: a peça entra, a triagem interpreta, a busca
+            devolve {data.grafo.dado.bm80.n}, o rerank corta para{' '}
+            {data.grafo.dado.triar.lidos}, e então <strong>cada um dos{' '}
+            {data.grafo.dado.triar.lidos} acende com a sua nota de analogia</strong> até
+            sobrarem {data.grafo.dado.triar.aprovados}. Os nós não nascem do nada: a
+            árvore inteira está na tela desde o começo, apagada, porque o tamanho do
+            funil é metade do que há para ver.
+          </p>
+        </div>
+        <ArvoreAoVivo g={data.grafo} />
+      </section>
+
       {/* --------------------------------------------------------- a conta */}
       <section className="apr-secao apr-largura">
         <div className="apr-cena" aria-hidden="true" />
         <div className="apr-cab">
-          <span className="apr-etapa">03 · A CONTA</span>
+          <span className="apr-etapa">04 · A CONTA</span>
           <h2>O número não é um palpite do modelo. É esta aritmética.</h2>
           <p>
             Nenhum modelo de linguagem participa desta etapa. São{' '}
@@ -410,7 +431,7 @@ export function Apresentacao() {
       <section className="apr-secao apr-largura">
         <div className="apr-cena" aria-hidden="true" />
         <div className="apr-cab">
-          <span className="apr-etapa">04 · OS PESOS</span>
+          <span className="apr-etapa">05 · OS PESOS</span>
           <h2>O peso de cada precedente, com a conta aberta</h2>
           <p>
             A busca por palavra só vê texto: para ela, um acórdão de 2011 já superado empata com
@@ -503,7 +524,7 @@ export function Apresentacao() {
       <section className="apr-secao apr-largura">
         <div className="apr-cena" aria-hidden="true" />
         <div className="apr-cab">
-          <span className="apr-etapa">05 · A PROVA</span>
+          <span className="apr-etapa">06 · A PROVA</span>
           <h2>Um caso não prova nada. A medição usou 400.</h2>
           <p>
             O sistema sorteia decisões já julgadas, esconde cada uma do índice e recebe só a parte
@@ -554,7 +575,7 @@ export function Apresentacao() {
       <section className="apr-secao apr-largura">
         <div className="apr-cena" aria-hidden="true" />
         <div className="apr-cab">
-          <span className="apr-etapa">06 · O QUE O SISTEMA NÃO FAZ</span>
+          <span className="apr-etapa">07 · O QUE O SISTEMA NÃO FAZ</span>
           <h2>As recusas custaram mais para construir do que as respostas</h2>
         </div>
         <div className="apr-cartoes">
@@ -595,7 +616,7 @@ export function Apresentacao() {
       <section className="apr-secao apr-largura">
         <div className="apr-cena" aria-hidden="true" />
         <div className="apr-cab">
-          <span className="apr-etapa">07 · O RASTRO</span>
+          <span className="apr-etapa">08 · O RASTRO</span>
           <h2>Cinco modelos diferentes, e nenhum julga o próprio trabalho</h2>
           <p>
             Rastro da consulta que gerou a decisão do topo. O <strong>revisor</strong> roda em
