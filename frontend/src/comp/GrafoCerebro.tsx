@@ -12,6 +12,8 @@ import {
 } from 'd3-force'
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 
+import { Ferramenta, TelaCheia } from './TelaCheia'
+
 export type NoGrafo = {
   id: string
   tipo: 'caso' | 'etapa' | 'volume' | 'estimador' | 'precedente' | 'ancora' | 'lei'
@@ -91,10 +93,29 @@ const FAIXA: Record<string, number> = {
   juiz: 0.975,
 }
 
+/* A VARREDURA: o processo acendendo, uma etapa por vez.
+ *
+ * O mapa é bonito parado, mas parado ele não diz que existe uma ORDEM — e a
+ * ordem é metade do argumento. A varredura roda uma vez, quando a seção entra
+ * na tela, e termina com tudo aceso: no fim ela devolve exatamente o mapa que
+ * havia antes, e a exploração com o mouse continua a mesma.
+ *
+ * A ordem vem do próprio FAIXA, que já é a ordem de src/rag/grafo.py. Não há
+ * uma segunda lista para divergir da primeira. */
+const PASSOS_VARREDURA = Object.keys(FAIXA).sort((a, b) => FAIXA[a] - FAIXA[b])
+const PASSO_VARREDURA = 420
+
+/** Documento, âncora e lei acendem junto com a ANALOGIA: é a etapa que os leu,
+ *  e é onde eles entram na história. */
+const momentoDe = (n: No) => {
+  const i = PASSOS_VARREDURA.indexOf(n.id)
+  return i >= 0 ? i : PASSOS_VARREDURA.indexOf('triar')
+}
+
 /** O centro do disco. Os documentos orbitam a ANALOGIA, que é a etapa que os
  *  julgou — e o raio da órbita é a nota. Ler a distância é ler o veredito. */
 const ORBITA = { x: FAIXA.triar * W, y: H / 2 }
-const raioOrbita = (n: No) => 320 - (n.nota ?? 0) * 42
+const raioOrbita = (n: No) => 400 - (n.nota ?? 0) * 56
 
 function raio(n: No) {
   if (n.tipo === 'caso') return 15
@@ -143,12 +164,38 @@ export function GrafoCerebro({ g }: { g: DadosGrafo }) {
   const [camera, setCamera] = useState<{ x: number; y: number; z: number } | null>(null)
   const [tocou, setTocou] = useState(false)
   const [arrastando, setArrastando] = useState(false)
+  const [varredura, defVarredura] = useState(0)
   const parado = useRef(false)
+  const caixaRef = useRef<HTMLDivElement>(null)
   const svgRef = useRef<SVGSVGElement>(null)
   const sim = useRef<Simulation<No, Aresta> | null>(null)
   const arrasto = useRef<Arrasto | null>(null)
 
-  const { nos, arestas } = useMemo(() => {
+  // Começa quando a seção entra na tela, e só uma vez. Em reduced-motion pula
+  // direto para o fim: quem pediu para nada se mexer recebe o mapa pronto.
+  useEffect(() => {
+    const el = caixaRef.current
+    if (!el) return
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      defVarredura(PASSOS_VARREDURA.length)
+      return
+    }
+    const obs = new IntersectionObserver(([e]) => {
+      if (!e?.isIntersecting) return
+      obs.disconnect()
+      defVarredura(1)
+    }, { threshold: 0.2 })
+    obs.observe(el)
+    return () => obs.disconnect()
+  }, [])
+
+  useEffect(() => {
+    if (varredura < 1 || varredura >= PASSOS_VARREDURA.length) return
+    const t = setTimeout(() => defVarredura(varredura + 1), PASSO_VARREDURA)
+    return () => clearTimeout(t)
+  }, [varredura])
+
+  const { nos, arestas, grau } = useMemo(() => {
     const nos: No[] = g.nos.map((n) => ({ ...n }))
     const porId = new Map(nos.map((n) => [n.id, n]))
     const arestas: Aresta[] = g.arestas
@@ -159,7 +206,19 @@ export function GrafoCerebro({ g }: { g: DadosGrafo }) {
         tipo: a.tipo ?? 'fluxo',
         peso: a.peso,
       }))
-    return { nos, arestas }
+    /* Quantos vizinhos cada nó tem de fato.
+     *
+     * As forças abaixo eram parametrizadas só por TIPO, e é por isso que a tela
+     * embolava: uma âncora citada por doze precedentes ocupava exatamente o
+     * mesmo espaço de uma citada por dois. Quem tem muito coligado precisa de
+     * mais espaço, e o tipo não sabe disso — o grau sabe. */
+    const grau = new Map<string, number>()
+    for (const a of arestas) {
+      for (const id of [(a.source as No).id, (a.target as No).id]) {
+        grau.set(id, (grau.get(id) ?? 0) + 1)
+      }
+    }
+    return { nos, arestas, grau }
   }, [g])
 
   useEffect(() => {
@@ -167,20 +226,32 @@ export function GrafoCerebro({ g }: { g: DadosGrafo }) {
     parado.current = false
     const documento = (a: Aresta) =>
       (a.source as No).tipo === 'precedente' || (a.target as No).tipo === 'precedente'
+    /* O grau, achatado. A raiz cresce devagar de propósito: quem tem 12
+     * vizinhos precisa de mais espaço que quem tem 2, mas não de seis vezes
+     * mais — linear e o hub sozinho empurraria o resto do mapa para fora. */
+    const folga = (d: No) => Math.sqrt(grau.get(d.id) ?? 1)
     const s: Simulation<No, Aresta> = forceSimulation(nos)
       .force('link', forceLink<No, Aresta>(arestas).id((d) => d.id)
         // Nenhuma aresta que toca um documento PUXA de verdade. Quem manda na
         // posição dele é o raio, e o raio é a nota — foi assim que este mapa
         // ficou legível: com mola normal, os 40 desabavam em cima da Analogia e
         // a leitura da distância morria junto.
-        .distance((a) => (a.tipo === 'texto' ? 80 : a.tipo === 'ancora' ? 70
-          : a.tipo === 'lei' ? 62 : documento(a) ? 130 : 58))
+        //
+        // O comprimento agora cresce com o grau da ponta mais conectada: uma
+        // aresta que chega num hub nasce mais longa, e o hub deixa de puxar a
+        // vizinhança toda para cima de si.
+        .distance((a) => {
+          const base = a.tipo === 'texto' ? 80 : a.tipo === 'ancora' ? 70
+            : a.tipo === 'lei' ? 62 : documento(a) ? 130 : 58
+          const g = Math.max(folga(a.source as No), folga(a.target as No))
+          return base * (1 + 0.16 * Math.max(0, g - 1.6))
+        })
         .strength((a) => (a.tipo === 'texto' ? 0.03 : a.tipo === 'ancora' ? 0.1
           : a.tipo === 'lei' ? 0.14 : documento(a) ? 0.02 : 0.4)))
       .force('carga', forceManyBody<No>().strength((d) =>
-        d.tipo === 'precedente' ? -34
-          : d.tipo === 'ancora' || d.tipo === 'lei' ? -140 : -300))
-      .force('colisao', forceCollide<No>().radius((d) => raio(d) + 7))
+        (d.tipo === 'precedente' ? -34
+          : d.tipo === 'ancora' || d.tipo === 'lei' ? -140 : -300) * folga(d)))
+      .force('colisao', forceCollide<No>().radius((d) => raio(d) + 7 + 3.5 * folga(d)))
       // as etapas ganham posição-alvo no eixo X: o pipeline tem ordem, e a
       // ordem é informação
       .force('faixa', forceX<No>((d) => (FAIXA[d.id] ?? 0.5) * W)
@@ -207,7 +278,7 @@ export function GrafoCerebro({ g }: { g: DadosGrafo }) {
       s.stop()
       sim.current = null
     }
-  }, [nos, arestas])
+  }, [nos, arestas, grau])
 
   // Só apaga a vizinhança depois do primeiro toque. Com 60 nós, chegar já
   // filtrado é chegar a uma tela quase vazia — o mapa tem de ser visto inteiro
@@ -321,6 +392,22 @@ export function GrafoCerebro({ g }: { g: DadosGrafo }) {
     sim.current?.alphaTarget(0).alpha(0.4).restart()
   }
 
+  /** Zoom pelos botões. Amplia em torno do CENTRO do quadro, e não da origem
+   *  do viewBox: ampliar na origem manda o desenho para o canto inferior a cada
+   *  clique, e em dois cliques não há mais mapa na tela. */
+  function zoom(fator: number) {
+    setCamera((c) => {
+      const z0 = c?.z ?? 1
+      const z = Math.min(3, Math.max(0.6, z0 * fator))
+      const k = z / z0
+      return {
+        z,
+        x: W / 2 - k * (W / 2 - (c?.x ?? 0)),
+        y: H / 2 - k * (H / 2 - (c?.y ?? 0)),
+      }
+    })
+  }
+
   /** A câmera não centraliza de todo: leva o nó a 35% do caminho e amplia pouco.
    *  Centralizar por completo tira o contexto, e o contexto é o mapa. Clicar de
    *  novo no mesmo nó devolve a vista inteira. */
@@ -336,8 +423,26 @@ export function GrafoCerebro({ g }: { g: DadosGrafo }) {
   }
 
   return (
-    <div className="apr-grafo" data-entra>
+    <div className="apr-grafo" data-entra ref={caixaRef}>
       <div className={`apr-tela${arrastando ? ' arrastando' : ''}`}>
+        <TelaCheia alvo={caixaRef}>
+          <Ferramenta onClick={() => zoom(1.25)} titulo="aproximar">
+            <svg viewBox="0 0 16 16" aria-hidden="true">
+              <circle cx="7" cy="7" r="4.5" /><path d="M10.4 10.4 14 14M7 5v4M5 7h4" />
+            </svg>
+          </Ferramenta>
+          <Ferramenta onClick={() => zoom(0.8)} titulo="afastar">
+            <svg viewBox="0 0 16 16" aria-hidden="true">
+              <circle cx="7" cy="7" r="4.5" /><path d="M10.4 10.4 14 14M5 7h4" />
+            </svg>
+          </Ferramenta>
+          <Ferramenta onClick={() => { setCamera(null); setSel(null); setTocou(false) }}
+            titulo="devolver a vista inteira">
+            <svg viewBox="0 0 16 16" aria-hidden="true">
+              <path d="M13 7a5 5 0 1 0-1.4 3.5M13 3.5V7h-3.5" />
+            </svg>
+          </Ferramenta>
+        </TelaCheia>
         <svg ref={svgRef} viewBox={`0 0 ${W} ${H}`} data-tique={tique} role="img"
           aria-label="Mapa do cérebro: etapas do processamento e os documentos que ele leu">
           <defs>
@@ -366,18 +471,28 @@ export function GrafoCerebro({ g }: { g: DadosGrafo }) {
                 const acesa = vizinhos ? vizinhos.has(s.id) && vizinhos.has(t.id) : false
                 const base = a.tipo === 'texto' ? 0.22
                   : a.tipo === 'ancora' || a.tipo === 'lei' ? 0.4 : 0.55
+                // a aresta só existe quando as DUAS pontas já chegaram: uma
+                // ligação saindo de um nó ainda apagado seria um caminho que o
+                // processo não percorreu
+                const chegou = varredura >= PASSOS_VARREDURA.length
+                  || (momentoDe(s) < varredura && momentoDe(t) < varredura)
                 return (
                   <line
                     key={i}
                     className={`apr-aresta ${a.tipo}${acesa ? ' acesa' : ''}`}
                     x1={s.x ?? 0} y1={s.y ?? 0} x2={t.x ?? 0} y2={t.y ?? 0}
-                    opacity={vizinhos && !acesa ? 0.09 : base}
+                    opacity={!chegou ? 0.05 : vizinhos && !acesa ? 0.09 : base}
                   />
                 )
               })}
             </g>
             {nos.map((n, i) => {
               const apagado = vizinhos ? !vizinhos.has(n.id) : false
+              const fim = varredura >= PASSOS_VARREDURA.length
+              const chegou = fim || momentoDe(n) < varredura
+              // o nó da etapa que ACABOU de acender ganha anel: é ele que a
+              // varredura está narrando neste instante
+              const agora = !fim && varredura > 0 && PASSOS_VARREDURA[varredura - 1] === n.id
               const r = raio(n)
               const halo = haloDe(n)
               const rotulo = n.tipo === 'precedente' ? '' : n.rotulo
@@ -389,7 +504,7 @@ export function GrafoCerebro({ g }: { g: DadosGrafo }) {
                   key={n.id}
                   className={`apr-no${sel === n.id ? ' sel' : ''}${fora ? ' fora' : ''}${orbe ? ' orbe' : ''}`}
                   style={{ ['--i' as string]: i }}
-                  opacity={apagado ? 0.12 : 1}
+                  opacity={!chegou ? 0.1 : apagado ? 0.12 : 1}
                   onMouseEnter={() => setFoco(n.id)}
                   onMouseLeave={() => setFoco(null)}
                   onPointerDown={(e) => { e.stopPropagation(); pegar(e, n) }}
@@ -406,6 +521,10 @@ export function GrafoCerebro({ g }: { g: DadosGrafo }) {
                   }}
                 >
                   <g className="apr-orbita">
+                    {agora && (
+                      <circle className="apr-folha-foco" cx={n.x ?? 0} cy={n.y ?? 0}
+                        r={r + 9} />
+                    )}
                     {halo && (
                       <circle className="apr-halo" cx={n.x ?? 0} cy={n.y ?? 0}
                         r={r * 3.4} fill={`url(#apr-halo-${chaveHalo(halo)})`} />

@@ -1169,3 +1169,213 @@
 
   .apr-camera { transform: none !important; }
 }
+
+/* ------------------------------------------------- a árvore de decisão real
+ *
+ * A segunda cena da seção 03: um dos 400 estimadores da floresta, com os cortes
+ * que ele usa de verdade. Reusa .apr-arvore, .apr-no-arv e .apr-narracao — é a
+ * mesma gramática da cena de cima, porque é a mesma seção.
+ */
+
+.apr-arvore-rf { margin-top: 1rem; }
+
+/* o galho. `color` além de `stroke` porque a ponta da seta é um <marker> que
+ * pinta com currentcolor — sem isto a seta sai preta sobre fundo grafite */
+.apr-rf-galho line {
+  stroke: var(--linha-forte);
+  color: var(--linha-forte);
+  stroke-width: 1.2;
+  transition: stroke 260ms ease, color 260ms ease;
+}
+
+.apr-rf-galho.acesa line { stroke: var(--verde); color: var(--verde); stroke-width: 2; }
+
+.apr-rf-galho text {
+  font-family: var(--sans);
+  font-size: 13px;
+  fill: var(--tinta-3);
+  user-select: none;
+}
+
+.apr-rf-galho.acesa text { fill: var(--verde); }
+
+/* O corte, acima do nó: é a pergunta que aquele nó faz. Mono no limiar porque
+ * é número e alinha com os outros; o termo em sans porque é palavra. */
+.apr-rf-termo {
+  font-family: var(--sans);
+  font-size: 15px;
+  fill: var(--tinta);
+  user-select: none;
+}
+
+.apr-rf-limiar {
+  font-family: var(--mono);
+  font-size: 14px;
+  fill: var(--ambar);
+  user-select: none;
+}
+
+.apr-rf-meta {
+  font-family: var(--mono);
+  font-size: 13px;
+  fill: var(--tinta-3);
+  user-select: none;
+}
+
+.apr-rf-classe {
+  font-family: var(--sans);
+  font-size: 14px;
+  user-select: none;
+}
+
+.apr-rf-corte {
+  font-family: var(--sans);
+  font-size: 12px;
+  fill: var(--tinta-3);
+  font-style: italic;
+  user-select: none;
+}
+
+/* O selo do que está na tela. Fica com peso de dado, e não de nota de rodapé:
+ * "1 de 400 árvores" é a informação que impede a cena de mentir. */
+.apr-rf-selo {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.3rem 0.9rem;
+  margin: 1.2rem 0 0;
+  padding-top: 1rem;
+  border-top: 1px solid var(--linha);
+  font-family: var(--sans);
+  font-size: 0.8125rem;
+}
+
+.apr-rf-selo dt { color: var(--tinta-3); }
+.apr-rf-selo dd { margin: 0; color: var(--tinta-2); font-variant-numeric: tabular-nums; }
+
+.apr-rf-aviso {
+  margin: 0.9rem 0 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--tinta-3);
+}
+
+.apr-rf-aviso strong { color: var(--tinta-2); }
+
+/* a seta do tronco da primeira cena, mesma razão do currentcolor acima */
+.apr-aresta.seta { color: var(--linha-forte); }
+.apr-aresta.seta.acesa { color: var(--verde); }
+
+/* ------------------------------------------------------------ o diagrama
+ *
+ * Nós e setas, topo→baixo. Serve à CONTA (dois estimadores que confluem) e à
+ * PROVA (400 casos que se dividem). Mesma gramática da árvore da seção 03:
+ * apagado desde o primeiro quadro, acendendo por nível. */
+
+.apr-diagrama {
+  background: var(--painel);
+  border: 1px solid var(--linha-forte);
+  padding: 0.8rem;
+  margin-bottom: 1.5rem;
+}
+
+.apr-diagrama svg { display: block; width: 100%; height: auto; }
+
+.apr-diag-no { opacity: 0.13; transition: opacity 300ms ease; }
+.apr-diag-no.acesa { opacity: 1; }
+
+.apr-diag-no rect { fill: var(--painel-2); stroke-width: 1; }
+
+.apr-diag-rot {
+  font-family: var(--sans);
+  font-size: 14px;
+  fill: var(--tinta-2);
+  user-select: none;
+}
+
+.apr-diag-valor {
+  font-family: var(--mono);
+  font-size: 27px;
+  user-select: none;
+}
+
+.apr-diag-nota {
+  font-family: var(--sans);
+  font-size: 12px;
+  fill: var(--tinta-3);
+  user-select: none;
+}
+
+.apr-diag-seta { opacity: 0.2; transition: opacity 300ms ease; }
+.apr-diag-seta.acesa { opacity: 1; }
+
+.apr-diag-seta line {
+  stroke: var(--linha-forte);
+  color: var(--linha-forte);
+  stroke-width: 1.3;
+}
+
+.apr-diag-seta.acesa line { stroke: var(--verde); color: var(--verde); }
+
+.apr-diag-seta text {
+  font-family: var(--sans);
+  font-size: 13px;
+  fill: var(--tinta-3);
+  user-select: none;
+}
+
+/* ---------------------------------------------------------- o precedente
+ *
+ * A seção 09 (Harvard). Citação e "virada" — as duas peças que a seção tem e
+ * que não existiam em nenhuma outra. */
+
+.apr-citacao {
+  margin: 2rem 0 0;
+  padding: 1.4rem 1.8rem;
+  border-left: 3px solid var(--verde);
+  background: var(--painel);
+  max-width: 54rem;
+}
+
+.apr-citacao p {
+  margin: 0;
+  font-size: 1.25rem;
+  line-height: 1.5;
+  color: var(--tinta);
+}
+
+.apr-citacao cite {
+  display: block;
+  margin-top: 0.9rem;
+  font-family: var(--sans);
+  font-size: 0.8125rem;
+  font-style: normal;
+  color: var(--tinta-3);
+}
+
+/* O contraste que sustenta a seção: eles modelam o que o especialista DIZ,
+ * aqui se modela o que o julgador ASSINOU. Verde porque é afirmação
+ * verificada — a regra de cor da paleta desta página. */
+.apr-virada {
+  margin-top: 2rem;
+  padding: 1.4rem 1.6rem;
+  border: 1px solid var(--verde);
+  border-left-width: 3px;
+  background: var(--verde-fundo);
+  max-width: 54rem;
+}
+
+.apr-virada .rot {
+  display: block;
+  font-family: var(--sans);
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--verde);
+  margin-bottom: 0.7rem;
+}
+
+.apr-virada p { margin: 0 0 0.7rem; font-size: 1.0625rem; line-height: 1.55; }
+.apr-virada p:last-child { margin-bottom: 0; }
+
+/* cabeçalho de uma segunda cena dentro da mesma seção (a árvore da floresta) */
+.apr-cab-cena { margin-top: 3rem; }

@@ -3,6 +3,8 @@ import { useEffect, useRef, useState } from 'react'
 
 import { del, get, post } from '../api'
 import { ArvoreAoVivo } from '../comp/ArvoreAoVivo'
+import { ArvoreFloresta, type ArvoreRF } from '../comp/ArvoreFloresta'
+import { Diagrama } from '../comp/Diagrama'
 import { Confronto, type DadosConfronto } from '../comp/Confronto'
 import { ContaAoVivo, type Pesos } from '../comp/ContaAoVivo'
 import { GrafoCerebro, type DadosGrafo } from '../comp/GrafoCerebro'
@@ -54,7 +56,7 @@ type Dados = {
       disponiveis: { lei: string; precedentes: number }[]
     }
   }
-  grafo: DadosGrafo
+  grafo: DadosGrafo & { arvore_rf?: ArvoreRF | null }
   confronto: DadosConfronto
 }
 
@@ -407,6 +409,31 @@ export function Apresentacao() {
           </p>
         </div>
         <ArvoreAoVivo g={data.grafo} />
+
+        {/* A SEGUNDA CENA. A de cima é o pipeline — as etapas do sistema. Esta
+            é a decisão matemática propriamente dita, e ela existe porque
+            "árvore" na seção anterior era metáfora e aqui é literal: são os
+            cortes que o RandomForest usa, lidos do próprio floresta.pkl.
+            Só aparece se houver floresta treinada. */}
+        {data.grafo.arvore_rf && (
+          <>
+            <div className="apr-cab apr-cab-cena">
+              <span className="apr-etapa">03b · A DECISÃO MATEMÁTICA</span>
+              <h2>E dentro da floresta, uma árvore de verdade</h2>
+              <p>
+                Acima está o caminho do sistema. Aqui está a conta. A floresta é
+                um dos dois estimadores, e é feita de{' '}
+                <strong>{mil(data.grafo.arvore_rf.arvores)} árvores de decisão</strong>{' '}
+                treinadas nas decisões até {data.grafo.arvore_rf.ano_corte}. Esta é uma
+                delas, com os cortes que ela usa de verdade — o termo, o limiar, o
+                gini e quantas decisões restam em cada nó, lidos do modelo treinado.
+                O caminho que acende é o galho por onde <strong>este caso</strong>{' '}
+                desceu.
+              </p>
+            </div>
+            <ArvoreFloresta a={data.grafo.arvore_rf} />
+          </>
+        )}
       </section>
 
       {/* --------------------------------------------------------- a conta */}
@@ -424,6 +451,58 @@ export function Apresentacao() {
             imprimiu.
           </p>
         </div>
+        {/* O DESENHO DA CONTA, antes da conta. A escada abaixo explica cada
+            degrau, mas em coluna ela não mostra a FORMA: que são dois
+            estimadores independentes confluindo, e não uma fila. A confluência
+            é o argumento — é dela que sai o desacordo que fecha o portão. */}
+        <Diagrama
+          rotulo="Como o prognóstico é calculado, do voto dos precedentes até o portão"
+          nos={[
+            {
+              id: 'knn',
+              nivel: 0,
+              rotulo: 'k-NN sobre os precedentes',
+              valor: pct(a.pesos.agregacao.knn ?? 0, 1),
+              nota: `voto ponderado dos ${a.pesos.precedentes.length} análogos aprovados`,
+              tom: 'verde',
+            },
+            {
+              id: 'floresta',
+              nivel: 0,
+              rotulo: 'Floresta aleatória',
+              valor: pct(a.pesos.agregacao.floresta ?? 0, 1),
+              nota: '400 árvores; lê o caso, não a busca',
+              tom: 'ambar',
+            },
+            {
+              id: 'conjunto',
+              nivel: 1,
+              rotulo: 'Conjunto',
+              valor: pct(a.pesos.agregacao.conjunto ?? 0, 1),
+              nota: `média ponderada, peso ${a.pesos.config.peso_knn} no k-NN`,
+              de: ['knn', 'floresta'],
+              tom: 'neutro',
+            },
+            {
+              id: 'calibrado',
+              nivel: 2,
+              rotulo: 'Calibração isotônica',
+              valor: pct(a.pesos.agregacao.calibrado ?? 0, 1),
+              nota: 'corrige a escala sem estragar a ordem',
+              de: ['conjunto'],
+              tom: 'verde',
+            },
+            {
+              id: 'portao',
+              nivel: 3,
+              rotulo: 'O portão — cinco cortes',
+              valor: a.prognostico.decide ? 'CRAVA' : 'NÃO DECIDO',
+              nota: 'reprovou em um? nenhum percentual sai',
+              de: ['calibrado'],
+              tom: a.prognostico.decide ? 'verde' : 'fora',
+            },
+          ]}
+        />
         <ContaAoVivo p={a.pesos} />
       </section>
 
@@ -533,6 +612,63 @@ export function Apresentacao() {
             dessa medição: ela isola o núcleo estatístico do sistema.
           </p>
         </div>
+        {/* O FUNIL DA MEDIÇÃO. Os três cartões abaixo dão os números; este
+            desenho dá a forma — e a forma é o que impede a leitura errada.
+            "96,7% de acerto" sozinho parece um sistema quase infalível; a
+            árvore mostra que esse 96,7% vive dentro do galho estreito, e que o
+            galho largo é o silêncio. */}
+        <Diagrama
+          rotulo="Como os 400 casos cegos se dividem entre silêncio, acerto e erro"
+          nos={[
+            {
+              id: 'casos',
+              nivel: 0,
+              rotulo: 'Casos cegos com gabarito',
+              valor: '400',
+              nota: 'sorteados, escondidos do índice, sem o desfecho no texto',
+              tom: 'neutro',
+            },
+            {
+              id: 'cala',
+              nivel: 1,
+              rotulo: 'O sistema cala',
+              valor: pct(1 - a.triagem.cobertura_medida, 1),
+              nota: 'dossiê de evidências, e nenhum percentual',
+              de: ['casos'],
+              rotuloAresta: 'não passou no portão',
+              tom: 'fora',
+            },
+            {
+              id: 'responde',
+              nivel: 1,
+              rotulo: 'O sistema crava',
+              valor: pct(a.triagem.cobertura_medida, 1),
+              nota: 'passou nos cinco cortes do portão',
+              de: ['casos'],
+              rotuloAresta: 'passou',
+              tom: 'verde',
+            },
+            {
+              id: 'acerta',
+              nivel: 2,
+              rotulo: 'Acertou',
+              valor: '96,7%',
+              nota: 'do que cravou',
+              de: ['responde'],
+              tom: 'verde',
+            },
+            {
+              id: 'erra',
+              nivel: 2,
+              rotulo: 'Errou',
+              valor: '3,3%',
+              nota: 'erra pouco porque responde pouco',
+              de: ['responde'],
+              tom: 'ambar',
+            },
+          ]}
+        />
+
         <div className="apr-cartoes">
           <div className="apr-cartao">
             <b className="grande">72,4%</b>
@@ -655,6 +791,109 @@ export function Apresentacao() {
         <p className="apr-dica">
           O juiz automático deu <strong>{a.juiz.nota} de 5</strong> e apontou o defeito:
           “{a.juiz.critica}”. A crítica sai impressa no relatório da consulta.
+        </p>
+      </section>
+
+      {/* ------------------------------------------------------ o precedente
+       *
+       * A seção fecha o deck com enquadramento, e não com mais prova. Todo
+       * número aqui é conferível e está com a fonte ao lado — numa página que
+       * invoca Harvard pelo nome, a checagem é a apelação. O que NÃO entra,
+       * de propósito: os "1.757 startups / US$ 84,6 bi" que o site da Foundry
+       * exibe. O rodapé de lá diz que são dados de ex-alunos da HBS de
+       * 2014–2025, não resultado do produto — usar como impacto seria dado
+       * falso, e cair nisso custaria a página inteira. */}
+      <section className="apr-secao apr-largura">
+        <div className="apr-cena" aria-hidden="true" />
+        <div className="apr-cab">
+          <span className="apr-etapa">09 · O PRECEDENTE</span>
+          <h2>Harvard Business School já faz isso. E cobra US$ 699.</h2>
+          <p>
+            Em maio de 2026 a HBS lançou a <strong>Foundry</strong>. Sete professores e
+            senior lecturers sentaram para entrevistas e sessões de gravação para que
+            <strong> clones de IA de si mesmos</strong> fossem construídos. Hoje
+            fundadores ensaiam pitch, reunião de conselho e conversa difícil contra
+            esses clones — antes de encarar os professores de verdade. Setecentos e
+            sessenta já passaram por isso.
+          </p>
+        </div>
+
+        <div className="apr-cartoes">
+          <div className="apr-cartao">
+            <b className="grande">7</b>
+            <h3>professores clonados</h3>
+            <p>
+              Voluntariamente, entre eles Shikhar Ghosh, Christina Wallace e Jim
+              Matheson. Os avatares foram construídos pela HeyGen.
+            </p>
+          </div>
+          <div className="apr-cartao">
+            <b className="grande">US$ 699</b>
+            <h3>oito semanas de programa</h3>
+            <p>
+              A anuidade da Harvard Business School passa de US$ 84.000. O clone é o
+              que torna a diferença possível.
+            </p>
+          </div>
+          <div className="apr-cartao">
+            <b className="grande">760</b>
+            <h3>fundadores já passaram</h3>
+            <p>
+              Ensaiam contra um investidor de IA vinte vezes ou mais antes da conversa
+              que conta. Vários venceram competições de pitch depois.
+            </p>
+          </div>
+          <div className="apr-cartao">
+            <b className="grande">2026</b>
+            <h3>não é projeto de laboratório</h3>
+            <p>
+              É produto, com preço, turma e Demo Day no campus da HBS. A escola de
+              negócios mais conservadora do mundo pôs o próprio nome nisso.
+            </p>
+          </div>
+        </div>
+
+        <blockquote className="apr-citacao">
+          <p>
+            “O objetivo não é criar um substituto para mim. É dar aos fundadores outro
+            jeito de se preparar e de desafiar o próprio raciocínio — para que, quando a
+            gente se encontrar ao vivo, o tempo valioso seja gasto nas perguntas em que
+            julgamento humano e conversa importam mais.”
+          </p>
+          <cite>
+            Shikhar Ghosh, professor da Harvard Business School, à <em>Fortune</em>,
+            25 de agosto de 2026
+          </cite>
+        </blockquote>
+
+        {/* A VIRADA. É o cartão mais forte da seção porque é verdade e é
+            verificável dos dois lados: o método da Foundry é declarado por
+            eles, e o acervo daqui está a um clique no portal do TJSC. */}
+        <div className="apr-virada">
+          <span className="rot">A diferença, que joga a favor</span>
+          <p>
+            A Harvard modelou o que sete especialistas <strong>dizem</strong> sobre como
+            decidem: entrevistas, gravações, o que cada um conta do próprio julgamento.
+          </p>
+          <p>
+            Este sistema modela o que um desembargador <strong>de fato decidiu</strong> —{' '}
+            {mil(a.acervo.decisoes)} vezes, em documentos públicos, cada um com link para
+            o inteiro teor. Não é o que ele diz que pensa. É o que ele assinou.
+          </p>
+        </div>
+
+        <p className="apr-dica">
+          Fontes: <a href="https://hbsfoundry.org/" target="_blank" rel="noreferrer">
+            hbsfoundry.org
+          </a>{' '}
+          e{' '}
+          <a href="https://fortune.com/2026/08/25/harvard-startup-bootcamp-ai/"
+            target="_blank" rel="noreferrer">
+            Fortune, 25/08/2026
+          </a>. A Harvard Business School <strong>não tem relação com este projeto</strong>{' '}
+          e não trabalha com decisões judiciais. O que a comparação afirma é uma coisa só:
+          modelar um decisor para ensaiar antes do encontro deixou de ser exótico — virou
+          produto de escola de negócios, com preço em tabela.
         </p>
       </section>
 

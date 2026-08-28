@@ -28,5 +28,10 @@ export default defineConfig({
       },
     },
   },
-  build: { outDir: 'dist', sourcemap: false },
+  // ARTEFATO=1 troca a entrada para artefato.html, que monta a apresentação
+  // sozinha, sem rota e sem API. `python -m apresentacao.artefato` costura a
+  // saída num arquivo HTML só. O build normal não vê nada disto.
+  build: process.env.ARTEFATO
+    ? { outDir: 'dist-artefato', sourcemap: false, rollupOptions: { input: 'artefato.html' } }
+    : { outDir: 'dist', sourcemap: false },
 })

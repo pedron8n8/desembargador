@@ -1983,5 +1983,257 @@
    "entrada": 2055,
    "saida": 316
   }
+ },
+ "arvore_rf": {
+  "nos": [
+   {
+    "id": "0",
+    "nivel": 0,
+    "gini": 0.667,
+    "n": 4150,
+    "dist": [
+     0.337,
+     0.338,
+     0.326
+    ],
+    "classe": "parcialmente provido",
+    "folha": false,
+    "cortado": false,
+    "termo": "honorarios advocaticios",
+    "limiar": 0.0162,
+    "esq": "1",
+    "dir": "992"
+   },
+   {
+    "id": "1",
+    "nivel": 1,
+    "gini": 0.666,
+    "n": 3861,
+    "dist": [
+     0.35,
+     0.31,
+     0.34
+    ],
+    "classe": "desprovido",
+    "folha": false,
+    "cortado": false,
+    "termo": "restituidos que",
+    "limiar": 0.0361,
+    "esq": "2",
+    "dir": "979"
+   },
+   {
+    "id": "2",
+    "nivel": 2,
+    "gini": 0.665,
+    "n": 3817,
+    "dist": [
+     0.355,
+     0.3,
+     0.345
+    ],
+    "classe": "desprovido",
+    "folha": false,
+    "cortado": false,
+    "termo": "fixacao",
+    "limiar": 0.0295,
+    "esq": "3",
+    "dir": "894"
+   },
+   {
+    "id": "3",
+    "nivel": 3,
+    "gini": 0.663,
+    "n": 3237,
+    "dist": [
+     0.3,
+     0.318,
+     0.381
+    ],
+    "classe": "provido",
+    "folha": false,
+    "cortado": true,
+    "termo": "advogados drs",
+    "limiar": 0.0585
+   },
+   {
+    "id": "894",
+    "nivel": 3,
+    "gini": 0.423,
+    "n": 580,
+    "dist": [
+     0.733,
+     0.176,
+     0.091
+    ],
+    "classe": "desprovido",
+    "folha": false,
+    "cortado": true,
+    "termo": "__orgao_camara_especial_regional_de_chapeco",
+    "limiar": 0.0166
+   },
+   {
+    "id": "979",
+    "nivel": 2,
+    "gini": 0.137,
+    "n": 44,
+    "dist": [
+     0.074,
+     0.926,
+     0.0
+    ],
+    "classe": "parcialmente provido",
+    "folha": false,
+    "cortado": false,
+    "termo": "exigencia",
+    "limiar": 0.0312,
+    "esq": "980",
+    "dir": "991"
+   },
+   {
+    "id": "980",
+    "nivel": 3,
+    "gini": 0.265,
+    "n": 24,
+    "dist": [
+     0.157,
+     0.843,
+     0.0
+    ],
+    "classe": "parcialmente provido",
+    "folha": false,
+    "cortado": true,
+    "termo": "custo",
+    "limiar": 0.046
+   },
+   {
+    "id": "991",
+    "nivel": 3,
+    "gini": 0.0,
+    "n": 20,
+    "dist": [
+     0.0,
+     1.0,
+     0.0
+    ],
+    "classe": "parcialmente provido",
+    "folha": true,
+    "cortado": false
+   },
+   {
+    "id": "992",
+    "nivel": 1,
+    "gini": 0.524,
+    "n": 289,
+    "dist": [
+     0.186,
+     0.642,
+     0.172
+    ],
+    "classe": "parcialmente provido",
+    "folha": false,
+    "cortado": false,
+    "termo": "afastadas",
+    "limiar": 0.0246,
+    "esq": "993",
+    "dir": "1100"
+   },
+   {
+    "id": "993",
+    "nivel": 2,
+    "gini": 0.516,
+    "n": 282,
+    "dist": [
+     0.175,
+     0.65,
+     0.175
+    ],
+    "classe": "parcialmente provido",
+    "folha": false,
+    "cortado": false,
+    "termo": "honorarios advocaticios",
+    "limiar": 0.0526,
+    "esq": "994",
+    "dir": "1023"
+   },
+   {
+    "id": "994",
+    "nivel": 3,
+    "gini": 0.269,
+    "n": 71,
+    "dist": [
+     0.11,
+     0.847,
+     0.043
+    ],
+    "classe": "parcialmente provido",
+    "folha": false,
+    "cortado": true,
+    "termo": "improcedencia da",
+    "limiar": 0.0303
+   },
+   {
+    "id": "1023",
+    "nivel": 3,
+    "gini": 0.576,
+    "n": 211,
+    "dist": [
+     0.198,
+     0.579,
+     0.222
+    ],
+    "classe": "parcialmente provido",
+    "folha": false,
+    "cortado": true,
+    "termo": "reformada no",
+    "limiar": 0.0689
+   },
+   {
+    "id": "1100",
+    "nivel": 2,
+    "gini": 0.298,
+    "n": 7,
+    "dist": [
+     0.818,
+     0.182,
+     0.0
+    ],
+    "classe": "desprovido",
+    "folha": true,
+    "cortado": false
+   }
+  ],
+  "caminho": [
+   {
+    "id": "0",
+    "valor": 0.0,
+    "esquerda": true
+   },
+   {
+    "id": "1",
+    "valor": 0.0,
+    "esquerda": true
+   },
+   {
+    "id": "2",
+    "valor": 0.0,
+    "esquerda": true
+   },
+   {
+    "id": "3"
+   }
+  ],
+  "classes": [
+   "desprovido",
+   "parcialmente provido",
+   "provido"
+  ],
+  "arvores": 400,
+  "niveis": 3,
+  "profundidade": 56,
+  "nos_total": 1101,
+  "n_raiz": 4150,
+  "n_treino": 7545,
+  "ano_corte": 2023
  }
 }

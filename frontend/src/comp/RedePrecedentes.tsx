@@ -9,6 +9,8 @@ import {
   type SimulationNodeDatum,
 } from 'd3-force'
 import { useEffect, useMemo, useRef, useState } from 'react'
+
+import { TelaCheia } from './TelaCheia'
 import { useNavigate } from 'react-router-dom'
 
 import type { NoRede, Rede } from '../api'
@@ -40,6 +42,7 @@ const raio = (n: No) => {
  */
 export function RedePrecedentes({ r }: { r: Rede }) {
   const svgRef = useRef<SVGSVGElement>(null)
+  const caixaRef = useRef<HTMLDivElement>(null)
   const navegar = useNavigate()
   const [tique, setTique] = useState(0)
   const [foco, setFoco] = useState<string | number | null>(null)
@@ -99,7 +102,8 @@ export function RedePrecedentes({ r }: { r: Rede }) {
   }
 
   return (
-    <div className="rede">
+    <div className="rede" ref={caixaRef}>
+      <TelaCheia alvo={caixaRef} />
       <svg ref={svgRef} viewBox={`0 0 ${W} ${H}`} data-tique={tique} role="img"
         aria-label="Rede de precedentes e âncoras">
         <g>

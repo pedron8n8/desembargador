@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 
 import type { DadosGrafo, NoGrafo } from './GrafoCerebro'
+import { TelaCheia } from './TelaCheia'
 
 /* A árvore do cérebro, rodando.
  *
@@ -17,46 +18,59 @@ import type { DadosGrafo, NoGrafo } from './GrafoCerebro'
  * divergir do primeiro. */
 
 const W = 1160
-const H = 700
-const EIXO = 300
+const H = 1270
+const EIXO = 580
 
 /* A GEOMETRIA É O ARGUMENTO.
  *
- * Os 8 aprovados ficam ACIMA da linha de corte, espaçados, com nome e espaço
- * para respirar. Os 32 reprovados ficam ABAIXO, apertados num bloco denso. Não
- * é decoração: o funil 40 → 8 é a coisa mais difícil de acreditar na demo, e
- * numa coluna única, ordenada por nota, ele vira só uma lista comprida. Assim
- * ele vira uma proporção que se vê de longe — e os reprovados continuam todos
- * na tela, que é o que impede a página de ser vitrine.
+ * Os 8 aprovados ficam ACIMA da linha de corte, numa fileira larga, com espaço
+ * para respirar. Os 32 reprovados ficam ABAIXO, num bloco denso de quatro
+ * fileiras. Não é decoração: o funil 40 → 8 é a coisa mais difícil de acreditar
+ * na demo, e numa fileira única ele vira só uma lista comprida. Assim ele vira
+ * uma proporção que se vê de longe — e os reprovados continuam todos na tela,
+ * que é o que impede a página de ser vitrine.
  *
- * Toda posição respeita o halo: raio 54 no caso, 39,6 nas etapas. Um nó a menos
- * de 54 da borda esquerda sangra para fora do viewBox. */
-const APROV_Y0 = 58
-const APROV_PASSO = 31
-const Y_CORTE = 306
-const REPROV_Y0 = 340
-const X_FOLHA = 664
+ * Desce, e não corre para a direita. A referência da seção é uma árvore de
+ * decisão clássica: raiz em cima, níveis descendo, seta em cada galho. O eixo
+ * do tempo virou o Y — "mais abaixo = mais tarde", a mesma leitura de antes, na
+ * orientação em que todo mundo já sabe ler uma árvore.
+ *
+ * O que NÃO transpôs junto foram as folhas. Espalhá-las em fileira única, do
+ * jeito que a coluna original virava ao girar, põe 40 pontos lado a lado numa
+ * linha fina de 1 px de altura: o funil some, e some justamente a parte que
+ * custou a ser desenhada. Por isso os reprovados quebram em bloco — e é a
+ * FILEIRA dentro do bloco que passa a carregar a nota, já que a lista chega
+ * ordenada por ela. */
+const APROV_X0 = 148
+const APROV_PASSO = 118
+const Y_APROV = 616
+const Y_CORTE = 676
+const REPROV_X0 = 336
+const REPROV_PASSO_X = 70
+const REPROV_COLS = 8
+const Y_REPROV0 = 726
+const REPROV_PASSO_Y = 38
 
-/** O tronco, na ordem de execução. `x` é posição, e posição aqui é tempo.
+/** O tronco, na ordem de execução. `y` é posição, e posição aqui é tempo.
  *
- *  `abaixo` alterna o rótulo para o outro lado da linha. As etapas ficam a 46–90
- *  unidades umas das outras e os nomes são mais largos que isso: todos do mesmo
- *  lado, "Prognóstico Redator Revisor Juiz" vira uma única mancha ilegível no
- *  canto direito. Alternando, cada rótulo tem o dobro de espaço. */
-const TRONCO: { id: string; x: number; y: number; abaixo?: boolean }[] = [
-  { id: 'caso', x: 58, y: EIXO },
-  { id: 'triagem', x: 148, y: EIXO, abaixo: true },
-  { id: 'busca', x: 238, y: EIXO },
-  { id: 'bm80', x: 322, y: EIXO, abaixo: true },
-  { id: 'rerank', x: 406, y: EIXO },
-  { id: 'c40', x: 490, y: EIXO, abaixo: true },
-  { id: 'triar', x: 574, y: EIXO },
-  { id: 'knn', x: 900, y: 160 },
-  { id: 'floresta', x: 900, y: 500, abaixo: true },
-  { id: 'prognostico', x: 972, y: EIXO },
-  { id: 'redigir', x: 1026, y: EIXO, abaixo: true },
-  { id: 'revisar', x: 1072, y: EIXO },
-  { id: 'juiz', x: 1118, y: EIXO, abaixo: true },
+ *  `direita` alterna o rótulo para o outro lado da coluna. As etapas ficam a
+ *  60–90 unidades umas das outras e os nomes são mais largos que isso: todos do
+ *  mesmo lado, "Prognóstico Redator Revisor Juiz" vira uma única mancha
+ *  ilegível. Alternando, cada rótulo tem o dobro de espaço. */
+const TRONCO: { id: string; x: number; y: number; direita?: boolean }[] = [
+  { id: 'caso', x: EIXO, y: 56 },
+  { id: 'triagem', x: EIXO, y: 134, direita: true },
+  { id: 'busca', x: EIXO, y: 212 },
+  { id: 'bm80', x: EIXO, y: 290, direita: true },
+  { id: 'rerank', x: EIXO, y: 368 },
+  { id: 'c40', x: EIXO, y: 446, direita: true },
+  { id: 'triar', x: EIXO, y: 524 },
+  { id: 'knn', x: 300, y: 942 },
+  { id: 'floresta', x: 880, y: 942, direita: true },
+  { id: 'prognostico', x: EIXO, y: 1034 },
+  { id: 'redigir', x: EIXO, y: 1106, direita: true },
+  { id: 'revisar', x: EIXO, y: 1166 },
+  { id: 'juiz', x: EIXO, y: 1226, direita: true },
 ]
 
 /** A ordem em que o sistema roda. As folhas entram no meio, entre `triar` e
@@ -219,12 +233,15 @@ export function ArvoreAoVivo({ g }: { g: DadosGrafo }) {
 
   const nAprovados = folhas.filter((f) => f.aprovado).length
   const nReprovados = folhas.length - nAprovados
-  const yFolha = (i: number) => (i < nAprovados
-    ? APROV_Y0 + i * APROV_PASSO
-    : REPROV_Y0 + ((i - nAprovados) * (H - 34 - REPROV_Y0))
-      / Math.max(1, nReprovados - 1))
-  // longe do tronco = menos análogo, a mesma leitura do mapa da seção 02
-  const xFolha = (f: NoGrafo) => X_FOLHA + (5 - (f.nota ?? 0)) * 15
+  const xFolha = (i: number) => (i < nAprovados
+    ? APROV_X0 + i * APROV_PASSO
+    : REPROV_X0 + ((i - nAprovados) % REPROV_COLS) * REPROV_PASSO_X)
+  // Mais abaixo = menos análogo, a mesma leitura do mapa da seção 02. Na
+  // fileira dos aprovados isso é um degrauzinho por nota; no bloco dos
+  // reprovados é a fileira inteira, porque a lista chega ordenada por nota.
+  const yFolha = (f: NoGrafo, i: number) => (i < nAprovados
+    ? Y_APROV + (5 - (f.nota ?? 0)) * 14
+    : Y_REPROV0 + Math.floor((i - nAprovados) / REPROV_COLS) * REPROV_PASSO_Y)
   const pos = new Map(TRONCO.map((t) => [t.id, t]))
   const noDe = new Map(g.nos.map((x) => [x.id, x]))
 
@@ -234,6 +251,7 @@ export function ArvoreAoVivo({ g }: { g: DadosGrafo }) {
   return (
     <div className="apr-arvore" ref={ref}>
       <div className="apr-tela apr-tela-arvore">
+        <TelaCheia alvo={ref} />
         <svg viewBox={`0 0 ${W} ${H}`} role="img"
           aria-label="A árvore do cérebro, etapa por etapa">
           <defs>
@@ -243,6 +261,12 @@ export function ArvoreAoVivo({ g }: { g: DadosGrafo }) {
                 <stop offset="100%" stopColor={COR[k]} stopOpacity="0" />
               </radialGradient>
             ))}
+            {/* a seta é o que separa uma árvore de um emaranhado: ela diz para
+                que lado a coisa corre, e aqui o sentido é a própria informação */}
+            <marker id="apr-arv-seta" viewBox="0 0 8 8" refX="7" refY="4"
+              markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+              <path d="M0 1 L7 4 L0 7 z" fill="currentcolor" />
+            </marker>
           </defs>
 
           {/* --- o tronco */}
@@ -250,24 +274,26 @@ export function ArvoreAoVivo({ g }: { g: DadosGrafo }) {
             const p = TRONCO[i + 1]
             return (
               <line key={`tr${t.id}`}
-                className={`apr-aresta${aceso(p.id) ? ' acesa' : ''}`}
-                x1={t.x} y1={t.y} x2={p.x} y2={p.y} />
+                className={`apr-aresta seta${aceso(p.id) ? ' acesa' : ''}`}
+                markerEnd="url(#apr-arv-seta)"
+                x1={t.x} y1={t.y + 13} x2={p.x} y2={p.y - 15} />
             )
           })}
 
           {/* --- triar → cada folha, e a folha aprovada → k-NN */}
           {folhas.map((f, i) => {
             const acesa = i < folhasAcesas
-            const x = xFolha(f)
-            const y = yFolha(i)
+            const x = xFolha(i)
+            const y = yFolha(f, i)
             const knn = pos.get('knn')!
+            const triar = pos.get('triar')!
             return (
               <g key={`ar${f.id}`}>
                 <line className={`apr-aresta folha${acesa ? ' acesa' : ''}`}
-                  x1={pos.get('triar')!.x} y1={EIXO} x2={x} y2={y} />
+                  x1={triar.x} y1={triar.y + 13} x2={x} y2={y} />
                 {f.aprovado && (
                   <line className={`apr-aresta${aceso('knn') ? ' acesa' : ''}`}
-                    x1={x} y1={y} x2={knn.x} y2={knn.y}
+                    x1={x} y1={y} x2={knn.x} y2={knn.y - 13}
                     opacity={acesa ? 1 : 0.15} />
                 )}
               </g>
@@ -275,20 +301,24 @@ export function ArvoreAoVivo({ g }: { g: DadosGrafo }) {
           })}
 
           {/* --- triar → floresta, e os dois estimadores → prognóstico */}
-          <line className={`apr-aresta${aceso('floresta') ? ' acesa' : ''}`}
-            x1={pos.get('triar')!.x} y1={EIXO}
-            x2={pos.get('floresta')!.x} y2={pos.get('floresta')!.y} />
+          <line className={`apr-aresta seta${aceso('floresta') ? ' acesa' : ''}`}
+            markerEnd="url(#apr-arv-seta)"
+            x1={pos.get('triar')!.x} y1={pos.get('triar')!.y + 13}
+            x2={pos.get('floresta')!.x} y2={pos.get('floresta')!.y - 13} />
           {(['knn', 'floresta'] as const).map((k) => (
             <line key={`pg${k}`}
-              className={`apr-aresta${aceso('prognostico') ? ' acesa' : ''}`}
-              x1={pos.get(k)!.x} y1={pos.get(k)!.y}
-              x2={pos.get('prognostico')!.x} y2={EIXO} />
+              className={`apr-aresta seta${aceso('prognostico') ? ' acesa' : ''}`}
+              markerEnd="url(#apr-arv-seta)"
+              x1={pos.get(k)!.x} y1={pos.get(k)!.y + 13}
+              x2={pos.get('prognostico')!.x} y2={pos.get('prognostico')!.y - 13} />
           ))}
           {(['redigir', 'revisar', 'juiz'] as const).map((k, i) => {
-            const de = ['prognostico', 'redigir', 'revisar'][i]
+            const de = pos.get(['prognostico', 'redigir', 'revisar'][i])!
             return (
-              <line key={`fi${k}`} className={`apr-aresta${aceso(k) ? ' acesa' : ''}`}
-                x1={pos.get(de)!.x} y1={EIXO} x2={pos.get(k)!.x} y2={EIXO} />
+              <line key={`fi${k}`}
+                className={`apr-aresta seta${aceso(k) ? ' acesa' : ''}`}
+                markerEnd="url(#apr-arv-seta)"
+                x1={de.x} y1={de.y + 12} x2={pos.get(k)!.x} y2={pos.get(k)!.y - 12} />
             )
           })}
 
@@ -297,11 +327,11 @@ export function ArvoreAoVivo({ g }: { g: DadosGrafo }) {
                  LUGAR da tela: o funil 40 → 8 vira distância, e não uma frase. */}
           {nAprovados > 0 && nReprovados > 0 && (
             <g className={`apr-corte${aceso('triar') ? ' acesa' : ''}`}>
-              <line x1={618} y1={Y_CORTE} x2={862} y2={Y_CORTE} />
-              <text x={618} y={Y_CORTE - 8}>
+              <line x1={96} y1={Y_CORTE} x2={W - 96} y2={Y_CORTE} />
+              <text x={96} y={Y_CORTE - 10}>
                 corte {corte}/5 — {nAprovados} passaram
               </text>
-              <text x={618} y={Y_CORTE + 20}>
+              <text x={96} y={Y_CORTE + 22}>
                 {nReprovados} lidos e reprovados, todos aqui
               </text>
             </g>
@@ -311,8 +341,8 @@ export function ArvoreAoVivo({ g }: { g: DadosGrafo }) {
           {folhas.map((f, i) => {
             const acesa = i < folhasAcesas
             const atual = i === folhasAcesas - 1 && dentroDasFolhas
-            const x = xFolha(f)
-            const y = yFolha(i)
+            const x = xFolha(i)
+            const y = yFolha(f, i)
             return (
               <g key={f.id} className={`apr-no-arv${acesa ? ' acesa' : ''}`}>
                 {atual && (
@@ -327,7 +357,7 @@ export function ArvoreAoVivo({ g }: { g: DadosGrafo }) {
                     narração ao lado; repeti-lo aqui só empurraria texto por
                     cima do k-NN. */}
                 {atual && (
-                  <text x={x + 16} y={y + 5} className="apr-folha-rot">
+                  <text x={x} y={y - 16} textAnchor="middle" className="apr-folha-rot">
                     {f.nota}/5
                   </text>
                 )}
@@ -352,8 +382,8 @@ export function ArvoreAoVivo({ g }: { g: DadosGrafo }) {
                 )}
                 <circle cx={t.x} cy={t.y} r={r}
                   fill={COR[no.tipo] ?? COR.volume} fillOpacity={0.9} />
-                <text x={t.x} y={t.abaixo ? t.y + r + 18 : t.y - r - 9}
-                  textAnchor="middle" className="apr-arv-rot">
+                <text x={t.direita ? t.x + r + 12 : t.x - r - 12} y={t.y + 5}
+                  textAnchor={t.direita ? 'start' : 'end'} className="apr-arv-rot">
                   {no.rotulo}
                 </text>
               </g>

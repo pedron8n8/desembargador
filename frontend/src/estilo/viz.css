@@ -232,6 +232,8 @@
 .rede {
   border: 1px solid var(--linha);
   background: var(--papel-2);
+  /* âncora da barra de ferramentas (tela cheia), que é absolute */
+  position: relative;
 }
 
 .rede svg {
@@ -353,3 +355,68 @@
   fill: var(--tinta-2);
   font-size: 11px;
 }
+
+/* ------------------------------------------- ferramentas de visualização
+ *
+ * Tela cheia e zoom. Mora aqui, e não em apresentacao.css, porque a rede de
+ * precedentes do produto usa a mesma barra — e viz.css é o único dos dois que
+ * as duas páginas carregam.
+ *
+ * Por isso toda cor tem fallback: a apresentação tem paleta própria (--painel,
+ * grafite) e o produto tem a de tokens.css (--papel, claro). As duas definem
+ * --tinta-2 e --linha-forte; só o fundo precisa escolher.
+ */
+.apr-ferramentas {
+  position: absolute;
+  top: 0.6rem;
+  right: 0.6rem;
+  z-index: 2;
+  display: flex;
+  gap: 0.3rem;
+}
+
+.apr-ferramenta {
+  display: grid;
+  place-items: center;
+  width: 1.9rem;
+  height: 1.9rem;
+  padding: 0;
+  cursor: pointer;
+  color: var(--tinta-2);
+  background: var(--painel-2, var(--papel-2, #fff));
+  border: 1px solid var(--linha-forte);
+  border-radius: 2px;
+  opacity: 0.55;
+  transition: opacity 140ms ease, color 140ms ease;
+}
+
+.apr-ferramenta:hover, .apr-ferramenta:focus-visible { opacity: 1; color: var(--verde, var(--selo)); }
+.apr-ferramenta[aria-pressed='true'] { opacity: 1; color: var(--verde, var(--selo)); }
+
+.apr-ferramenta svg {
+  width: 0.85rem;
+  height: 0.85rem;
+  fill: none;
+  stroke: currentcolor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Em tela cheia o SVG tem de crescer na ALTURA. Fora dela ele é
+ * `width:100%; height:auto` sobre um viewBox de proporção fixa — o que numa
+ * tela 16:9 deixaria o desenho no topo e uma faixa morta embaixo. */
+.apr-grafo:fullscreen,
+.apr-arvore:fullscreen,
+.rede:fullscreen {
+  width: 100vw;
+  height: 100vh;
+  background: var(--painel, var(--papel));
+}
+
+.apr-grafo:fullscreen .apr-tela svg,
+.apr-arvore:fullscreen .apr-tela svg,
+.rede:fullscreen svg { height: 100%; max-height: 100vh; }
+
+.apr-grafo:fullscreen .apr-tela,
+.apr-arvore:fullscreen .apr-tela { min-height: 0; }

@@ -535,6 +535,111 @@ def grafo(prec, cnd, prog, cst, cfg):
             "dado": dado}
 
 
+# ------------------------------------------------------------------- a floresta
+
+# Quantos niveis da arvore real vao para a tela. Tres da' 15 nos — a mesma
+# densidade do desenho de referencia (apresentacao/exemplo/Arvore.png). A arvore
+# tem 56: mostrar tudo viraria mancha, e mostrar 3 sem dizer que ha' 56 seria
+# mentir por omissao. Por isso os dois numeros vao juntos para a tela.
+NIVEIS_ARVORE = 3
+
+
+def arvore_floresta(cst, lida):
+    """Uma arvore DE VERDADE da floresta, com os cortes que ela usa.
+
+    A secao 03 mostrava o PIPELINE — as etapas do sistema. Isto aqui e' a
+    decisao matematica propriamente dita: um dos 400 estimadores do
+    RandomForest de src/rag/floresta.py, com o termo, o limiar, o gini e o
+    numero de amostras que o sklearn guardou em cada no'.
+
+    Sai a arvore 0, e nao a "melhor": escolher a mais bonita entre 400 seria
+    vitrine. E o caso da demo desce por ela pelo MESMO texto que a producao
+    monta em grafo.py:505 — termos da triagem + materia + tese —, entao o
+    caminho que acende na tela e' o caminho que este caso percorreu de fato.
+
+    None quando nao ha' floresta treinada: a secao simplesmente nao aparece, do
+    mesmo jeito que o sistema roda sem sklearn.
+    """
+    cam = cerebros.caminhos()
+    if not os.path.exists(cam["floresta"]):
+        print("  (sem floresta.pkl — a arvore real fica de fora)")
+        return None
+    import joblib
+    from src.rag.floresta import _texto
+
+    m = joblib.load(cam["floresta"])
+    p = m["pipeline"]
+    tf, rf = p.named_steps["tfidf"], p.named_steps["rf"]
+    vocab = tf.get_feature_names_out()
+    est = rf.estimators_[0]
+    t = est.tree_
+    classes = [str(c) for c in rf.classes_]
+
+    # o mesmo texto que a producao entrega a' floresta: os termos da busca (que
+    # saem entre aspas na consulta FTS5 do relatorio) mais materia e tese
+    termos = re.findall(r'"([^"]+)"', cst.get("consulta_fts") or "")
+    texto = " ".join(termos + [lida.get("materia") or "", lida.get("tese") or ""])
+    x = tf.transform([_texto(texto, lida.get("classe"), None, None, None,
+                             cru=True)])
+
+    nos = []
+
+    def anda(i, nivel):
+        folha = t.children_left[i] == -1
+        # cortado != folha. Um no' que a tela para de desenhar continua tendo
+        # galho embaixo, e chama-lo de folha seria dizer que a decisao terminou
+        # ali. A tela distingue os dois.
+        cortado = (not folha) and nivel >= NIVEIS_ARVORE
+        v = t.value[i][0]
+        tot = float(v.sum()) or 1.0
+        no = {"id": str(i), "nivel": nivel,
+              "gini": round(float(t.impurity[i]), 3),
+              "n": int(t.n_node_samples[i]),
+              "dist": [round(float(c) / tot, 3) for c in v],
+              "classe": classes[int(v.argmax())],
+              "folha": bool(folha), "cortado": bool(cortado)}
+        if not folha:
+            no["termo"] = str(vocab[t.feature[i]])
+            no["limiar"] = round(float(t.threshold[i]), 4)
+        if not folha and not cortado:
+            no["esq"] = str(t.children_left[i])
+            no["dir"] = str(t.children_right[i])
+        nos.append(no)
+        if not folha and not cortado:
+            anda(t.children_left[i], nivel + 1)
+            anda(t.children_right[i], nivel + 1)
+
+    anda(0, 0)
+
+    # Por onde ESTE caso desce, ate' onde a tela desenha. Vai junto o valor
+    # TF-IDF que o caso tem no termo de cada corte: e' o que deixa a narracao
+    # dizer POR QUE o galho foi aquele, em vez de so' apontar o galho.
+    caminho, i, nivel = [], 0, 0
+    while True:
+        no = {"id": str(i)}
+        if t.children_left[i] != -1 and nivel < NIVEIS_ARVORE:
+            val = float(x[0, t.feature[i]])
+            no["valor"] = round(val, 4)
+            no["esquerda"] = bool(val <= t.threshold[i])
+        caminho.append(no)
+        if "esquerda" not in no:
+            break
+        i = (t.children_left[i] if no["esquerda"] else t.children_right[i])
+        nivel += 1
+
+    return {"nos": nos, "caminho": caminho, "classes": classes,
+            "arvores": len(rf.estimators_),
+            "niveis": NIVEIS_ARVORE,
+            "profundidade": int(est.get_depth()),
+            "nos_total": int(t.node_count),
+            # a raiz nao ve' o acervo inteiro: cada arvore treina num sorteio
+            # com reposicao (bootstrap). Sem este par de numeros a tela sugere
+            # que a arvore leu as 7.545 decisoes, e ela nao leu.
+            "n_raiz": int(t.n_node_samples[0]),
+            "n_treino": int(m["n_treino"]),
+            "ano_corte": int(m["ano_corte"])}
+
+
 # ------------------------------------------------------------------- confronto
 
 # EDITORIAL: o alinhamento entre a decisao real e a gerada. Cada linha aponta o
@@ -604,6 +709,7 @@ def main():
     cnd = candidatos()
     with open(os.path.join(FONTES, "config_rag.json"), encoding="utf-8") as f:
         cfg = json.load(f)
+    lida = leitura(txt)
     real = acordao_real(CASO["numero"])
     with open(os.path.join(FONTES, "casos", CASO["peca"]), encoding="utf-8") as f:
         peca = f.read()
@@ -623,20 +729,40 @@ def main():
         "o prognóstico (%s) não bate com o resultado real (%s)" % (
             prog["resultado"], CASO["real"])
 
+    arv = arvore_floresta(cst, lida)
+    if arv:
+        # A arvore da floresta e' um passeio sobre arrays do sklearn, e passeio
+        # errado nao quebra: ele desenha uma arvore plausivel e falsa. Estas
+        # quatro travas custam nada e pegam os quatro jeitos de errar.
+        no = {n["id"]: n for n in arv["nos"]}
+        assert arv["nos"] and arv["nos"][0]["id"] == "0",             "a arvore da floresta nao comeca na raiz"
+        for n in arv["nos"]:
+            for lado in ("esq", "dir"):
+                assert n.get(lado) is None or n[lado] in no,                     "o no %s aponta para um filho que nao foi emitido" % n["id"]
+        ids = [x["id"] for x in arv["caminho"]]
+        assert ids[0] == "0", "o caminho do caso nao comeca na raiz"
+        for k, x in enumerate(arv["caminho"][:-1]):
+            pai = no[x["id"]]
+            assert (pai["esq"] if x["esquerda"] else pai["dir"]) == ids[k + 1],                 "o caminho do caso pula de galho em %s" % x["id"]
+        assert arv["niveis"] <= arv["profundidade"]             and arv["n_raiz"] <= arv["n_treino"],             "a arvore diz mostrar mais do que tem"
+
     os.makedirs(DADOS, exist_ok=True)
 
     grava("apresentacao.json", {
         "caso": CASO, "triagem": TRIAGEM, "acervo": acervo(),
         # "execucao", nao "custo": depois do corte de valores este bloco carrega
         # tempo, tokens e modelos — chamá-lo de custo seria nome mentindo
-        "leitura": leitura(txt), "prognostico": prog, "execucao": cst,
+        "leitura": lida, "prognostico": prog, "execucao": cst,
         "juiz": juiz(txt), "precedentes": prec,
         # a cascata do prognostico, congelada de api/serial.pesos — a seção
         # "A conta" a reencena passo a passo, sem recalcular nada
         "pesos": cnd["pesos"],
         "base_legal": base_legal(minuta(txt), real, cnd, cfg),
     })
-    grava("grafo.json", grafo(prec, cnd, prog, cst, cfg))
+    # a arvore real da floresta viaja DENTRO do grafo.json: artefato.py carrega
+    # tres arquivos fixos, e um quarto obrigaria a mexer no empacotador para
+    # nada — os dois desenhos da secao 03 saem da mesma fonte de qualquer jeito
+    grava("grafo.json", dict(grafo(prec, cnd, prog, cst, cfg), arvore_rf=arv))
     grava("confronto.json", {
         "caso": CASO,
         "peca_entregue": peca,
@@ -646,8 +772,10 @@ def main():
         "batem": sum(1 for c in CONFRONTO if c["bate"]),
         "total": len(CONFRONTO),
     })
-    print("OK — %d precedentes, prognóstico %.0f%% (%s), %d linhas de confronto"
-          % (len(prec), 100 * prog["p"], prog["resultado"], len(CONFRONTO)))
+    print("OK — %d precedentes, prognóstico %.0f%% (%s), %d linhas de confronto%s"
+          % (len(prec), 100 * prog["p"], prog["resultado"], len(CONFRONTO),
+             (", árvore real com %d nós (%d de %d níveis)"
+              % (len(arv["nos"]), arv["niveis"], arv["profundidade"])) if arv else ""))
 
 
 def grava(nome, obj):

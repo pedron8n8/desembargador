@@ -13,6 +13,7 @@ output/
 # fase 6 — frontend. O output/web.db (contas e sessoes) ja' cai no output/ acima.
 frontend/node_modules/
 frontend/dist/
+frontend/dist-artefato/
 frontend/.vite/
 
 # deploy — os certificados do Caddy sao volume nomeado do Docker, mas quem

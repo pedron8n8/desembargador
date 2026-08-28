@@ -17,6 +17,16 @@
       "rules": {
         "declaration-property-value-disallowed-list": null
       }
+    },
+    {
+      "files": ["src/estilo/apresentacao.css"],
+      "rules": {
+        "declaration-property-value-disallowed-list": {
+          "/^border(-.*)?-radius$/": ["/^([3-9]|[1-9][0-9])px/", "/^(?!50%$)[0-9.]+%$/"],
+          "backdrop-filter": ["/.+/"],
+          "text-shadow": ["/.+/"]
+        }
+      }
     }
   ],
   "_por_que": [
@@ -27,6 +37,18 @@
     "  - repeating-linear-gradient continua permitido (o [^-] do regex o poupa):",
     "    é a hachura da faixa NÃO DECIDO, que representa um intervalo.",
     "  - border-radius: 50% continua permitido: é o círculo do nó da rede e do",
-    "    ponto da legenda. O que se proíbe é canto arredondado de painel."
+    "    ponto da legenda. O que se proíbe é canto arredondado de painel.",
+    "",
+    "src/estilo/apresentacao.css tem exceção, e é deliberada: a apresentação",
+    "comercial (/apresentacao) não é superfície do produto — é lida uma vez, na",
+    "frente de alguém, e o cliente pediu vida. Vive num mundo visual próprio, sob",
+    ".apr, sem herdar tokens.css nem app.css. O que está liberado lá:",
+    "  - gradiente: o fundo da página e o halo dos nós do grafo.",
+    "  - filter: blur e box-shadow: a nebulosa atrás do grafo e o brilho dos nós.",
+    "    Um mapa de 60 nós com 121 arestas precisa de profundidade para se ler, e",
+    "    régua de 1px não a dá. Fora daqui continuam banidos — a decisão vale para",
+    "    UMA página, não para o sistema.",
+    "Continuam proibidos até lá: backdrop-filter (painel translúcido sobre texto",
+    "jurídico) e canto arredondado acima de 2px."
   ]
 }
