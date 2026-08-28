@@ -43,6 +43,13 @@ processo e consulta FTS5 são monoespaçados.
 
 A v1 usa **pilha de sistema** (`Charter, Georgia` para o corpo). Nenhuma fonte é
 baixada de CDN — as consultas são confidenciais e não se vaza nem o referrer.
+
+> **Uma exceção, e só uma:** `/apresentacao` carrega Fira Sans do Google Fonts,
+> e apenas dentro das caixas dos diagramas. A apresentação é comercial, é aberta
+> na frente de alguém e não tem consulta a proteger. O `<link>` é injetado em
+> tempo de execução por `paginas/Apresentacao.tsx`, **não** pelo `index.html`,
+> justamente para que o produto nunca toque em `fonts.googleapis.com`. Se essa
+> injeção migrar para o HTML, a regra acima passa a estar quebrada.
 Para trocar por Source Serif 4 self-hosted: coloque os `.woff2` em
 `public/fontes/`, declare `@font-face` em `estilo/tokens.css` e ponha a família
 na frente de `--fonte-serif`. Nada mais no código muda.

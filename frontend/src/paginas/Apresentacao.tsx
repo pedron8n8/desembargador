@@ -292,6 +292,40 @@ const NO_EPROC: NoDiag[] = [
   },
 ]
 
+/* ------------------------------------------------------------------ fonte */
+
+/** A fonte das caixas, carregada SÓ quando a apresentação monta.
+ *
+ *  Não vai no `index.html` de propósito, e o motivo não é estético: aquele HTML
+ *  é o mesmo do produto, e `frontend/DESIGN.md` proíbe fonte de CDN ali porque
+ *  as consultas são confidenciais — pedir a fonte ao Google entrega a eles, no
+ *  mínimo, que alguém está usando o sistema e de onde. A apresentação é
+ *  comercial, é aberta na frente de alguém, e não tem esse problema.
+ *
+ *  Montando aqui, o produto nunca toca em fonts.googleapis.com, e o artefato de
+ *  arquivo único herda o comportamento sem código próprio — ele renderiza este
+ *  mesmo componente.
+ *
+ *  Se a rede não responder, `--caixa` cai na pilha de sistema e a caixa volta a
+ *  ser o que era. É degradação, não tela quebrada. */
+const FONTE = 'https://fonts.googleapis.com/css2'
+  + '?family=Fira+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap'
+
+function useFonteDasCaixas() {
+  useEffect(() => {
+    if (document.querySelector(`link[href="${FONTE}"]`)) return
+    const pre = document.createElement('link')
+    pre.rel = 'preconnect'
+    pre.href = 'https://fonts.gstatic.com'
+    pre.crossOrigin = ''
+    const link = document.createElement('link')
+    link.rel = 'stylesheet'
+    link.href = FONTE
+    document.head.append(pre, link)
+    return () => { pre.remove(); link.remove() }
+  }, [])
+}
+
 /* ----------------------------------------------------------------- cinema */
 
 /** Os elementos que entram por rolagem. A mesma lista mora no CSS; aqui ela só
@@ -460,6 +494,7 @@ export function Apresentacao() {
   })
 
   // antes dos returns: hook não pode ficar atrás de um early return
+  useFonteDasCaixas()
   useEntrada(!!data)
 
   if (isLoading) return null

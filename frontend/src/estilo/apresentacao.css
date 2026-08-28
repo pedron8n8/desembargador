@@ -24,18 +24,18 @@
   --linha: #e7e2d8;
   --linha-forte: #d3ccbe;
   --tinta: #23282a;
-  --tinta-2: #5c6461;
+  --tinta-2: #55605c;
   --tinta-3: #8d938e;
 
   /* os acentos, todos dessaturados */
-  --verde: #5f9c8a;          /* sálvia: a afirmação verificada */
-  --verde-2: #86b8a4;        /* sálvia clara: parcialmente provido */
+  --verde: #43897a;          /* sálvia: a afirmação verificada */
+  --verde-2: #6fac95;        /* sálvia clara: parcialmente provido */
   --verde-fundo: #e8f1ed;
-  --ambar: #bd934f;          /* areia: o estimador que grita */
+  --ambar: #b0862f;          /* areia: o estimador que grita */
   --ambar-fundo: #f6efe1;
-  --azul: #7e9dbe;           /* névoa: âncora — ardósia, nunca violeta */
-  --lei: #b08d57;            /* sépia: a lei é outra autoridade que a âncora */
-  --vermelho: #c1705f;       /* terracota: a ressalva, não o erro */
+  --azul: #6a90b8;           /* névoa: âncora — ardósia, nunca violeta */
+  --lei: #a87f42;            /* sépia: a lei é outra autoridade que a âncora */
+  --vermelho: #b85f4c;       /* terracota: a ressalva, não o erro */
 
   /* cor de dado, não de marca */
   --caso: #3a4144;           /* o nó do caso: a tinta mais escura da página */
@@ -50,6 +50,16 @@
   --serif: 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif;
   --sans: ui-sans-serif, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --mono: ui-monospace, 'Cascadia Mono', 'SF Mono', Consolas, monospace;
+
+  /* A LETRA DE DENTRO DAS CAIXAS, e só dela.
+     O corpo da apresentação continua na serifa acima. Aqui era mono no valor e
+     pilha de sistema no rótulo, e a mono é que dava o ar de terminal: letra de
+     largura fixa força espaço irregular entre as letras. Ela também não ganhava
+     nada — mono serve para alinhar número em coluna, e o valor da caixa é quase
+     sempre uma palavra solta. Onde é número, `tabular-nums` alinha igual.
+     Fira Sans é humanista: vem do traço da mão, que é a mesma raiz da serifa.
+     A reserva é a pilha de sistema, então sem rede a caixa volta ao que era. */
+  --caixa: 'Fira Sans', ui-sans-serif, -apple-system, 'Segoe UI', Roboto, sans-serif;
 
   position: fixed;
   inset: 0;
@@ -1415,20 +1425,21 @@
 .apr-diag-no.acesa rect { stroke-width: 2; }
 
 .apr-diag-rot {
-  font-family: var(--sans);
+  font-family: var(--caixa);
   font-size: 17px;
   fill: var(--tinta);
   user-select: none;
 }
 
 .apr-diag-valor {
-  font-family: var(--mono);
+  font-family: var(--caixa);
+  font-weight: 500;
   font-size: 31px;
   user-select: none;
 }
 
 .apr-diag-nota {
-  font-family: var(--sans);
+  font-family: var(--caixa);
   font-size: 14px;
   fill: var(--tinta-2);
   user-select: none;
@@ -1446,7 +1457,7 @@
 .apr-diag-seta.acesa line { stroke: var(--verde); color: var(--verde); }
 
 .apr-diag-seta text {
-  font-family: var(--sans);
+  font-family: var(--caixa);
   font-size: 14px;
   fill: var(--tinta-2);
   user-select: none;

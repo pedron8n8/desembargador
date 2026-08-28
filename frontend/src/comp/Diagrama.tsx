@@ -43,7 +43,11 @@ export type NoDiag = {
 
 const W = 1100
 const CAIXA_L = 300
+/** Altura de uma caixa cujo rótulo cabe em UMA linha. Quem tem duas cresce —
+ *  ver `alturaDe`. O `PASSO` tem folga suficiente para absorver isso sem que a
+ *  seta encoste na caixa de baixo. */
 const CAIXA_A = 118
+const LINHA_ROT = 21
 const PASSO = 190
 const TOPO = 26
 
@@ -79,6 +83,20 @@ function linhas(t: string, largura = 40, max = 2) {
   return saida
 }
 
+/** O RÓTULO TAMBÉM QUEBRA, e não quebrava.
+ *
+ *  Só a nota passava por `linhas()`; o rótulo ia inteiro para um `<text>`, e
+ *  texto em SVG não quebra sozinho. "Os precedentes dele, com o peso de cada
+ *  um" media 341px numa caixa de 300 e saía pelos dois lados. Outros três
+ *  rótulos passam de 30 caracteres e estavam a uma palavra do mesmo destino.
+ *
+ *  30 caracteres é a medida da caixa: 276px úteis a 17px de Fira Sans. */
+const linhasRot = (t: string) => linhas(t, 30, 2)
+
+/** Caixa com rótulo de duas linhas é 21px mais alta. Sem isto o rótulo empurra
+ *  valor e nota para fora da própria caixa — o vazamento voltaria por baixo. */
+const alturaCrua = (x: NoDiag) => CAIXA_A + (linhasRot(x.rotulo).length - 1) * LINHA_ROT
+
 export function Diagrama({ nos, rotulo }: { nos: NoDiag[]; rotulo: string }) {
   const [n, defN] = useState(0)
   const ref = useRef<HTMLDivElement>(null)
@@ -102,7 +120,16 @@ export function Diagrama({ nos, rotulo }: { nos: NoDiag[]; rotulo: string }) {
   }, [])
 
   const niveis = Math.max(...nos.map((x) => x.nivel)) + 1
-  const H = TOPO + niveis * PASSO - (PASSO - CAIXA_A) + 20
+  /* A altura é do NÍVEL, e não de cada caixa. Duas caixas lado a lado com
+   * alturas diferentes leem como dois momentos, e elas são o mesmo: o nível é
+   * uma fileira. Quem manda é o rótulo mais longo da fileira. */
+  const alturaDoNivel = new Map<number, number>()
+  for (const x of nos) {
+    alturaDoNivel.set(x.nivel, Math.max(alturaDoNivel.get(x.nivel) ?? 0, alturaCrua(x)))
+  }
+  const alturaDe = (x: NoDiag) => alturaDoNivel.get(x.nivel) ?? CAIXA_A
+  const maisAlta = Math.max(...alturaDoNivel.values())
+  const H = TOPO + niveis * PASSO - (PASSO - maisAlta) + 20
   const maxPan = cheia ? 0 : Math.max(0, H - VISOR)
 
   useEffect(() => {
@@ -209,9 +236,9 @@ export function Diagrama({ nos, rotulo }: { nos: NoDiag[]; rotulo: string }) {
               const pai = porId.get(idPai)
               if (!pai) return null
               const x1 = cx(pai)
-              const y1 = cy(pai) + CAIXA_A / 2
+              const y1 = cy(pai) + alturaDe(pai) / 2
               const x2 = cx(x)
-              const y2 = cy(x) - CAIXA_A / 2 - 8
+              const y2 = cy(x) - alturaDe(x) / 2 - 8
               return (
                 <g key={`${idPai}-${x.id}`}
                   className={`apr-diag-seta${aceso(x) ? ' acesa' : ''}`}>
@@ -232,23 +259,30 @@ export function Diagrama({ nos, rotulo }: { nos: NoDiag[]; rotulo: string }) {
               const cor = TOM[x.tom ?? 'neutro']
               const on = aceso(x)
               const meio = cx(x)
-              const topo = cy(x) - CAIXA_A / 2
+              const alta = alturaDe(x)
+              const topo = cy(x) - alta / 2
+              const rot = linhasRot(x.rotulo)
               const nota = x.nota ? linhas(x.nota) : []
+              // o que o rótulo empurra para baixo quando ocupa duas linhas
+              const empurra = (rot.length - 1) * LINHA_ROT
               return (
                 <g key={x.id} className={`apr-diag-no${on ? ' acesa' : ''}`}>
-                  <rect x={meio - CAIXA_L / 2} y={topo} width={CAIXA_L} height={CAIXA_A}
-                    rx={2} stroke={cor} />
-                  <text x={meio} y={topo + 27} textAnchor="middle" className="apr-diag-rot">
-                    {x.rotulo}
-                  </text>
+                  <rect x={meio - CAIXA_L / 2} y={topo} width={CAIXA_L} height={alta}
+                    rx={12} stroke={cor} />
+                  {rot.map((linha, i) => (
+                    <text key={i} x={meio} y={topo + 27 + i * LINHA_ROT}
+                      textAnchor="middle" className="apr-diag-rot">
+                      {linha}
+                    </text>
+                  ))}
                   {x.valor && (
-                    <text x={meio} y={topo + 68} textAnchor="middle"
+                    <text x={meio} y={topo + 68 + empurra} textAnchor="middle"
                       className="apr-diag-valor" fill={cor}>
                       {x.valor}
                     </text>
                   )}
                   {nota.map((linha, i) => (
-                    <text key={i} x={meio} y={topo + (x.valor ? 92 : 58) + i * 18}
+                    <text key={i} x={meio} y={topo + (x.valor ? 92 : 58) + empurra + i * 18}
                       textAnchor="middle" className="apr-diag-nota">
                       {linha}
                     </text>
