@@ -59,20 +59,20 @@ const W = 1100
 const H = 720
 
 const COR: Record<string, string> = {
-  caso: '#e8eceb',
-  etapa: '#4ec5b3',
-  volume: '#6d7d7d',
-  estimador: '#d9a441',
+  caso: 'var(--caso)',
+  etapa: 'var(--verde)',
+  volume: 'var(--tinta-3)',
+  estimador: 'var(--ambar)',
   // ardósia, não violeta: frontend/DESIGN.md proíbe roxo em qualquer superfície
-  ancora: '#7f9bb3',
+  ancora: 'var(--azul)',
   // a lei e' outra autoridade que a ancora, e por isso outra cor: sepia, a
   // mesma familia do ambar dos estimadores, sem virar um 2o acento saturado
-  lei: '#b08d57',
-  provido: '#4ec5b3',
-  'parcialmente provido': '#8ec9a6',
-  desprovido: '#6d7d7d',
+  lei: 'var(--lei)',
+  provido: 'var(--verde)',
+  'parcialmente provido': 'var(--verde-2)',
+  desprovido: 'var(--tinta-3)',
   // quem a triagem leu e reprovou: presente, legível, e claramente fora
-  reprovado: '#3f5052',
+  reprovado: 'var(--reprovado)',
 }
 
 /** Etapas vêm da esquerda para a direita; documentos orbitam. Sem isso o
@@ -128,14 +128,18 @@ function raio(n: No) {
 
 function corDe(n: No) {
   if (n.tipo === 'precedente') {
-    return n.aprovado ? COR[n.resultado ?? ''] ?? '#6d7d7d' : COR.reprovado
+    return n.aprovado ? COR[n.resultado ?? ''] ?? 'var(--tinta-3)' : COR.reprovado
   }
-  return COR[n.tipo] ?? '#6d7d7d'
+  return COR[n.tipo] ?? 'var(--tinta-3)'
 }
 
 /** Halo: um círculo grande com gradiente radial da própria cor até transparente.
  *  Não é filtro SVG de propósito — 60 nós com feGaussianBlur derrubam o quadro,
- *  e o gradiente dá o mesmo brilho de graça. */
+ *  e o gradiente dá o mesmo halo de graça.
+ *
+ *  Em fundo claro ele é MAIS FRACO que era no escuro (26% contra 50%): brilho
+ *  sobre papel não brilha, borra. Quem carrega a legibilidade do nó aqui é o
+ *  anel de 1px da própria cor, abaixo — não o halo. */
 const HALOS = ['caso', 'etapa', 'estimador', 'ancora', 'lei', 'provido',
   'parcialmente provido', 'desprovido']
 const chaveHalo = (s: string) => s.replace(/\s+/g, '-')
@@ -408,6 +412,39 @@ export function GrafoCerebro({ g }: { g: DadosGrafo }) {
     })
   }
 
+  /* Ctrl + roda: amplia PARA O CURSOR, e não para o centro do quadro como os
+   * botões. Com o ponteiro em cima de um nó específico, é aquele nó que a
+   * pessoa quer ver de perto — puxar a vista para o centro no meio do gesto é
+   * perder justamente o que se estava olhando.
+   *
+   * O listener é nativo e NÃO-PASSIVO: o `onWheel` do React entra como passivo,
+   * e listener passivo não pode chamar preventDefault. Sem ele o Ctrl+roda
+   * vazaria para o navegador e o que ampliaria seria a PÁGINA inteira. Sem
+   * Ctrl a roda continua rolando a página — um mapa que sequestra a roda no
+   * meio de uma apresentação de vinte mil pixels é uma armadilha. */
+  useEffect(() => {
+    const svg = svgRef.current
+    if (!svg) return
+    const roda = (e: WheelEvent) => {
+      if (!e.ctrlKey && !e.metaKey) return
+      e.preventDefault()
+      const r = svg.getBoundingClientRect()
+      const k = W / (r.width || W)
+      const px = (e.clientX - r.left) * k
+      const py = (e.clientY - r.top) * k
+      setTocou(true)
+      setCamera((c) => {
+        const z0 = c?.z ?? 1
+        const z = Math.min(3, Math.max(0.6, z0 * Math.exp(-e.deltaY * 0.0016)))
+        if (z === z0) return c
+        const f = z / z0
+        return { z, x: px - f * (px - (c?.x ?? 0)), y: py - f * (py - (c?.y ?? 0)) }
+      })
+    }
+    svg.addEventListener('wheel', roda, { passive: false })
+    return () => svg.removeEventListener('wheel', roda)
+  }, [])
+
   /** A câmera não centraliza de todo: leva o nó a 35% do caminho e amplia pouco.
    *  Centralizar por completo tira o contexto, e o contexto é o mapa. Clicar de
    *  novo no mesmo nó devolve a vista inteira. */
@@ -448,8 +485,8 @@ export function GrafoCerebro({ g }: { g: DadosGrafo }) {
           <defs>
             {HALOS.map((k) => (
               <radialGradient key={k} id={`apr-halo-${chaveHalo(k)}`}>
-                <stop offset="0%" stopColor={COR[k]} stopOpacity="0.5" />
-                <stop offset="45%" stopColor={COR[k]} stopOpacity="0.14" />
+                <stop offset="0%" stopColor={COR[k]} stopOpacity="0.26" />
+                <stop offset="45%" stopColor={COR[k]} stopOpacity="0.08" />
                 <stop offset="100%" stopColor={COR[k]} stopOpacity="0" />
               </radialGradient>
             ))}
@@ -504,7 +541,7 @@ export function GrafoCerebro({ g }: { g: DadosGrafo }) {
                   key={n.id}
                   className={`apr-no${sel === n.id ? ' sel' : ''}${fora ? ' fora' : ''}${orbe ? ' orbe' : ''}`}
                   style={{ ['--i' as string]: i }}
-                  opacity={!chegou ? 0.1 : apagado ? 0.12 : 1}
+                  opacity={!chegou ? 0.22 : apagado ? 0.26 : 1}
                   onMouseEnter={() => setFoco(n.id)}
                   onMouseLeave={() => setFoco(null)}
                   onPointerDown={(e) => { e.stopPropagation(); pegar(e, n) }}
@@ -540,15 +577,17 @@ export function GrafoCerebro({ g }: { g: DadosGrafo }) {
                         width={r * 2} height={r * 2}
                         transform={n.tipo === 'lei'
                           ? `rotate(45 ${n.x ?? 0} ${n.y ?? 0})` : undefined}
-                        fill={corDe(n)} fillOpacity={0.85}
-                        stroke={sel === n.id ? '#e8eceb' : 'none'} strokeWidth={1.5}
+                        fill={corDe(n)} fillOpacity={0.72}
+                        stroke={sel === n.id ? 'var(--caso)' : corDe(n)}
+                        strokeWidth={sel === n.id ? 1.5 : 1}
                       />
                     ) : (
                       <circle
                         cx={n.x ?? 0} cy={n.y ?? 0} r={r}
                         fill={corDe(n)}
-                        fillOpacity={n.tipo === 'precedente' ? (n.aprovado ? 0.85 : 0.5) : 0.9}
-                        stroke={sel === n.id ? '#e8eceb' : 'none'} strokeWidth={1.5}
+                        fillOpacity={n.tipo === 'precedente' ? (n.aprovado ? 0.72 : 0.34) : 0.82}
+                        stroke={sel === n.id ? 'var(--caso)' : corDe(n)}
+                        strokeWidth={sel === n.id ? 1.5 : 1}
                       />
                     )}
                     {rotulo && (

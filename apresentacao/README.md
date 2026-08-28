@@ -1,6 +1,6 @@
 # apresentacao/
 
-A apresentação comercial do Segundo Cérebro — a página que se abre na frente de
+A apresentação comercial do **DrSec** — a página que se abre na frente de
 alguém. Fica em **`/apresentacao`**, protegida por senha própria.
 
 É a única rota do sistema que **não exige conta**: o link vai para quem está sendo
@@ -89,7 +89,7 @@ fatores do rerank, pontos, peso de confiança, nota normalizada, peso final e
 fração do total; mais a agregação (k-NN, floresta, conjunto, calibrado, intervalo)
 e o dossiê do portão de confiança.
 
-A seção **04 · A CONTA** reencena esses números passo a passo. Ela não recalcula
+A seção **09 · DE ONDE VEM O NÚMERO** reencena esses números passo a passo. Ela não recalcula
 nada: refazer a aritmética em TypeScript para poder animá-la seria manter duas
 contas do mesmo prognóstico, e no dia em que divergissem a tela mentiria sem
 avisar. O acumulador que sobe na última coluna é soma parcial dos pesos
@@ -98,8 +98,8 @@ fechar, é porque a tela deixou de ser a conta do pipeline.
 
 ### As duas seções de movimento
 
-**02 · O CÉREBRO** é o mapa parado, com força d3, para ser explorado com o mouse.
-**03 · A ÁRVORE, RODANDO** é o mesmo cérebro acontecendo: layout à mão (a ordem é
+**05 · O CÉREBRO DO RELATOR** é o mapa parado, com força d3, para ser explorado com
+o mouse. **06 · O CÉREBRO ACONTECENDO** é o mesmo cérebro em execução: layout à mão (a ordem é
 a informação, e uma simulação que a embaralha a cada carregamento tiraria
 justamente o que se quer mostrar), um nó de cada vez, na ordem de execução, com os
 40 lidos acendendo um por um até sobrarem 8.
@@ -109,13 +109,31 @@ animação mostra é a ordem, não a existência: se as folhas fossem aparecendo
 nada, o tamanho do funil 40 → 8 só seria legível no fim, que é justamente quando
 ninguém está mais contando.
 
+### O as-is e o to-be
+
+Quatro desenhos da página não saem de `dados/`: **02 · O GABINETE, HOJE**, **03 ·
+O EPROC, HOJE**, **07 · ONDE O DRSEC ENTRA** e **12 · DENTRO DO EPROC**. Eles são
+editoriais e vivem como arrays de `NoDiag` no topo de `Apresentacao.tsx`.
+
+Por isso **não carregam número nenhum**: o campo `valor` deles é sempre uma
+palavra ("de memória", "o mérito", "sem rastro"), nunca uma estatística de
+gabinete. Numa página cujo contrato é não ter número digitado à mão, inventar um
+tempo médio de tramitação aqui derrubaria, por contágio, os números que foram
+medidos de verdade.
+
+`GABINETE` (02) e `COM_DRSEC` (07) são **um par**: mesmo primeiro nó, mesmo
+último nó, mesma quantidade de níveis. A apresentação não tem tabela comparativa
+de propósito — a comparação é a semelhança entre os dois desenhos, e o leitor a
+faz sozinho. Mexer em um sem mexer no outro desfaz o argumento sem quebrar nada
+nem dar erro em lugar nenhum.
+
 ### As leis
 
 `sinais.leis()` extrai o dispositivo legal do inteiro teor, e `indexar` o guarda em
 `decisao.leis_json` — 90% do acervo tem pelo menos um. Isso serve a três lugares:
 a lista dos artigos que os precedentes recuperados invocam entra no prompt do
 redator (`grafo._bloco_procedencia`), a lei vira **nó próprio** no grafo (losango,
-separado do quadrado da âncora — são autoridades diferentes) e a seção 01 mostra em
+separado do quadrado da âncora — são autoridades diferentes) e a seção 08 mostra em
 que dispositivos a minuta se apoiou, ao lado do que o acórdão real citou.
 
 O checkpoint da demo é **anterior** à coluna `leis_json`, então `--congelar` busca
@@ -172,9 +190,9 @@ uma demonstração que o escondesse seria uma vitrine montada.
 | rota e senha | `api/apresentacao.py` (self-check: `python -m api.apresentacao`) |
 | tabela de sessão | `api/esquema.py` → `sessao_apresentacao` |
 | a página | `frontend/src/paginas/Apresentacao.tsx` |
-| o grafo (seção 02) | `frontend/src/comp/GrafoCerebro.tsx` |
-| a árvore rodando (03) | `frontend/src/comp/ArvoreAoVivo.tsx` |
-| a conta do prognóstico (04) | `frontend/src/comp/ContaAoVivo.tsx` |
+| o grafo (seção 05) | `frontend/src/comp/GrafoCerebro.tsx` |
+| a árvore rodando (06) | `frontend/src/comp/ArvoreAoVivo.tsx` |
+| a conta do prognóstico (09) | `frontend/src/comp/ContaAoVivo.tsx` |
 | o confronto | `frontend/src/comp/Confronto.tsx` |
 | o visual | `frontend/src/estilo/apresentacao.css` (mundo próprio, sob `.apr`) |
 

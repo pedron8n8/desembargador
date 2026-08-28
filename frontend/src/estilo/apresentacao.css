@@ -5,24 +5,47 @@
  * na frente de alguém, e precisa de peso. Tudo abaixo mora sob `.apr`, então
  * nada vaza para o resto do app.
  *
- * Paleta: papel de processo virado do avesso — grafite frio com um verde-tribunal
- * que só aparece onde há afirmação verificada. Nada de gradiente roxo.
+ * Paleta: papel claro de verdade — pastel quente, tinta grafite e três acentos
+ * dessaturados (sálvia, areia, névoa) que só aparecem onde há afirmação
+ * verificada. Nada de gradiente roxo, e nada de neon: a apresentação é lida em
+ * projetor e em tela de sala de reunião, onde saturação alta some.
+ *
+ * A COR MORA SÓ AQUI. GrafoCerebro, ArvoreAoVivo, ArvoreFloresta e Diagrama
+ * pintam SVG com `var(--…)` destas variáveis — antes havia quatro cópias dos
+ * mesmos hexes em TypeScript, e cada troca de paleta deixava três delas para
+ * trás. Se um nó aparecer da cor errada, o bug está neste bloco, não lá.
  */
 
 .apr {
-  --tinta: #e8eceb;
-  --tinta-2: #a5b3b2;
-  --tinta-3: #6d7d7d;
-  --fundo: #080c0d;
-  --painel: #0e1416;
-  --painel-2: #131b1d;
-  --linha: #1e2a2c;
-  --linha-forte: #2c3d40;
-  --verde: #4ec5b3;
-  --verde-fundo: #0f2a28;
-  --ambar: #d9a441;
-  --ambar-fundo: #2a2114;
-  --vermelho: #e2705f;
+  /* papel e tinta */
+  --fundo: #fbfaf6;
+  --painel: #fff;
+  --painel-2: #f4f1ea;
+  --linha: #e7e2d8;
+  --linha-forte: #d3ccbe;
+  --tinta: #23282a;
+  --tinta-2: #5c6461;
+  --tinta-3: #8d938e;
+
+  /* os acentos, todos dessaturados */
+  --verde: #5f9c8a;          /* sálvia: a afirmação verificada */
+  --verde-2: #86b8a4;        /* sálvia clara: parcialmente provido */
+  --verde-fundo: #e8f1ed;
+  --ambar: #bd934f;          /* areia: o estimador que grita */
+  --ambar-fundo: #f6efe1;
+  --azul: #7e9dbe;           /* névoa: âncora — ardósia, nunca violeta */
+  --lei: #b08d57;            /* sépia: a lei é outra autoridade que a âncora */
+  --vermelho: #c1705f;       /* terracota: a ressalva, não o erro */
+
+  /* cor de dado, não de marca */
+  --caso: #3a4144;           /* o nó do caso: a tinta mais escura da página */
+  --reprovado: #bdb9ad;      /* lido e reprovado: presente, legível, fora */
+  --aresta: #cfc8ba;
+  --aresta-ancora: #b3c3d3;
+  --aresta-texto: #ddd6c8;
+  --aresta-acesa: #7e9dbe;
+  --aresta-texto-acesa: #86b8a4;
+  --folha: #e2ddd1;
 
   --serif: 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif;
   --sans: ui-sans-serif, -apple-system, 'Segoe UI', Roboto, sans-serif;
@@ -55,8 +78,8 @@
   inset: 0;
   pointer-events: none;
   background:
-    radial-gradient(60rem 40rem at 15% -10%, rgb(78 197 179 / 9%), transparent 60%),
-    radial-gradient(50rem 35rem at 90% 10%, rgb(78 197 179 / 5%), transparent 55%),
+    radial-gradient(60rem 40rem at 15% -10%, rgb(95 156 138 / 7%), transparent 60%),
+    radial-gradient(50rem 35rem at 90% 10%, rgb(126 157 190 / 6%), transparent 55%),
     linear-gradient(var(--linha) 1px, transparent 1px) 0 0 / 100% 4.5rem,
     linear-gradient(90deg, var(--linha) 1px, transparent 1px) 0 0 / 4.5rem 100%;
   opacity: 0.5;
@@ -116,7 +139,7 @@
 .apr-btn {
   padding: 0.75rem 1.1rem;
   background: var(--verde);
-  color: #04100f;
+  color: var(--fundo);
   border: 0;
   font-family: var(--sans);
   font-size: 0.9375rem;
@@ -351,7 +374,7 @@
 .apr-no { cursor: pointer; }
 .apr-no text {
   font-family: var(--sans);
-  font-size: 9px;
+  font-size: 12px;
   fill: var(--tinta-2);
   pointer-events: none;
   user-select: none;
@@ -362,11 +385,11 @@
 
 /* três naturezas de ligação, três traços. O tracejado curto é semelhança de
  * ementa: é PISTA, e traço cheio leria como afirmação. */
-.apr-aresta.ancora { stroke: #46606d; }
-.apr-aresta.texto { stroke: #35494c; stroke-dasharray: 2 7; }
+.apr-aresta.ancora { stroke: var(--aresta-ancora); }
+.apr-aresta.texto { stroke: var(--aresta-texto); stroke-dasharray: 2 7; }
 .apr-aresta.acesa { stroke: var(--verde); stroke-width: 1.6; }
-.apr-aresta.ancora.acesa { stroke: #9dbcd0; }
-.apr-aresta.texto.acesa { stroke: #8ec9a6; stroke-width: 1.2; }
+.apr-aresta.ancora.acesa { stroke: var(--aresta-acesa); }
+.apr-aresta.texto.acesa { stroke: var(--aresta-texto-acesa); stroke-width: 1.2; }
 
 .apr-painel {
   background: var(--painel-2);
@@ -467,7 +490,7 @@
   border-bottom: 1px solid var(--linha-forte);
 }
 
-.apr-linha-conta { opacity: 0.28; transition: opacity 280ms ease; }
+.apr-linha-conta { opacity: 0.42; transition: opacity 280ms ease; }
 .apr-linha-conta.acesa { opacity: 1; }
 .apr-linha-conta.acesa td.destaque { color: var(--verde); }
 
@@ -715,12 +738,6 @@
   to { opacity: 1; transform: none; }
 }
 
-/* o nó nasce do próprio centro: escala a partir do ponto onde ele já está */
-@keyframes apr-nasce {
-  from { opacity: 0; transform: scale(0.2); }
-  to { opacity: 1; transform: none; }
-}
-
 /* deriva orbital, dois eixos com sinais opostos — e o atraso por índice é o que
  * impede os 48 documentos de balançarem em bloco e virarem gelatina */
 @keyframes apr-deriva {
@@ -753,9 +770,9 @@
  * vez, na ordem em que o sistema executa. Reusa .apr-tela e .apr-aresta do
  * grafo — é o mesmo vocabulário visual de propósito, porque é o mesmo cérebro.
  *
- * O que NÃO reusa é .apr-grafo, e isso é deliberado: aquele seletor carrega o
- * nascimento escalonado (.apr-grafo.visivel .apr-no) e a deriva orbital, e as
- * duas brigariam com o acender passo a passo, que aqui é a informação. */
+ * O que NÃO reusa é .apr-grafo, e isso é deliberado: aquele seletor carrega a
+ * deriva orbital, que brigaria com o acender passo a passo — que aqui é a
+ * informação, e não o movimento. */
 
 .apr-arvore {
   display: grid;
@@ -776,16 +793,24 @@
  * disputa GPU com o próprio conteúdo perde as duas coisas. */
 .apr-tela-arvore::before { content: none; }
 
-/* Apagado é 0.13, não invisível: a árvore inteira tem de estar na tela desde o
+/* segurar e arrastar vale nas árvores como vale no grafo */
+.apr-tela-arvore { cursor: grab; }
+.apr-tela-arvore.arrastando { cursor: grabbing; }
+.apr-tela-arvore.arrastando svg { user-select: none; }
+
+/* Apagado é 0.34, não invisível: a árvore inteira tem de estar na tela desde o
  * primeiro quadro. O que a animação mostra é a ORDEM, e não a existência dos
  * nós — se eles fossem aparecendo do nada, o tamanho do funil (40 → 8) só seria
- * legível no fim, que é justamente quando ninguém está mais contando. */
-.apr-no-arv { opacity: 0.13; transition: opacity 260ms ease; }
+ * legível no fim, que é justamente quando ninguém está mais contando.
+ *
+ * Era 0.13 no fundo escuro. Em papel claro, 13% de tinta é papel: o apagado
+ * sumia e com ele o funil inteiro, que é o argumento da cena. */
+.apr-no-arv { opacity: 0.34; transition: opacity 260ms ease; }
 .apr-no-arv.acesa { opacity: 1; }
 
 .apr-arv-rot {
   font-family: var(--sans);
-  font-size: 12px;
+  font-size: 14px;
   fill: var(--tinta-2);
   user-select: none;
 }
@@ -821,8 +846,8 @@
 
 /* as 40 ligações de leitura são muitas: finas e apagadas, ou viram um leque
  * opaco que esconde as próprias folhas */
-.apr-aresta.folha { stroke: #243436; }
-.apr-aresta.folha.acesa { stroke: #46606d; stroke-width: 1; animation: none; }
+.apr-aresta.folha { stroke: var(--folha); }
+.apr-aresta.folha.acesa { stroke: var(--aresta-ancora); stroke-width: 1; animation: none; }
 
 .apr-narracao {
   background: var(--painel);
@@ -880,16 +905,13 @@
   .apr-cartao,
   .apr-tabela,
   .apr-grafo,
-  .apr-dica,
-  .apr-descartados {
+  .apr-dica {
     animation: apr-aparece linear both;
     animation-timeline: view();
     animation-range: entry 4% cover 30%;
   }
 
   /* os KPIs e os cartões entram em cascata, não em bloco */
-.apr-descartados .apr-tabela, .apr-descartados .apr-dica { animation: none; }
-
   .apr-numero:nth-child(2), .apr-cartao:nth-child(2) { animation-range: entry 4% cover 34%; }
   .apr-numero:nth-child(3), .apr-cartao:nth-child(3) { animation-range: entry 4% cover 38%; }
   .apr-numero:nth-child(4), .apr-cartao:nth-child(4) { animation-range: entry 4% cover 42%; }
@@ -908,8 +930,7 @@
 .apr.sem-timeline .apr-cartao,
 .apr.sem-timeline .apr-tabela,
 .apr.sem-timeline .apr-grafo,
-.apr.sem-timeline .apr-dica,
-.apr.sem-timeline .apr-descartados {
+.apr.sem-timeline .apr-dica {
   opacity: 0;
   transform: translateY(2.25rem);
   transition: opacity 700ms ease, transform 700ms cubic-bezier(0.2, 0.8, 0.2, 1);
@@ -917,8 +938,6 @@
 
 .apr.sem-timeline .visivel { opacity: 1; transform: none; }
 
-.apr.sem-timeline .apr-descartados .apr-tabela,
-.apr.sem-timeline .apr-descartados .apr-dica { opacity: 1; transform: none; transition: none; }
 
 /* -------------------------------------------------- cortes de cena */
 
@@ -937,17 +956,19 @@
   z-index: -1;
   pointer-events: none;
   background:
-    linear-gradient(180deg, rgb(78 197 179 / 7%) 0%, rgb(78 197 179 / 2%) 26%, transparent 62%);
+    linear-gradient(180deg, rgb(95 156 138 / 9%) 0%, rgb(95 156 138 / 3%) 26%, transparent 62%);
 }
 
 .apr-secao:nth-of-type(3n + 1) .apr-cena { clip-path: url("#apr-corte-diagonal"); }
 .apr-secao:nth-of-type(3n + 2) .apr-cena { clip-path: url("#apr-corte-onda"); }
 .apr-secao:nth-of-type(3n) .apr-cena { clip-path: url("#apr-corte-zigue"); }
 
-/* a seção do cérebro é a mais fria da página: o mapa precisa do escuro */
-.apr-secao:nth-of-type(2) .apr-cena {
+/* a seção do cérebro é a mais fria da página: o mapa precisa do contraste.
+   Por CLASSE, e não por nth-of-type: a ordem das seções mudou uma vez e a cena
+   fria foi parar na seção errada sem dar erro nenhum. */
+.apr-secao-fria .apr-cena {
   background:
-    linear-gradient(180deg, rgb(127 155 179 / 8%) 0%, rgb(78 197 179 / 3%) 30%, transparent 66%);
+    linear-gradient(180deg, rgb(126 157 190 / 11%) 0%, rgb(95 156 138 / 4%) 30%, transparent 66%);
 }
 
 /* -------------------------------------------------- o grafo, com vida */
@@ -958,10 +979,10 @@
   inset: -12%;
   pointer-events: none;
   background:
-    radial-gradient(30rem 22rem at 46% 50%, rgb(78 197 179 / 22%), transparent 68%),
-    radial-gradient(20rem 15rem at 74% 30%, rgb(217 164 65 / 13%), transparent 70%),
-    radial-gradient(24rem 18rem at 22% 72%, rgb(127 155 179 / 12%), transparent 70%);
-  filter: blur(44px);
+    radial-gradient(30rem 22rem at 46% 50%, rgb(95 156 138 / 13%), transparent 68%),
+    radial-gradient(20rem 15rem at 74% 30%, rgb(189 147 79 / 9%), transparent 70%),
+    radial-gradient(24rem 18rem at 22% 72%, rgb(126 157 190 / 10%), transparent 70%);
+  filter: blur(52px);
   animation: apr-nebulosa 38s ease-in-out infinite alternate;
 }
 
@@ -982,19 +1003,19 @@
 
 .apr-no .apr-halo { pointer-events: none; }
 
-/* Nascimento escalonado, disparado quando o mapa entra em vista.
+/* O MAPA NÃO TEM ANIMAÇÃO DE ENTRADA, e a ausência é a correção de um bug.
  *
- * `backwards`, nunca `both`: com `both` a animação SEGURA opacity: 1 depois de
- * terminar, e aí ela ganha do atributo `opacity` que o React escreve para
- * apagar a vizinhança — o mapa nasce bonito e nunca mais consegue focar nada.
- * Com `backwards` o nó fica no estado inicial durante o atraso, anima, e depois
- * devolve a propriedade a quem é dono dela. */
-.apr-grafo.visivel .apr-no {
-  transform-box: fill-box;
-  transform-origin: center;
-  animation: apr-nasce 620ms cubic-bezier(0.2, 0.9, 0.3, 1) backwards;
-  animation-delay: calc(var(--i, 0) * 14ms);
-}
+ * Havia uma: os nós nasciam escalonados por `--i`. Ficava travada. A simulação
+ * de força re-renderiza este subtree a cada quadro enquanto esfria, e uma
+ * animação CSS que recomeça a cada quadro nunca sai dos primeiros 80ms — o
+ * mapa inteiro ficava preso a meio caminho, encolhido e translúcido. Mover a
+ * animação para o grupo da câmera só mudou quem travava, porque a câmera
+ * também é re-renderizada.
+ *
+ * A correção é não ter animação nenhuma aqui: a VARREDURA já é o nascimento do
+ * mapa. Ela acende etapa por etapa, na ordem de execução, e é informação — não
+ * enfeite de entrada. Duas entradas empilhadas eram uma a mais, e a que
+ * sobrava era justamente a que quebrava. */
 
 .apr-aresta.acesa {
   stroke-dasharray: 14 10;
@@ -1010,28 +1031,6 @@
 .apr-aba { animation: apr-painel-entra 420ms ease both; }
 
 .apr::before { animation: apr-malha 40s ease-in-out infinite alternate; }
-
-/* -------------------------------------------------- os descartados */
-
-.apr-descartados { margin-top: 1.5rem; }
-
-.apr-descartados > summary {
-  font-family: var(--sans);
-  font-size: 0.875rem;
-  color: var(--tinta-2);
-  cursor: pointer;
-  padding: 0.6rem 0.9rem;
-  border: 1px solid var(--linha-forte);
-  background: var(--painel);
-  list-style: none;
-}
-
-.apr-descartados > summary::-webkit-details-marker { display: none; }
-.apr-descartados > summary::before { content: "▸ "; color: var(--verde); }
-.apr-descartados[open] > summary::before { content: "▾ "; }
-.apr-descartados > summary:hover { color: var(--tinta); border-color: var(--tinta-3); }
-.apr-descartados[open] > summary { border-bottom: 0; }
-.apr-descartados .apr-tabela { border-top: 0; }
 
 /* -------------------------------------------------- arrastar o mapa */
 
@@ -1054,11 +1053,6 @@
 
 @keyframes apr-linha-entra {
   from { opacity: 0; transform: translateX(-0.9rem); }
-  to { opacity: 1; transform: none; }
-}
-
-@keyframes apr-abre {
-  from { opacity: 0; transform: translateY(-0.6rem); }
   to { opacity: 1; transform: none; }
 }
 
@@ -1103,24 +1097,12 @@
     animation-range: entry 2% cover 26%;
   }
 
-  /* menos dentro do <details>, que nasce fechado: sem caixa não há linha do
-   * tempo, e `both` deixaria a linha em opacity 0 justamente ao abrir */
-  .apr-descartados tbody tr { animation: none; }
-
   /* e menos na tabela da conta, onde a opacidade da linha é DADO: ela diz se
    * aquele precedente já entrou na soma. Animação ganha de declaração normal na
    * cascata, então sem esta linha o `apr-linha-entra` reescrevia o estado aceso
    * conforme a rolagem e a conta acendia sozinha, fora de ordem. */
   .apr-conta tbody tr { animation: none; }
 }
-
-/* o conteúdo dos descartados desliza quando o <details> abre */
-.apr-descartados[open] > .apr-tabela,
-.apr-descartados[open] > .apr-dica {
-  animation: apr-abre 380ms cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
-}
-
-.apr-descartados[open] > .apr-dica { animation-delay: 90ms; }
 
 /* estados de ponteiro: 1px de deslocamento, que é o quanto um documento
  * impresso pode se mexer sem virar aplicativo */
@@ -1161,8 +1143,7 @@
   .apr.sem-timeline .apr-cartao,
   .apr.sem-timeline .apr-tabela,
   .apr.sem-timeline .apr-grafo,
-  .apr.sem-timeline .apr-dica,
-  .apr.sem-timeline .apr-descartados {
+  .apr.sem-timeline .apr-dica {
     opacity: 1;
     transform: none;
   }
@@ -1274,54 +1255,109 @@
 .apr-diagrama {
   background: var(--painel);
   border: 1px solid var(--linha-forte);
-  padding: 0.8rem;
-  margin-bottom: 1.5rem;
+  margin: 0 0 1.5rem;
+  position: relative;
 }
 
-.apr-diagrama svg { display: block; width: 100%; height: auto; }
+/* O quadro: altura fixa, desenho correndo por dentro. `touch-action: none`
+   porque o arrasto é livre nos dois eixos — o mesmo que `.apr-tela svg` faz no
+   grafo, e pelo mesmo motivo: com o gesto dividido, arrastar o desenho e rolar
+   a página disputam o mesmo toque e a página vence sempre. O quadro é bem mais
+   baixo que a seção, então sobra página de sobra para rolar em volta dele. */
+.apr-diag-quadro {
+  position: relative;
+  overflow: hidden;
+  cursor: grab;
+  touch-action: none;
+}
 
-.apr-diag-no { opacity: 0.13; transition: opacity 300ms ease; }
+.apr-diag-quadro.arrastando { cursor: grabbing; }
+
+.apr-diag-quadro svg { display: block; width: 100%; height: auto; }
+
+/* foco visível: o quadro é operável por teclado (setas, PageUp/Down, Home/End)
+   e um alvo de teclado sem anel de foco é um alvo invisível */
+.apr-diag-quadro svg:focus-visible {
+  outline: 2px solid var(--verde);
+  outline-offset: -2px;
+}
+
+.apr-diag-legenda {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1rem;
+  justify-content: space-between;
+  align-items: baseline;
+  font-family: var(--sans);
+  font-size: 0.75rem;
+  color: var(--tinta-3);
+  border-top: 1px solid var(--linha);
+  padding: 0.55rem 0.8rem;
+}
+
+.apr-diag-legenda b { font-weight: 500; color: var(--verde); }
+
+/* O apagado é MAIS FORTE aqui do que era no fundo escuro (0.32 contra 0.13):
+   13% de tinta sobre papel é papel. E o nó apagado precisa ser legível — a
+   forma inteira do fluxo está na tela desde o primeiro quadro de propósito, e
+   é dela que se lê o tamanho do caminho antes de a animação chegar ao fim. */
+.apr-diag-no { opacity: 0.34; transition: opacity 300ms ease; }
 .apr-diag-no.acesa { opacity: 1; }
 
-.apr-diag-no rect { fill: var(--painel-2); stroke-width: 1; }
+/* branco sobre o papel quente, e a cor fica no traço: em fundo claro é o
+   contorno que separa a caixa do fundo, não o preenchimento. */
+.apr-diag-no rect { fill: var(--painel); stroke-width: 1.4; }
+.apr-diag-no.acesa rect { stroke-width: 2; }
 
 .apr-diag-rot {
+  font-family: var(--sans);
+  font-size: 17px;
+  fill: var(--tinta);
+  user-select: none;
+}
+
+.apr-diag-valor {
+  font-family: var(--mono);
+  font-size: 31px;
+  user-select: none;
+}
+
+.apr-diag-nota {
   font-family: var(--sans);
   font-size: 14px;
   fill: var(--tinta-2);
   user-select: none;
 }
 
-.apr-diag-valor {
-  font-family: var(--mono);
-  font-size: 27px;
-  user-select: none;
-}
-
-.apr-diag-nota {
-  font-family: var(--sans);
-  font-size: 12px;
-  fill: var(--tinta-3);
-  user-select: none;
-}
-
-.apr-diag-seta { opacity: 0.2; transition: opacity 300ms ease; }
+.apr-diag-seta { opacity: 0.42; transition: opacity 300ms ease; }
 .apr-diag-seta.acesa { opacity: 1; }
 
 .apr-diag-seta line {
-  stroke: var(--linha-forte);
-  color: var(--linha-forte);
-  stroke-width: 1.3;
+  stroke: var(--tinta-3);
+  color: var(--tinta-3);
+  stroke-width: 1.5;
 }
 
 .apr-diag-seta.acesa line { stroke: var(--verde); color: var(--verde); }
 
 .apr-diag-seta text {
   font-family: var(--sans);
-  font-size: 13px;
-  fill: var(--tinta-3);
+  font-size: 14px;
+  fill: var(--tinta-2);
   user-select: none;
 }
+
+/* em tela cheia o quadro deixa de ser quadro: cabe tudo, e a régua sai */
+.apr-diagrama:fullscreen {
+  background: var(--fundo);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 1.5rem;
+}
+
+.apr-diagrama:fullscreen .apr-diag-quadro { cursor: default; }
+.apr-diagrama:fullscreen .apr-diag-quadro svg { max-height: 88vh; }
 
 /* ---------------------------------------------------------- o precedente
  *

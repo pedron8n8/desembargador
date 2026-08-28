@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 
-import { TelaCheia } from './TelaCheia'
+import { useMoldura } from './moldura'
+import { Ferramenta, TelaCheia } from './TelaCheia'
 
 /* A árvore de decisão de verdade.
  *
@@ -50,9 +51,9 @@ const Y0 = 74
 const PASSO = 150
 
 const COR: Record<string, string> = {
-  provido: '#4ec5b3',
-  'parcialmente provido': '#8ec9a6',
-  desprovido: '#6d7d7d',
+  provido: 'var(--verde)',
+  'parcialmente provido': 'var(--verde-2)',
+  desprovido: 'var(--tinta-3)',
 }
 
 const BATIDA = 1500
@@ -75,6 +76,8 @@ function quebra(t: string) {
 export function ArvoreFloresta({ a }: { a: ArvoreRF }) {
   const [n, defN] = useState(0)
   const ref = useRef<HTMLDivElement>(null)
+  // segurar e arrastar em qualquer direção, Ctrl+roda para o zoom
+  const { svgRef, transform, arrastando, pegar, recentrar, aproximar } = useMoldura(W)
   const total = a.caminho.length
 
   useEffect(() => {
@@ -168,9 +171,25 @@ export function ArvoreFloresta({ a }: { a: ArvoreRF }) {
 
   return (
     <div className="apr-arvore apr-arvore-rf" ref={ref}>
-      <div className="apr-tela apr-tela-arvore">
-        <TelaCheia alvo={ref} />
-        <svg viewBox={`0 0 ${W} ${H}`} role="img"
+      <div className={`apr-tela apr-tela-arvore${arrastando ? ' arrastando' : ''}`}>
+        <TelaCheia alvo={ref}>
+          <Ferramenta onClick={() => aproximar(1.25)} titulo="aproximar (Ctrl + roda)">
+            <svg viewBox="0 0 16 16" aria-hidden="true">
+              <circle cx="7" cy="7" r="4.5" /><path d="M10.4 10.4 14 14M7 5v4M5 7h4" />
+            </svg>
+          </Ferramenta>
+          <Ferramenta onClick={() => aproximar(1 / 1.25)} titulo="afastar (Ctrl + roda)">
+            <svg viewBox="0 0 16 16" aria-hidden="true">
+              <circle cx="7" cy="7" r="4.5" /><path d="M10.4 10.4 14 14M5 7h4" />
+            </svg>
+          </Ferramenta>
+          <Ferramenta onClick={recentrar} titulo="devolver a vista inteira">
+            <svg viewBox="0 0 16 16" aria-hidden="true">
+              <path d="M13 7a5 5 0 1 0-1.4 3.5M13 3.5V7h-3.5" />
+            </svg>
+          </Ferramenta>
+        </TelaCheia>
+        <svg ref={svgRef} onPointerDown={pegar} viewBox={`0 0 ${W} ${H}`} role="img"
           aria-label="Uma árvore de decisão real da floresta, com os cortes que ela usa">
           <defs>
             <marker id="apr-rf-seta" viewBox="0 0 8 8" refX="7" refY="4"
@@ -178,6 +197,8 @@ export function ArvoreFloresta({ a }: { a: ArvoreRF }) {
               <path d="M0 1 L7 4 L0 7 z" fill="currentcolor" />
             </marker>
           </defs>
+
+          <g transform={transform}>
 
           {/* --- os galhos, com a seta e o sim/não que fazem disto uma decisão */}
           {a.nos.map((no) => ([no.esq, no.dir] as const).map((filho, lado) => {
@@ -207,7 +228,7 @@ export function ArvoreFloresta({ a }: { a: ArvoreRF }) {
             const on = acesos.has(no.id)
             const aqui = passo?.id === no.id && n > 0
             const ponta = no.folha || no.cortado
-            const cor = ponta ? COR[no.classe] ?? COR.desprovido : '#4ec5b3'
+            const cor = ponta ? COR[no.classe] ?? COR.desprovido : 'var(--verde)'
             return (
               <g key={no.id} className={`apr-no-arv${on ? ' acesa' : ''}`}>
                 {aqui && <circle cx={x} cy={y} r={19} className="apr-folha-foco" />}
@@ -257,6 +278,7 @@ export function ArvoreFloresta({ a }: { a: ArvoreRF }) {
               </g>
             )
           })}
+          </g>
         </svg>
       </div>
 

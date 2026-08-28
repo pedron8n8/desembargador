@@ -21,9 +21,9 @@ sys.path.insert(0, RAIZ)
 AQUI = os.path.dirname(os.path.abspath(__file__))
 DADOS = os.path.join(AQUI, "dados")
 BUILD = os.path.join(RAIZ, "frontend", "dist-artefato")
-SAIDA = os.path.join(BUILD, "cerebro-do-relator.html")
+SAIDA = os.path.join(BUILD, "drsec.html")
 
-TITULO = "O Cérebro do Relator"
+TITULO = "DrSec — o cérebro do relator"
 
 # O arquivo e' um HTML solto: quem o abre nao tem sessao para encerrar, e um
 # botao que nao faz nada e' pior que botao nenhum.

@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 
 import type { DadosGrafo, NoGrafo } from './GrafoCerebro'
-import { TelaCheia } from './TelaCheia'
+import { useMoldura } from './moldura'
+import { Ferramenta, TelaCheia } from './TelaCheia'
 
 /* A árvore do cérebro, rodando.
  *
@@ -79,14 +80,14 @@ const ORDEM = ['caso', 'triagem', 'busca', 'bm80', 'rerank', 'c40', 'triar',
   '@folhas', 'knn', 'floresta', 'prognostico', 'redigir', 'revisar', 'juiz']
 
 const COR: Record<string, string> = {
-  caso: '#e8eceb',
-  etapa: '#4ec5b3',
-  volume: '#6d7d7d',
-  estimador: '#d9a441',
-  provido: '#4ec5b3',
-  'parcialmente provido': '#8ec9a6',
-  desprovido: '#6d7d7d',
-  reprovado: '#3f5052',
+  caso: 'var(--caso)',
+  etapa: 'var(--verde)',
+  volume: 'var(--tinta-3)',
+  estimador: 'var(--ambar)',
+  provido: 'var(--verde)',
+  'parcialmente provido': 'var(--verde-2)',
+  desprovido: 'var(--tinta-3)',
+  reprovado: 'var(--reprovado)',
 }
 
 const RAIO: Record<string, number> = { caso: 15, etapa: 11, estimador: 10, volume: 8 }
@@ -109,6 +110,8 @@ export function ArvoreAoVivo({ g }: { g: DadosGrafo }) {
   const total = ORDEM.length - 1 + folhas.length
   const [n, defN] = useState(0)
   const ref = useRef<HTMLDivElement>(null)
+  // segurar e arrastar em qualquer direção, Ctrl+roda para o zoom
+  const { svgRef, transform, arrastando, pegar, recentrar, aproximar } = useMoldura(W)
 
   useEffect(() => {
     const el = ref.current
@@ -250,14 +253,30 @@ export function ArvoreAoVivo({ g }: { g: DadosGrafo }) {
 
   return (
     <div className="apr-arvore" ref={ref}>
-      <div className="apr-tela apr-tela-arvore">
-        <TelaCheia alvo={ref} />
-        <svg viewBox={`0 0 ${W} ${H}`} role="img"
+      <div className={`apr-tela apr-tela-arvore${arrastando ? ' arrastando' : ''}`}>
+        <TelaCheia alvo={ref}>
+          <Ferramenta onClick={() => aproximar(1.25)} titulo="aproximar (Ctrl + roda)">
+            <svg viewBox="0 0 16 16" aria-hidden="true">
+              <circle cx="7" cy="7" r="4.5" /><path d="M10.4 10.4 14 14M7 5v4M5 7h4" />
+            </svg>
+          </Ferramenta>
+          <Ferramenta onClick={() => aproximar(1 / 1.25)} titulo="afastar (Ctrl + roda)">
+            <svg viewBox="0 0 16 16" aria-hidden="true">
+              <circle cx="7" cy="7" r="4.5" /><path d="M10.4 10.4 14 14M5 7h4" />
+            </svg>
+          </Ferramenta>
+          <Ferramenta onClick={recentrar} titulo="devolver a vista inteira">
+            <svg viewBox="0 0 16 16" aria-hidden="true">
+              <path d="M13 7a5 5 0 1 0-1.4 3.5M13 3.5V7h-3.5" />
+            </svg>
+          </Ferramenta>
+        </TelaCheia>
+        <svg ref={svgRef} onPointerDown={pegar} viewBox={`0 0 ${W} ${H}`} role="img"
           aria-label="A árvore do cérebro, etapa por etapa">
           <defs>
             {['caso', 'etapa', 'estimador', 'provido', 'desprovido'].map((k) => (
               <radialGradient key={k} id={`apr-arv-halo-${k.replace(/\s+/g, '-')}`}>
-                <stop offset="0%" stopColor={COR[k]} stopOpacity="0.5" />
+                <stop offset="0%" stopColor={COR[k]} stopOpacity="0.26" />
                 <stop offset="100%" stopColor={COR[k]} stopOpacity="0" />
               </radialGradient>
             ))}
@@ -268,6 +287,8 @@ export function ArvoreAoVivo({ g }: { g: DadosGrafo }) {
               <path d="M0 1 L7 4 L0 7 z" fill="currentcolor" />
             </marker>
           </defs>
+
+          <g transform={transform}>
 
           {/* --- o tronco */}
           {TRONCO.slice(0, 6).map((t, i) => {
@@ -349,7 +370,8 @@ export function ArvoreAoVivo({ g }: { g: DadosGrafo }) {
                   <circle cx={x} cy={y} r={13} className="apr-folha-foco" />
                 )}
                 <circle cx={x} cy={y} r={3 + (f.nota ?? 1) * 1.3}
-                  fill={corFolha(f)} fillOpacity={f.aprovado ? 0.95 : 0.7} />
+                  fill={corFolha(f)} fillOpacity={f.aprovado ? 0.8 : 0.42}
+                  stroke={corFolha(f)} strokeWidth={0.8} />
                 {/* rótulo SÓ na folha que está sendo lida agora, e só a nota.
                     O SVG desce a ~0,7 da largura do viewBox nesta coluna, então
                     40 rótulos de 9px sairiam com 6px na tela — ilegíveis, e
@@ -381,7 +403,8 @@ export function ArvoreAoVivo({ g }: { g: DadosGrafo }) {
                     fill={`url(#apr-arv-halo-${halo})`} />
                 )}
                 <circle cx={t.x} cy={t.y} r={r}
-                  fill={COR[no.tipo] ?? COR.volume} fillOpacity={0.9} />
+                  fill={COR[no.tipo] ?? COR.volume} fillOpacity={0.82}
+                  stroke={COR[no.tipo] ?? COR.volume} strokeWidth={1} />
                 <text x={t.direita ? t.x + r + 12 : t.x - r - 12} y={t.y + 5}
                   textAnchor={t.direita ? 'start' : 'end'} className="apr-arv-rot">
                   {no.rotulo}
@@ -389,6 +412,7 @@ export function ArvoreAoVivo({ g }: { g: DadosGrafo }) {
               </g>
             )
           })}
+          </g>
         </svg>
       </div>
 
