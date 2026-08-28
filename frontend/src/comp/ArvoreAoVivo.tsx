@@ -111,7 +111,11 @@ export function ArvoreAoVivo({ g }: { g: DadosGrafo }) {
   const [n, defN] = useState(0)
   const ref = useRef<HTMLDivElement>(null)
   // segurar e arrastar em qualquer direção, Ctrl+roda para o zoom
-  const { svgRef, transform, arrastando, pegar, recentrar, aproximar } = useMoldura(W)
+  const { svgRef, transform, arrastando, pegar, recentrar, aproximar, arrastou } = useMoldura(W)
+  /** o nó que a pessoa abriu — etapa do tronco ou folha. Enquanto houver um,
+   *  o painel mostra ELE: quem clicou perguntou por aquele nó, não pelo passo
+   *  em que a narração está. */
+  const [sel, defSel] = useState<string | null>(null)
 
   useEffect(() => {
     const el = ref.current
@@ -251,6 +255,13 @@ export function ArvoreAoVivo({ g }: { g: DadosGrafo }) {
   const corFolha = (f: NoGrafo) =>
     (f.aprovado ? COR[f.resultado ?? ''] ?? COR.desprovido : COR.reprovado)
 
+  /** O nó aberto. Duas fichas diferentes, porque são duas coisas diferentes:
+   *  etapa do tronco explica O QUE O SISTEMA FAZ ali (reusa o mesmo texto da
+   *  narração, para não existirem duas versões da mesma frase), e folha mostra
+   *  o precedente — nota, motivo escrito pelo próprio modelo, e o link. */
+  const aberto = sel ? (noDe.get(sel) ?? folhas.find((f) => f.id === sel)) : undefined
+  const abertoEhFolha = !!sel && folhas.some((f) => f.id === sel)
+
   return (
     <div className="apr-arvore" ref={ref}>
       <div className={`apr-tela apr-tela-arvore${arrastando ? ' arrastando' : ''}`}>
@@ -365,8 +376,17 @@ export function ArvoreAoVivo({ g }: { g: DadosGrafo }) {
             const x = xFolha(i)
             const y = yFolha(f, i)
             return (
-              <g key={f.id} className={`apr-no-arv${acesa ? ' acesa' : ''}`}>
-                {atual && (
+              <g key={f.id}
+                className={`apr-no-arv clicavel${acesa ? ' acesa' : ''}${sel === f.id ? ' sel' : ''}`}
+                role="button"
+                tabIndex={0}
+                onClick={() => { if (!arrastou()) defSel(sel === f.id ? null : f.id) }}
+                onKeyDown={(e) => {
+                  if (e.key !== 'Enter' && e.key !== ' ') return
+                  e.preventDefault()
+                  defSel(sel === f.id ? null : f.id)
+                }}>
+                {(atual || sel === f.id) && (
                   <circle cx={x} cy={y} r={13} className="apr-folha-foco" />
                 )}
                 <circle cx={x} cy={y} r={3 + (f.nota ?? 1) * 1.3}
@@ -397,7 +417,19 @@ export function ArvoreAoVivo({ g }: { g: DadosGrafo }) {
               : no.tipo === 'estimador' ? 'estimador'
                 : no.tipo === 'etapa' ? 'etapa' : ''
             return (
-              <g key={t.id} className={`apr-no-arv tronco${on ? ' acesa' : ''}`}>
+              <g key={t.id}
+                className={`apr-no-arv tronco clicavel${on ? ' acesa' : ''}${sel === t.id ? ' sel' : ''}`}
+                role="button"
+                tabIndex={0}
+                onClick={() => { if (!arrastou()) defSel(sel === t.id ? null : t.id) }}
+                onKeyDown={(e) => {
+                  if (e.key !== 'Enter' && e.key !== ' ') return
+                  e.preventDefault()
+                  defSel(sel === t.id ? null : t.id)
+                }}>
+                {sel === t.id && (
+                  <circle cx={t.x} cy={t.y} r={r + 9} className="apr-folha-foco" />
+                )}
                 {on && halo && (
                   <circle cx={t.x} cy={t.y} r={r * 3.6}
                     fill={`url(#apr-arv-halo-${halo})`} />
@@ -417,17 +449,68 @@ export function ArvoreAoVivo({ g }: { g: DadosGrafo }) {
       </div>
 
       <div className="apr-narracao">
-        <span className="apr-passo">
-          passo {Math.min(n, total)} de {total}
-        </span>
-        <h3>{atual.titulo}</h3>
-        <p>{atual.texto}</p>
-        <div className="apr-barra" aria-hidden="true">
-          <i style={{ width: `${(100 * Math.min(n, total)) / total}%` }} />
-        </div>
-        <button className="apr-sair" onClick={() => defN(1)}>
-          rodar a árvore de novo
-        </button>
+        {aberto ? (
+          <>
+            <span className="apr-passo">
+              {abertoEhFolha
+                ? (aberto.aprovado ? 'precedente aproveitado' : 'lido e descartado')
+                : 'etapa do sistema'}
+            </span>
+            <h3>{abertoEhFolha ? aberto.rotulo : (PASSOS[sel!]?.titulo ?? aberto.rotulo)}</h3>
+
+            {abertoEhFolha ? (
+              <>
+                <dl className="apr-arv-ficha">
+                  <dt>analogia</dt>
+                  <dd>{aberto.nota}/5 <i>corte {corte}/5</i></dd>
+                  <dt>ano</dt>
+                  <dd>{aberto.ano}</dd>
+                  {aberto.resultado && (<><dt>resultado</dt><dd>{aberto.resultado}</dd></>)}
+                  {aberto.orgao && (<><dt>órgão</dt><dd>{aberto.orgao}</dd></>)}
+                </dl>
+                {/* o motivo é a frase que o modelo de triagem escreveu sobre
+                    ESTE acórdão — é ela que separa "parecido no texto" de
+                    "análogo", e é o que a tela não tinha onde mostrar */}
+                {aberto.detalhe && (
+                  <p className="apr-arv-motivo">
+                    {aberto.detalhe.split('  Reprovado:')[0]}
+                  </p>
+                )}
+                {aberto.conta && <p className="apr-dica">{aberto.conta.replace(' → ', ' = ')}</p>}
+                {aberto.url && (
+                  <p className="apr-dica">
+                    <a href={aberto.url} target="_blank" rel="noreferrer">
+                      abrir o inteiro teor no portal do TJSC
+                    </a>
+                  </p>
+                )}
+              </>
+            ) : (
+              <p>{PASSOS[sel!]?.texto ?? aberto.detalhe ?? ''}</p>
+            )}
+
+            <button className="apr-sair" onClick={() => defSel(null)}>
+              voltar à narração
+            </button>
+          </>
+        ) : (
+          <>
+            <span className="apr-passo">
+              passo {Math.min(n, total)} de {total}
+            </span>
+            <h3>{atual.titulo}</h3>
+            <p>{atual.texto}</p>
+            <div className="apr-barra" aria-hidden="true">
+              <i style={{ width: `${(100 * Math.min(n, total)) / total}%` }} />
+            </div>
+            <p className="apr-rf-convite">
+              Clique em qualquer nó — etapa ou documento — para abrir a ficha dele.
+            </p>
+            <button className="apr-sair" onClick={() => defN(1)}>
+              rodar a árvore de novo
+            </button>
+          </>
+        )}
       </div>
     </div>
   )

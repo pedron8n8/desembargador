@@ -65,6 +65,9 @@ export function ContaAoVivo({ p }: { p: Pesos }) {
   const prec = p.precedentes
   const total = prec.length + 5
   const [n, defN] = useState(0)
+  /** o precedente cuja linha a pessoa abriu. A tabela mostra a conta; a
+   *  ficha mostra de onde cada fator dela saiu. */
+  const [sel, defSel] = useState<string | null>(null)
   const ref = useRef<HTMLDivElement>(null)
 
   // Partida: entrar em vista uma vez. Quem avança é o efeito abaixo, e não uma
@@ -118,6 +121,8 @@ export function ContaAoVivo({ p }: { p: Pesos }) {
   const parcial = merito ? (100 * reforma) / merito : null
   const fim = visiveis === prec.length
 
+  const aberta = sel ? prec.find((x) => x.numero === sel) : undefined
+
   const g = p.agregacao
   const c = p.config.confianca
   const conf = g.confianca ?? {}
@@ -160,7 +165,16 @@ export function ContaAoVivo({ p }: { p: Pesos }) {
                 if (REFORMA.includes(x.resultado)) r += x.peso_final
               }
               return (
-                <tr key={l.numero} className={`apr-linha-conta${acesa ? ' acesa' : ''}`}>
+                <tr key={l.numero}
+                  className={`apr-linha-conta clicavel${acesa ? ' acesa' : ''}`
+                    + `${sel === l.numero ? ' sel' : ''}`}
+                  tabIndex={0}
+                  onClick={() => defSel(sel === l.numero ? null : l.numero)}
+                  onKeyDown={(e) => {
+                    if (e.key !== 'Enter' && e.key !== ' ') return
+                    e.preventDefault()
+                    defSel(sel === l.numero ? null : l.numero)
+                  }}>
                   <td>{l.numero}</td>
                   <td className={REFORMA.includes(l.resultado) ? 'destaque' : undefined}>
                     {l.resultado}
@@ -180,6 +194,33 @@ export function ContaAoVivo({ p }: { p: Pesos }) {
           </tbody>
         </table>
       </div>
+
+      {aberta && (
+        <div className="apr-conta-ficha">
+          <span className="rot">{aberta.numero} · {aberta.ano}</span>
+          <p>
+            Este precedente entrou com{' '}
+            <strong>{aberta.pontos.toFixed(2)} pontos</strong> do rerank, nota de analogia{' '}
+            <strong>{aberta.nota}/5</strong> e confiança{' '}
+            <strong>{aberta.peso_confianca.toFixed(1)}×</strong> — o resultado dele foi lido{' '}
+            {aberta.rotulo_confianca === 'dispositivo'
+              ? 'direto no dispositivo, que é a leitura firme'
+              : `de ${aberta.rotulo_confianca}, que é leitura menos firme e por isso pesa menos`}.
+          </p>
+          <p className="apr-formula-linha">
+            {aberta.peso_confianca.toFixed(1)} × {aberta.nota_norm.toFixed(2)} ×{' '}
+            {aberta.pontos.toFixed(2)} = <b>{aberta.peso_final.toFixed(2)}</b>
+          </p>
+          <p>
+            Sozinho, ele responde por{' '}
+            <strong>{(100 * aberta.fracao_do_total).toFixed(1)}%</strong> do prognóstico, e o
+            resultado que ele carrega para a conta é <strong>{aberta.resultado}</strong>.
+            {aberta.fracao_do_total > 0.3 && ' Um único acórdão sustentando mais de um terço '
+              + 'da conclusão é coisa para conferir antes de citar.'}
+          </p>
+          <button className="apr-sair" onClick={() => defSel(null)}>fechar</button>
+        </div>
+      )}
 
       <p className="apr-dica">
         A “confiança” é de onde saiu o <strong>resultado</strong> daquela decisão:{' '}

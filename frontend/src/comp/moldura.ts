@@ -36,6 +36,11 @@ export function useMoldura(W: number, inicial?: Partial<Vista>) {
   const [naMao, defNaMao] = useState(false)
   const svgRef = useRef<SVGSVGElement>(null)
   const arrasto = useRef<{ px: number; py: number; ox: number; oy: number } | null>(null)
+  /** O último gesto chegou a mover o desenho? Quem tem nó clicável pergunta
+   *  isto antes de tratar o clique: sem a distinção, arrastar o mapa a partir
+   *  de cima de um nó abriria o nó ao soltar, e não daria para arrastar de
+   *  lugar nenhum sem disparar alguma coisa. */
+  const moveu = useRef(false)
 
   /** Quantas unidades do viewBox cabem num pixel de tela. O SVG tem width 100%
    *  sobre um viewBox de proporção fixa, então o mesmo fator serve nos dois
@@ -49,19 +54,19 @@ export function useMoldura(W: number, inicial?: Partial<Vista>) {
   const pegar = useCallback((e: React.PointerEvent) => {
     if (e.button !== 0) return
     const a = { px: e.clientX, py: e.clientY, ox: 0, oy: 0 }
-    let moveu = false
+    moveu.current = false
     defVista((v) => { a.ox = v.x; a.oy = v.y; return v })
     arrasto.current = a
     const mv = (ev: PointerEvent) => {
       const k = porPixel()
       const dx = (ev.clientX - a.px) * k
       const dy = (ev.clientY - a.py) * k
-      if (!moveu && Math.hypot(dx, dy) > 3) {
-        moveu = true
+      if (!moveu.current && Math.hypot(dx, dy) > 3) {
+        moveu.current = true
         defArrastando(true)
         defNaMao(true)
       }
-      if (!moveu) return
+      if (!moveu.current) return
       defVista((v) => ({ ...v, x: a.ox + dx, y: a.oy + dy }))
     }
     const up = () => {
@@ -113,8 +118,11 @@ export function useMoldura(W: number, inicial?: Partial<Vista>) {
 
   const transform = `translate(${vista.x} ${vista.y}) scale(${vista.z})`
 
+  /** true se o gesto que acabou de terminar foi um arrasto, e não um clique. */
+  const arrastou = useCallback(() => moveu.current, [])
+
   return {
     svgRef, vista, defVista, transform, arrastando, naMao, defNaMao,
-    pegar, recentrar, aproximar, porPixel,
+    pegar, recentrar, aproximar, porPixel, arrastou,
   }
 }

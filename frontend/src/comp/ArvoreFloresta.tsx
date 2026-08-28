@@ -77,7 +77,10 @@ export function ArvoreFloresta({ a }: { a: ArvoreRF }) {
   const [n, defN] = useState(0)
   const ref = useRef<HTMLDivElement>(null)
   // segurar e arrastar em qualquer direção, Ctrl+roda para o zoom
-  const { svgRef, transform, arrastando, pegar, recentrar, aproximar } = useMoldura(W)
+  const { svgRef, transform, arrastando, pegar, recentrar, aproximar, arrastou } = useMoldura(W)
+  /** o nó que a pessoa abriu. Enquanto houver um, o painel mostra ELE, e não
+   *  o passo da narração: quem clicou perguntou por aquele nó. */
+  const [sel, defSel] = useState<string | null>(null)
   const total = a.caminho.length
 
   useEffect(() => {
@@ -169,6 +172,12 @@ export function ArvoreFloresta({ a }: { a: ArvoreRF }) {
   }
   const atual = narracao()
 
+  /** A ficha do nó aberto. É o que saiu da tela: aqui ela tem espaço para vir
+   *  por extenso, com a distribuição entre as três classes — que no desenho não
+   *  cabia de jeito nenhum e é a informação que diz se a ponta é limpa ou é um
+   *  empate com nome de vencedor. */
+  const aberto = sel ? porId.get(sel) : undefined
+
   return (
     <div className="apr-arvore apr-arvore-rf" ref={ref}>
       <div className={`apr-tela apr-tela-arvore${arrastando ? ' arrastando' : ''}`}>
@@ -230,45 +239,47 @@ export function ArvoreFloresta({ a }: { a: ArvoreRF }) {
             const ponta = no.folha || no.cortado
             const cor = ponta ? COR[no.classe] ?? COR.desprovido : 'var(--verde)'
             return (
-              <g key={no.id} className={`apr-no-arv${on ? ' acesa' : ''}`}>
-                {aqui && <circle cx={x} cy={y} r={19} className="apr-folha-foco" />}
+              <g key={no.id}
+                className={`apr-no-arv clicavel${on ? ' acesa' : ''}${sel === no.id ? ' sel' : ''}`}
+                role="button"
+                tabIndex={0}
+                onClick={() => { if (!arrastou()) defSel(sel === no.id ? null : no.id) }}
+                onKeyDown={(e) => {
+                  if (e.key !== 'Enter' && e.key !== ' ') return
+                  e.preventDefault()
+                  defSel(sel === no.id ? null : no.id)
+                }}>
+                {(aqui || sel === no.id) && (
+                  <circle cx={x} cy={y} r={19} className="apr-folha-foco" />
+                )}
+                {/* CORTADO É OCO, folha de verdade é cheia. A tela mostra 3
+                    dos 56 níveis, então quase toda ponta aqui é um galho que
+                    continua abaixo — e desenhá-la igual a uma folha diria que a
+                    árvore terminou ali, que é falso. Um traço tracejado carrega
+                    essa diferença sem devolver texto à tela. */}
                 <circle cx={x} cy={y} r={ponta ? 10 : 13} fill={cor}
-                  fillOpacity={ponta ? 0.9 : 0.95} />
+                  fillOpacity={no.cortado ? 0.12 : ponta ? 0.9 : 0.95}
+                  stroke={cor} strokeWidth={no.cortado ? 1.6 : 0}
+                  strokeDasharray={no.cortado ? '3 3' : undefined} />
 
-                {/* o corte, acima do nó: é a pergunta que ele faz */}
+                {/* A TELA CARREGA UMA COISA POR NÓ: a pergunta, se ele
+                    pergunta; a classe, se ele responde. Gini, n, limiar e a
+                    distribuição saem no painel, ao clique.
+
+                    Antes estavam todos aqui, e quinze nós × cinco linhas era
+                    uma parede de número em que nada se lia — inclusive a forma
+                    da árvore, que é o que a cena tem para mostrar. */}
                 {!ponta && no.termo && (
-                  <>
-                    {quebra(no.termo).map((linha, i, todas) => (
-                      <text key={i} x={x} y={y - 26 - (todas.length - 1 - i) * 12}
-                        textAnchor="middle" className="apr-rf-termo">
-                        {i === 0 ? '"' : ''}{linha}{i === todas.length - 1 ? '"' : ''}
-                      </text>
-                    ))}
-                    <text x={x} y={y - 14} textAnchor="middle" className="apr-rf-limiar">
-                      ≤ {num(no.limiar ?? 0, 4)}
+                  quebra(no.termo).map((linha, i, todas) => (
+                    <text key={i} x={x} y={y - 22 - (todas.length - 1 - i) * 14}
+                      textAnchor="middle" className="apr-rf-termo">
+                      {i === 0 ? '"' : ''}{linha}{i === todas.length - 1 ? '"' : ''}
                     </text>
-                  </>
+                  ))
                 )}
-
-                {/* o que o nó guarda, abaixo dele */}
-                <text x={x} y={y + 26} textAnchor="middle" className="apr-rf-meta">
-                  gini {num(no.gini)}
-                </text>
-                <text x={x} y={y + 38} textAnchor="middle" className="apr-rf-meta">
-                  n {no.n.toLocaleString('pt-BR')}
-                </text>
-                {/* A FATIA, e não só o nome da classe. "provido · gini 0,663"
-                    lido por quem não lê gini todo dia soa como decisão limpa, e
-                    0,663 é quase empate triplo. O percentual diz na cara quanto
-                    da ponta é mesmo daquela classe. */}
                 {ponta && (
-                  <text x={x} y={y + 52} textAnchor="middle" className="apr-rf-classe" fill={cor}>
-                    {CURTO[no.classe] ?? no.classe} · {Math.round(100 * Math.max(...no.dist))}%
-                  </text>
-                )}
-                {no.cortado && (
-                  <text x={x} y={y + 66} textAnchor="middle" className="apr-rf-corte">
-                    continua ↓
+                  <text x={x} y={y + 28} textAnchor="middle" className="apr-rf-classe" fill={cor}>
+                    {CURTO[no.classe] ?? no.classe}
                   </text>
                 )}
                 <title>
@@ -283,14 +294,61 @@ export function ArvoreFloresta({ a }: { a: ArvoreRF }) {
       </div>
 
       <div className="apr-narracao">
-        <span className="apr-passo">
-          passo {Math.min(n, total)} de {total}
-        </span>
-        <h3>{atual.titulo}</h3>
-        <p>{atual.texto}</p>
-        <div className="apr-barra" aria-hidden="true">
-          <i style={{ width: `${(100 * Math.min(n, total)) / total}%` }} />
-        </div>
+        {aberto ? (
+          <>
+            <span className="apr-passo">
+              nó {aberto.id} · nível {aberto.nivel}
+            </span>
+            <h3>
+              {aberto.termo
+                ? `Pergunta: tem “${aberto.termo}”?`
+                : aberto.folha ? 'Folha — o galho terminou aqui'
+                  : 'Continua abaixo do que a tela mostra'}
+            </h3>
+            {aberto.termo && (
+              <p>
+                O corte é <strong>{num(aberto.limiar ?? 0, 4)}</strong> no peso TF-IDF do termo.
+                Abaixo dele o caso desce à esquerda; acima, à direita.
+              </p>
+            )}
+            <dl className="apr-rf-ficha">
+              <dt>decisões neste nó</dt>
+              <dd>{aberto.n.toLocaleString('pt-BR')}</dd>
+              <dt>gini</dt>
+              <dd>
+                {num(aberto.gini)}
+                <i>{aberto.gini < 0.3 ? 'quase puro'
+                  : aberto.gini < 0.55 ? 'inclinado' : 'quase empate'}</i>
+              </dd>
+              <dt>classe majoritária</dt>
+              <dd>{aberto.classe}</dd>
+            </dl>
+            <ul className="apr-rf-dist">
+              {a.classes.map((c, i) => (
+                <li key={c}>
+                  <span>{CURTO[c] ?? c}</span>
+                  <i style={{ width: `${100 * (aberto.dist[i] ?? 0)}%` }} />
+                  <b>{Math.round(100 * (aberto.dist[i] ?? 0))}%</b>
+                </li>
+              ))}
+            </ul>
+            <button className="apr-sair" onClick={() => defSel(null)}>
+              voltar à narração
+            </button>
+          </>
+        ) : (
+          <>
+            <span className="apr-passo">
+              passo {Math.min(n, total)} de {total}
+            </span>
+            <h3>{atual.titulo}</h3>
+            <p>{atual.texto}</p>
+            <div className="apr-barra" aria-hidden="true">
+              <i style={{ width: `${(100 * Math.min(n, total)) / total}%` }} />
+            </div>
+            <p className="apr-rf-convite">Clique em qualquer nó para abrir a ficha dele.</p>
+          </>
+        )}
 
         {/* O QUE ESTA TELA NÃO É. Sem estes números o desenho sugere que a
             floresta decide em três perguntas, e ela não decide: são 400 árvores
@@ -300,8 +358,10 @@ export function ArvoreFloresta({ a }: { a: ArvoreRF }) {
           <dd>1 de {a.arvores} árvores · {a.niveis} de {a.profundidade} níveis</dd>
           <dt>esta árvore inteira</dt>
           <dd>{a.nos_total.toLocaleString('pt-BR')} nós</dd>
-          <dt>nas pontas</dt>
-          <dd>classe majoritária e a fatia dela</dd>
+          <dt>ponta cheia</dt>
+          <dd>folha de verdade: o galho terminou</dd>
+          <dt>ponta tracejada</dt>
+          <dd>continua abaixo do que a tela mostra</dd>
           <dt>amostra da raiz</dt>
           <dd>
             {a.n_raiz.toLocaleString('pt-BR')} de {a.n_treino.toLocaleString('pt-BR')} (bootstrap)

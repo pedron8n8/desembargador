@@ -61,6 +61,17 @@ type Dados = {
 }
 
 const pct = (v: number, casas = 0) => `${(100 * v).toFixed(casas)}%`
+/** DUAS ESCALAS, e confundi-las já custou "8910,0%" impresso na tela.
+ *
+ *  `grafo.json → dado.*` guarda FRAÇÃO (0,891) e usa `pct`.
+ *  `apresentacao.json → pesos.agregacao.*` guarda PONTO PERCENTUAL (89,1) e usa
+ *  `pp` — é o retorno cru de `api/serial.pesos`, que já converte na origem.
+ *
+ *  Não normalizo aqui de propósito: o contrato desta página é não recalcular
+ *  nada que veio de `dados/`, e dividir por 100 no TypeScript seria uma segunda
+ *  aritmética do mesmo número esperando divergir. Quem escolhe é o campo. */
+const pp = (v: number | null | undefined, casas = 1) =>
+  v == null ? '—' : `${v.toFixed(casas)}%`
 const mil = (n: number) => n.toLocaleString('pt-BR')
 
 /* ------------------------------------------------------- as cenas do fluxo
@@ -508,7 +519,7 @@ export function Apresentacao() {
         <div className="apr-cena" aria-hidden="true" />
         <div className="apr-cab">
           <span className="apr-etapa">01 · O PRECEDENTE</span>
-          <h2>Harvard já faz isso. E cobra US$ 699.</h2>
+          <h2>Harvard já faz isso, e vende como produto.</h2>
           <p>
             Em maio de 2026 a Harvard Business School lançou a <strong>Foundry</strong>. Sete
             professores e senior lecturers sentaram para entrevistas e sessões de gravação para
@@ -528,11 +539,11 @@ export function Apresentacao() {
             </p>
           </div>
           <div className="apr-cartao">
-            <b className="grande">US$ 699</b>
-            <h3>oito semanas de programa</h3>
+            <b className="grande">8</b>
+            <h3>semanas de programa</h3>
             <p>
-              A anuidade da Harvard Business School passa de US$ 84.000. O clone é o que torna a
-              diferença possível.
+              Turma com data, matrícula e Demo Day no campus. O clone é o que torna essa
+              escala possível — sem ele não haveria como atender tanta gente.
             </p>
           </div>
           <div className="apr-cartao">
@@ -593,7 +604,7 @@ export function Apresentacao() {
           </a>. A Harvard Business School <strong>não tem relação com este projeto</strong> e não
           trabalha com decisões judiciais. O que a comparação afirma é uma coisa só: modelar um
           decisor para consultar antes de decidir deixou de ser exótico — virou produto de escola
-          de negócios, com preço em tabela.
+          de negócios, com turma e calendário.
         </p>
       </section>
 
@@ -891,7 +902,7 @@ export function Apresentacao() {
               id: 'knn',
               nivel: 0,
               rotulo: 'O voto dos precedentes',
-              valor: pct(a.pesos.agregacao.knn ?? 0, 1),
+              valor: pp(a.pesos.agregacao.knn),
               nota: `entre os ${a.pesos.precedentes.length} mais parecidos, quantos reformaram`,
               tom: 'verde',
             },
@@ -899,7 +910,7 @@ export function Apresentacao() {
               id: 'floresta',
               nivel: 0,
               rotulo: 'A leitura do texto',
-              valor: pct(a.pesos.agregacao.floresta ?? 0, 1),
+              valor: pp(a.pesos.agregacao.floresta),
               nota: '400 árvores lendo o caso, sem olhar a busca',
               tom: 'ambar',
             },
@@ -907,7 +918,7 @@ export function Apresentacao() {
               id: 'conjunto',
               nivel: 1,
               rotulo: 'As duas juntas',
-              valor: pct(a.pesos.agregacao.conjunto ?? 0, 1),
+              valor: pp(a.pesos.agregacao.conjunto),
               nota: `média ponderada, peso ${a.pesos.config.peso_knn} no voto dos precedentes`,
               de: ['knn', 'floresta'],
               tom: 'neutro',
@@ -916,7 +927,7 @@ export function Apresentacao() {
               id: 'calibrado',
               nivel: 2,
               rotulo: 'O ajuste de escala',
-              valor: pct(a.pesos.agregacao.calibrado ?? 0, 1),
+              valor: pp(a.pesos.agregacao.calibrado),
               nota: 'faz 70% querer dizer 70% de verdade',
               de: ['conjunto'],
               tom: 'verde',

@@ -1184,38 +1184,143 @@
  * é número e alinha com os outros; o termo em sans porque é palavra. */
 .apr-rf-termo {
   font-family: var(--sans);
-  font-size: 15px;
+  font-size: 17px;
   fill: var(--tinta);
   user-select: none;
 }
 
-.apr-rf-limiar {
-  font-family: var(--mono);
-  font-size: 14px;
-  fill: var(--ambar);
-  user-select: none;
-}
-
-.apr-rf-meta {
-  font-family: var(--mono);
-  font-size: 13px;
-  fill: var(--tinta-3);
-  user-select: none;
-}
 
 .apr-rf-classe {
   font-family: var(--sans);
-  font-size: 14px;
+  font-size: 16px;
   user-select: none;
 }
 
-.apr-rf-corte {
+
+/* ------------------------------------------- os nós que se abrem no clique
+ *
+ * Vale para as duas árvores e para a tabela da conta. A tela ficou com o
+ * mínimo — a pergunta que o nó faz, e nada mais — e todo o resto (gini, n,
+ * distribuição, a conta do precedente) mudou de lugar: sai no painel, do nó
+ * que a pessoa pediu. Quinze nós × cinco linhas de número era uma parede em
+ * que nada se lia, nem a forma da árvore, que é o que a cena tem a mostrar. */
+
+.apr-no-arv.clicavel { cursor: pointer; }
+.apr-no-arv.clicavel:focus-visible { outline: none; }
+.apr-no-arv.clicavel:focus-visible circle:first-of-type,
+.apr-no-arv.clicavel:hover circle:first-of-type { stroke: var(--tinta); stroke-width: 2; }
+
+/* o nó aberto fica aceso mesmo que a narração ainda não tenha chegado nele:
+   quem clicou pediu para ver, e "está apagado porque a animação não passou"
+   não é resposta */
+.apr-no-arv.sel { opacity: 1; }
+
+.apr-rf-convite {
+  margin: 0.9rem 0 0;
   font-family: var(--sans);
-  font-size: 12px;
-  fill: var(--tinta-3);
-  font-style: italic;
-  user-select: none;
+  font-size: 0.75rem;
+  color: var(--verde);
 }
+
+.apr-rf-ficha,
+.apr-arv-ficha {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.3rem 0.9rem;
+  margin: 0.9rem 0 0;
+  font-family: var(--sans);
+  font-size: 0.8125rem;
+}
+
+.apr-rf-ficha dt,
+.apr-arv-ficha dt { color: var(--tinta-3); }
+
+.apr-rf-ficha dd,
+.apr-arv-ficha dd {
+  margin: 0;
+  color: var(--tinta);
+  font-variant-numeric: tabular-nums;
+}
+
+.apr-rf-ficha dd i,
+.apr-arv-ficha dd i { color: var(--tinta-3); font-style: normal; margin-left: 0.4rem; }
+
+/* a distribuição entre as classes: três barras, que é a informação que dizia
+   se a ponta é limpa ou é empate com nome de vencedor */
+.apr-rf-dist {
+  list-style: none;
+  margin: 0.9rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.apr-rf-dist li {
+  display: grid;
+  grid-template-columns: 6.5rem 1fr 2.5rem;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--sans);
+  font-size: 0.75rem;
+  color: var(--tinta-2);
+}
+
+.apr-rf-dist i {
+  display: block;
+  height: 6px;
+  min-width: 1px;
+  background: var(--verde);
+}
+
+.apr-rf-dist b {
+  text-align: right;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--tinta);
+}
+
+.apr-arv-motivo {
+  margin: 0.9rem 0 0;
+  padding-left: 0.7rem;
+  border-left: 2px solid var(--linha-forte);
+  font-size: 0.9375rem;
+  color: var(--tinta-2);
+}
+
+/* ---------------------------------------------- a linha da conta, aberta */
+
+.apr-linha-conta.clicavel { cursor: pointer; }
+.apr-linha-conta.clicavel:hover td { background: var(--painel-2); }
+.apr-linha-conta.sel td { background: var(--verde-fundo); }
+.apr-linha-conta.clicavel:focus-visible { outline: 2px solid var(--verde); outline-offset: -2px; }
+
+.apr-conta-ficha {
+  margin-top: 1rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--linha-forte);
+  border-left: 2px solid var(--verde);
+  background: var(--painel);
+}
+
+.apr-conta-ficha .rot {
+  display: block;
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  color: var(--verde);
+  margin-bottom: 0.6rem;
+}
+
+.apr-conta-ficha p { margin: 0 0 0.6rem; font-size: 0.9375rem; color: var(--tinta-2); }
+.apr-conta-ficha p:last-of-type { margin-bottom: 0.9rem; }
+
+.apr-formula-linha {
+  font-family: var(--mono);
+  font-size: 0.9375rem;
+  color: var(--tinta-3) !important;
+}
+
+.apr-formula-linha b { color: var(--verde); font-weight: 400; }
 
 /* O selo do que está na tela. Fica com peso de dado, e não de nota de rodapé:
  * "1 de 400 árvores" é a informação que impede a cena de mentir. */
