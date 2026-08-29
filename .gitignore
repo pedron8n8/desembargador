@@ -20,3 +20,8 @@ frontend/.vite/
 # trocar por bind mount cai aqui.
 caddy_data/
 caddy_config/
+
+# docs de trabalho na raiz — a apresentacao usa as copias em apresentacao/fontes/
+/info.md
+/info copy.md
+/prova.md
