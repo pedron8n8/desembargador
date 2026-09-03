@@ -19,6 +19,7 @@ roda() {
 
 echo "=== cerebros (quem julga) ==="
 roda src.cerebros
+roda src.storage
 
 echo
 echo "=== modulos de dominio (src/rag) ==="

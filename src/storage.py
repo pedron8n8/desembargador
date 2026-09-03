@@ -3,6 +3,7 @@ import csv
 import hashlib
 import json
 import logging
+import os
 import sqlite3
 import sys
 from datetime import datetime, timezone
@@ -18,14 +19,14 @@ CREATE TABLE IF NOT EXISTS processos (
     assuntos_json   TEXT,               -- lista completa de assuntos (JSON)
     orgao_julgador  TEXT,
     data_ajuizamento TEXT,
-    grau            TEXT,
+    grau            TEXT NOT NULL DEFAULT '',
     formato         TEXT,
     sistema         TEXT,
     nivel_sigilo    TEXT,
     raw_json        TEXT,               -- hit completo do ES, nada é descartado
     hash            TEXT,
     coletado_em     TEXT,
-    PRIMARY KEY (numero_processo, fonte)
+    PRIMARY KEY (numero_processo, fonte, grau)
 );
 
 CREATE TABLE IF NOT EXISTS movimentos (
@@ -124,6 +125,45 @@ class Storage:
         for coluna, tipo in (("detalhe_em", "TEXT"), ("detalhe_nota", "TEXT")):
             if coluna not in existentes:
                 self.db.execute(f"ALTER TABLE decisoes ADD COLUMN {coluna} {tipo}")
+
+        # A PK de processos nasceu como (numero, fonte) e perdia o G1 quando o
+        # G2 do mesmo processo chegava (INSERT OR REPLACE). SQLite nao altera
+        # PK: reconstroi. Isto NAO traz de volta o que ja' se perdeu — para
+        # isso, o checkpoint do datajud e' zerado logo abaixo, e a proxima
+        # coleta repergunta tudo.
+        pk = self.db.execute(
+            "SELECT count(*) FROM pragma_table_info('processos') WHERE pk > 0"
+        ).fetchone()[0]
+        if pk == 2:
+            self.db.executescript("""
+                CREATE TABLE processos_novo (
+                    numero_processo TEXT NOT NULL,
+                    fonte           TEXT NOT NULL,
+                    tribunal        TEXT,
+                    classe          TEXT,
+                    classe_codigo   TEXT,
+                    assuntos_json   TEXT,
+                    orgao_julgador  TEXT,
+                    data_ajuizamento TEXT,
+                    grau            TEXT NOT NULL DEFAULT '',
+                    formato         TEXT,
+                    sistema         TEXT,
+                    nivel_sigilo    TEXT,
+                    raw_json        TEXT,
+                    hash            TEXT,
+                    coletado_em     TEXT,
+                    PRIMARY KEY (numero_processo, fonte, grau)
+                );
+                INSERT INTO processos_novo
+                    SELECT numero_processo, fonte, tribunal, classe, classe_codigo,
+                           assuntos_json, orgao_julgador, data_ajuizamento,
+                           COALESCE(grau,''), formato, sistema, nivel_sigilo,
+                           raw_json, hash, coletado_em
+                    FROM processos;
+                DROP TABLE processos;
+                ALTER TABLE processos_novo RENAME TO processos;
+                DELETE FROM checkpoints WHERE fonte IN ('datajud_ausentes','datajud_bulk');
+            """)
         self.db.commit()
 
     # ---- upserts (INSERT OR REPLACE = dedup pela PK; hash detecta mudança de conteúdo) ----
@@ -131,6 +171,7 @@ class Storage:
     def upsert_processo(self, d):
         d.setdefault("coletado_em", agora())
         d["hash"] = content_hash(d.get("raw_json"))
+        d["grau"] = d.get("grau") or ""      # NULL na PK duplicaria a linha
         cols = ("numero_processo fonte tribunal classe classe_codigo assuntos_json "
                 "orgao_julgador data_ajuizamento grau formato sistema nivel_sigilo "
                 "raw_json hash coletado_em").split()
@@ -236,6 +277,13 @@ class Storage:
     def numeros_com_processo(self):
         return {r[0] for r in self.db.execute("SELECT DISTINCT numero_processo FROM processos")}
 
+    def pares_numero_grau(self):
+        """(numero, grau) ja' guardados. E' o que decide o que ainda falta
+        perguntar ao Datajud: um processo com so' o G1 salvo NAO esta' completo,
+        e a versao antiga (so' o numero) o dava por coletado para sempre."""
+        return {(r[0], r[1]) for r in
+                self.db.execute("SELECT numero_processo, grau FROM processos")}
+
     def count(self, tabela):
         return self.db.execute(f"SELECT COUNT(*) FROM {tabela}").fetchone()[0]
 
@@ -264,6 +312,34 @@ class Storage:
                     n += 1
             logging.info("Exportado %s: %s linhas", tabela, n)
         logging.info("Exportado jsonl+csv para %s", export_dir)
+
+
+if __name__ == "__main__":
+    import tempfile
+
+    # G1 e G2 do mesmo processo sao dois registros distintos no Datajud e
+    # precisam coexistir. Com a PK antiga (numero, fonte) o segundo apagava o
+    # primeiro inteiro, raw_json incluido — e numeros_com_processo() passava a
+    # considerar o processo coletado, entao nem recoletar trazia de volta.
+    s = Storage(os.path.join(tempfile.mkdtemp(), "t.db"))
+    for grau in ("G1", "G2"):
+        s.upsert_processo({"numero_processo": "5001036832024824023",
+                           "fonte": "datajud", "grau": grau,
+                           "raw_json": '{"grau":"%s"}' % grau})
+    s.commit()
+    assert s.count("processos") == 2, "G1 e G2 colidiram na PK"
+    assert s.pares_numero_grau() == {("5001036832024824023", "G1"),
+                                     ("5001036832024824023", "G2")}
+
+    # grau ausente vira '' e continua sendo UMA linha, nao uma nova a cada
+    # execucao: NULL nunca colide com NULL num indice do SQLite (mesma
+    # armadilha ja' documentada em CHAVE_DEC).
+    for _ in range(2):
+        s.upsert_processo({"numero_processo": "9", "fonte": "datajud",
+                           "grau": None, "raw_json": "{}"})
+    s.commit()
+    assert s.count("processos") == 3, "grau NULL duplicou a linha"
+    print("self-check OK — processos guarda G1 e G2 separados")
 
 
 def setup_logging(log_dir, level="INFO"):

@@ -9,6 +9,9 @@ echo.
 echo --- src.cerebros
 %VPY% -X utf8 -m src.cerebros || set FALHOU=1
 
+echo --- src.storage
+%VPY% -X utf8 -m src.storage || set FALHOU=1
+
 echo.
 echo === modulos de dominio (src/rag) ===
 REM 'indexar' NAO entra: nao e' self-check, e' o construtor do indice. Rodar
