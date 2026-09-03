@@ -239,6 +239,21 @@ def main():
         r = cli.post("/api/consultas", json={"caso": "um caso qualquer"},
                      headers=CAB)
         assert r.status_code == 429, r.status_code
+
+        # --- o mesmo teto vale para /retomar: senao' o usuario contorna o
+        # limite esperando as 3 primeiras terminarem e retomando-as em laco —
+        # cada retomada tambem cai no pool() e paga LLM de novo.
+        c = esquema.db()
+        with c:
+            c.execute("INSERT INTO dono VALUES ('t-retomar','adv@teste.com')")
+            c.execute("INSERT INTO execucao (thread, email, estado, criado_em, "
+                      "so_prognostico, cerebro) VALUES (?,?,?,?,?,?)",
+                      ("t-retomar", "adv@teste.com", "pronto", "2026-01-01",
+                       0, "rubens-schulz"))
+        c.close()
+        r = cli.post("/api/consultas/t-retomar/retomar", headers=CAB)
+        assert r.status_code == 429, r.status_code
+
         c = esquema.db()
         with c:
             c.execute("UPDATE execucao SET estado='pronto' WHERE thread LIKE 't-fila-%'")

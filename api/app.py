@@ -652,6 +652,9 @@ def retomar(thread: str, c=Depends(conexao), u=Depends(atual)):
         raise HTTPException(404, "sem execução registrada")
     if r["estado"] in ("fila", "rodando"):
         raise HTTPException(409, "essa consulta já está rodando")
+    if execucao.vivas_de(c, u["email"]) >= MAX_VIVAS_POR_USUARIO:
+        raise HTTPException(429, "você já tem %d consultas na fila; espere uma "
+                                 "terminar" % MAX_VIVAS_POR_USUARIO)
     execucao.retomar(thread, so_prognostico=bool(r["so_prognostico"]))
     return {"thread": thread}
 
