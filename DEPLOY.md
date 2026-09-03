@@ -182,14 +182,22 @@ sh backup.sh /root/backups
 ```
 
 O que entra: `web.db` (contas e sessões), `feedback.db`, `rag_runs.db`,
-`consultas/`, **`tjsc.db` e `output/cerebros/`** (os acervos), e os três JSON de
-configuração.
+`consultas/`, e — do cérebro padrão e de cada cérebro em
+`output/cerebros/<slug>/` — **`tjsc.db` e `documentos/`** (o acervo e o
+inteiro teor), mais os três JSON de configuração.
 
-O acervo entra apesar do volume porque refazê-lo é ~12 h de coleta por cérebro,
-respeitando os delays contra o TJSC — foi o que `COMO_RODAR.md` sempre disse, e
-o que este arquivo dizia ao contrário até agora. O que fica de fora é só o que
-sai de `tjsc.db` em minutos: `rag.db` (`python -m src.rag.indexar`) e os `.pkl`
-(`--treinar`, `--ajustar`).
+`tjsc.db` e `documentos/` entram apesar do volume porque refazê-los é ~12 h de
+coleta e download por cérebro, respeitando os delays contra o TJSC — foi o que
+`COMO_RODAR.md` sempre disse, e o que este arquivo dizia ao contrário até
+agora. `documentos/` é tão não-reconstruível quanto `tjsc.db`: sem ele o botão
+"baixar o documento" quebra para toda decisão daquele cérebro.
+
+Por cérebro, ficam de fora: `exports/` (saída bruta do scraper — o passo 3
+manda explicitamente não movê-la, e ela é regenerável a partir do `tjsc.db`),
+`logs/`, `rag.db` (+ `-shm`/`-wal`) e os `.pkl`. Esses três últimos saem de
+`tjsc.db` em minutos via `python -m src.rag.indexar`, `--treinar` e
+`--ajustar`. O `backup.sh` usa `--exclude` em vez de listar cada cérebro, para
+um cérebro novo entrar no backup sozinho, sem editar o script.
 
 **Automático, e fora da VPS.** Backup que mora no mesmo disco que ele protege
 não é backup. Em `/etc/systemd/system/cerebro-backup.service`:
@@ -201,7 +209,7 @@ Description=Backup do Segundo Cérebro
 [Service]
 Type=oneshot
 WorkingDirectory=/srv/cerebro
-ExecStart=/bin/sh backup.sh /root/backups
+ExecStart=/bin/sh /srv/cerebro/backup.sh /root/backups
 ExecStartPost=/usr/bin/rsync -a /root/backups/ backup@outro-host:/backups/cerebro/
 ```
 
