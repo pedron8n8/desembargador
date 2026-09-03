@@ -178,14 +178,55 @@ entra na imagem.
 **Backup:**
 
 ```bash
-docker compose stop app
-tar czf /root/cerebro-$(date +%F).tar.gz output/web.db output/feedback.db \
-        output/rag_runs.db output/consultas cerebros.json
-docker compose start app
+sh backup.sh /root/backups
 ```
 
-Só isso: é o que não dá para regerar. Os acervos (`tjsc.db`, `rag.db`, os `.pkl`)
-saem de novo da coleta e do treino, e são 99% do volume — não vale o backup.
+O que entra: `web.db` (contas e sessões), `feedback.db`, `rag_runs.db`,
+`consultas/`, **`tjsc.db` e `output/cerebros/`** (os acervos), e os três JSON de
+configuração.
+
+O acervo entra apesar do volume porque refazê-lo é ~12 h de coleta por cérebro,
+respeitando os delays contra o TJSC — foi o que `COMO_RODAR.md` sempre disse, e
+o que este arquivo dizia ao contrário até agora. O que fica de fora é só o que
+sai de `tjsc.db` em minutos: `rag.db` (`python -m src.rag.indexar`) e os `.pkl`
+(`--treinar`, `--ajustar`).
+
+**Automático, e fora da VPS.** Backup que mora no mesmo disco que ele protege
+não é backup. Em `/etc/systemd/system/cerebro-backup.service`:
+
+```ini
+[Unit]
+Description=Backup do Segundo Cérebro
+
+[Service]
+Type=oneshot
+WorkingDirectory=/srv/cerebro
+ExecStart=/bin/sh backup.sh /root/backups
+ExecStartPost=/usr/bin/rsync -a /root/backups/ backup@outro-host:/backups/cerebro/
+```
+
+E em `/etc/systemd/system/cerebro-backup.timer`:
+
+```ini
+[Unit]
+Description=Backup diário do Segundo Cérebro
+
+[Timer]
+OnCalendar=daily
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+```
+
+```bash
+systemctl enable --now cerebro-backup.timer
+systemctl list-timers cerebro-backup     # confere a próxima execução
+```
+
+O `ExecStartPost` é a parte que importa: sem ele o backup continua no mesmo
+disco da aplicação. Trocar `backup@outro-host` por qualquer destino que não seja
+esta VPS.
 
 **Mandar um cérebro novo depois:** FTP da pasta para
 `output/cerebros/<slug>/`, acrescentar a entrada no `cerebros.json`, e

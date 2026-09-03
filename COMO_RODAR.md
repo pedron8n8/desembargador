@@ -297,6 +297,9 @@ Os quatro marcados como reconstruíveis podem ser apagados sem perda — só
 custam tempo de CPU. `tjsc.db`, `feedback.db` e `web.db` **não**: um custou
 horas de scraping, os outros dois são o seu histórico.
 
+> O `backup.sh` na raiz salva exatamente os não-reconstruíveis. Ver DEPLOY.md
+> para o timer que o roda sozinho e manda a cópia para fora da máquina.
+
 ---
 
 ## 7. O que custa dinheiro
