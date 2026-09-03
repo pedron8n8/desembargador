@@ -82,7 +82,8 @@
     "chars_por_precedente": 5000,
     "max_ciclos_busca": 2,
     "max_ciclos_revisao": 2,
-    "usar_feedback": true
+    "usar_feedback": true,
+    "max_chars_caso": 20000
   },
 
   "julgar_consultas": true,

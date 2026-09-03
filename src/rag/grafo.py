@@ -95,9 +95,27 @@ class Estado(TypedDict, total=False):
     julgamento: dict
     decisao_real: str                   # só no bench: o gabarito para o juiz
     custos: Annotated[list, operator.add]
+    caso_cortado: bool                  # o caso passou do limite e foi cortado
 
 
 # --------------------------------------------------------------------- nós
+
+def recortar_caso(caso):
+    """(texto, cortou). Um corte so' para o caso inteiro, lido do config a
+    cada chamada (nao congelado no import — ver comentario em config()).
+
+    Eram QUATRO cortes diferentes entre os nos (20000/6000/20000/8000): o
+    revisor, que confere se a minuta enfrentou TODOS os pedidos, lia menos da
+    metade do que o redator leu; o triador, que decide quais precedentes sao
+    analogos, lia menos de um terco. Um pedido depois do corte mais curto
+    ficava invisivel para o no que deveria julga-lo, e o sistema "nao
+    enfrentava" o pedido nao por falta de precedente, mas por falta de texto
+    — sem avisar ninguem. O `cortou` sobe ate' o relatorio: abstencao honesta
+    exige dizer que parte do caso nao entrou.
+    """
+    limite = config()["busca"].get("max_chars_caso", 20000)
+    caso = caso or ""
+    return caso[:limite], len(caso) > limite
 
 P_TRIAGEM = """Você analisa peças do Tribunal de Justiça de Santa Catarina.
 
@@ -295,14 +313,15 @@ MINUTA:
 
 
 def no_triagem(estado):
+    caso_cortado_txt, cortou = recortar_caso(estado["caso"])
     txt, custo = chamar("triagem", [{"role": "user",
-                                     "content": P_TRIAGEM + estado["caso"][:20000]}])
+                                     "content": P_TRIAGEM + caso_cortado_txt}])
     t = json_da_resposta(txt, padrao={})
     if not t.get("termos"):
         # sem termos nao ha' busca: cai para as palavras mais longas do caso
         t["termos"] = sorted(set(p for p in estado["caso"].split() if len(p) > 7),
                              key=len, reverse=True)[:10]
-    return {"triagem": t, "custos": [custo], "ciclo_busca": 0}
+    return {"triagem": t, "custos": [custo], "ciclo_busca": 0, "caso_cortado": cortou}
 
 
 def no_recuperar(estado):
@@ -358,7 +377,7 @@ def no_triar(estado):
         for c in cand)
     tese = estado.get("tese") or "neutra"
     msg = [{"role": "user", "content": P_TRIAR.format(
-        caso=estado["caso"][:6000], n=len(cand), lista=lista,
+        caso=recortar_caso(estado["caso"])[0], n=len(cand), lista=lista,
         titulo=cam["titulo"], relator=cam["nome"],
         lado=P_TRIAR_LADO.format(lado=LADOS[tese]) if tese in LADOS else "",
         campo=', "lado": "a_favor|contra|neutro"' if tese in LADOS else "")}]
@@ -702,7 +721,7 @@ def no_redigir(estado):
         prognostico=json.dumps(enxuto, ensure_ascii=False),
         divergencia=aviso,
         procedencia=_bloco_procedencia(estado),
-        caso=estado["caso"][:20000],
+        caso=recortar_caso(estado["caso"])[0],
         precedentes="\n\n".join(blocos) or "(nenhum precedente análogo encontrado)",
         criticas=bloco_criticas)}]
     txt, custo = chamar("redigir", msg)
@@ -750,7 +769,7 @@ def no_revisar(estado):
         modo=R_TESE if prog.get("enviesado") else (R_SEM_DECISAO if absteve else ""),
         prognostico=json.dumps(estado["prognostico"], ensure_ascii=False),
         numeros=", ".join(numeros) or "(nenhum)",
-        caso=estado["caso"][:8000], minuta=estado["minuta"])}])
+        caso=recortar_caso(estado["caso"])[0], minuta=estado["minuta"])}])
     # padrao=None de proposito: com padrao={"aprovado": True} uma resposta
     # ilegivel virava aprovacao silenciosa — o gate se desligando bem na hora
     # em que era necessario. O no_triar ja' avisava nesse caso (ver AVISO
@@ -839,6 +858,32 @@ def construir(checkpoint=None, so_prognostico=False):
 
 
 if __name__ == "__main__":
+    # --- o caso era cortado em QUATRO tamanhos diferentes entre os nos:
+    # 20000 na triagem, 6000 no triar, 20000 no redigir, 8000 no revisar. O
+    # revisor que confere se a minuta enfrentou TODOS os pedidos lia menos da
+    # metade do que o redator leu, e nada avisava o usuario.
+    limite = config()["busca"].get("max_chars_caso", 20000)
+    curto, cortou = recortar_caso("x" * 100)
+    assert curto == "x" * 100 and cortou is False
+    longo, cortou = recortar_caso("y" * (limite + 1))
+    assert len(longo) == limite and cortou is True
+    # caso vazio/None nao explode
+    vazio, cortou = recortar_caso(None)
+    assert vazio == "" and cortou is False
+    # no_triagem propaga a flag: e' o que chega ate' o relatorio
+    _chamar_real_tg = chamar
+    chamar = lambda *a, **k: (  # noqa: E731,F811
+        json.dumps({"termos": ["x"]}),
+        {"no": "triagem", "modelo": "dublê", "tokens_in": 0, "tokens_out": 0,
+         "custo_usd": 0.0, "cortado": False})
+    try:
+        r_curto = no_triagem({"caso": "x" * 100})
+        assert r_curto["caso_cortado"] is False, r_curto
+        r_longo = no_triagem({"caso": "y" * (limite + 1)})
+        assert r_longo["caso_cortado"] is True, r_longo
+    finally:
+        chamar = _chamar_real_tg  # noqa: F811
+
     # self-check offline: a topologia e o no que nao usa LLM.
     app = construir()
     assert "prognostico" in app.get_graph().nodes

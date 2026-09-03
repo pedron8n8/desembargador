@@ -225,6 +225,15 @@ def formatar(estado, segundos, quando=None):
 
     out += _procedencia(p, prec)
     out += _sustentacao(estado)
+    if estado.get("caso_cortado"):
+        # abstencao honesta: se o caso foi cortado, o usuario tem de saber
+        # que parte dele nunca chegou aos nos de LLM — antes do prognostico,
+        # nao depois, para nao ler o numero como se tivesse visto tudo. O
+        # limite e' lido do config (mesmo default de grafo.recortar_caso),
+        # e nao de uma constante — o corte pode ter sido reconfigurado.
+        limite = grafo.config()["busca"].get("max_chars_caso", 20000)
+        out += ["> AVISO: o caso passou de %d caracteres e foi cortado. O que "
+                "ficou de fora não foi analisado." % limite, ""]
     out += _veredito(p, estado.get("tese"))
     return _fechar(out, estado, prec, segundos)
 
