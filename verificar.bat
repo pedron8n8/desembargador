@@ -12,6 +12,15 @@ echo --- src.cerebros
 echo --- src.storage
 %VPY% -X utf8 -m src.storage || set FALHOU=1
 
+echo --- src.datajud
+%VPY% -X utf8 -m src.datajud || set FALHOU=1
+
+echo --- src.merge
+%VPY% -X utf8 -m src.merge || set FALHOU=1
+
+echo --- src.portal_jurisprudencia
+%VPY% -X utf8 -m src.portal_jurisprudencia || set FALHOU=1
+
 echo.
 echo === modulos de dominio (src/rag) ===
 REM 'indexar' NAO entra: nao e' self-check, e' o construtor do indice. Rodar
