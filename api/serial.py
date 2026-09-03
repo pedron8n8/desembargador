@@ -89,6 +89,12 @@ def consulta(thread, estado, segundos=None, markdown=None):
         "perfil": estado.get("perfil") or {},
         "contra": estado.get("contra") or {},
         "n_candidatos": len(estado.get("candidatos") or []),
+        # abstencao honesta: se o caso foi cortado, o front tem de avisar --
+        # nao so' o .md baixavel (ver grafo.recortar_caso). Vem antes do
+        # veredito, mesma posicao do aviso em cli.formatar: quem le' o
+        # percentual precisa saber antes que parte do caso ficou de fora.
+        "caso_cortado": bool(estado.get("caso_cortado")),
+        "max_chars_caso": config()["busca"].get("max_chars_caso", 20000),
         # --- veredito
         "prognostico": estado.get("prognostico") or {},
         # --- minuta e criticas
@@ -243,6 +249,13 @@ if __name__ == "__main__":
     assert "vinculante" in p0["ficha"] and "1.49x" in p0["explicacao_rank"], p0
     # o estado nao pode vazar inteiro: ementa/dispositivo grandes ficam de fora
     assert "dispositivo" not in p0 and "ancoras_json" not in p0
+
+    # --- caso_cortado tem que chegar ao front, e antes do prognostico (fix
+    # round 1 da Task 8: o aviso so' existia no .md baixavel, nao na tela)
+    assert chaves.index("caso_cortado") < chaves.index("prognostico"), chaves
+    assert c["caso_cortado"] is False and c["max_chars_caso"] == 20000, c
+    cortado = consulta("t1", {**falso, "caso_cortado": True}, segundos=12.0)
+    assert cortado["caso_cortado"] is True
 
     # --- pesos: os numeros tem que fechar
     w = pesos(falso)

@@ -108,6 +108,17 @@ export function Consulta() {
         Confira cada citação.
       </div>
 
+      {/* fora de qualquer aba de proposito: quem nao baixa o .md tambem
+          precisa saber que parte do caso nunca chegou aos nos de LLM. */}
+      {c.caso_cortado && (
+        <div className="aviso forte" style={{ marginBottom: 'var(--e6)' }}>
+          <strong>
+            O caso passou de {c.max_chars_caso.toLocaleString('pt-BR')} caracteres e foi cortado.
+          </strong>{' '}
+          O que ficou de fora não foi analisado.
+        </div>
+      )}
+
       {(rodando || parado || vivo.logs.length > 0 || !!vivo.erro) && (
         <section className="secao">
           <PipelineAoVivo vivo={vivo} />

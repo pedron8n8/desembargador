@@ -262,6 +262,9 @@ export type Consulta = {
   perfil: Record<string, any>
   contra: Record<string, any>
   n_candidatos: number
+  /** true se o caso passou de `max_chars_caso` e foi cortado antes de chegar aos nós de LLM */
+  caso_cortado: boolean
+  max_chars_caso: number
   prognostico: Prognostico
   minuta: string
   criticas: string[]

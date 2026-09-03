@@ -11,6 +11,7 @@ mandar rodar consulta nova, nao inventar.
 
     python -m src.rag.conversa        # self-check offline (nao chama LLM)
 """
+from .grafo import recortar_caso
 from .llm import chamar, config
 
 MAX_HISTORICO = 8          # turnos que voltam no contexto
@@ -121,7 +122,7 @@ def montar_prompt(estado, pergunta, historico=()):
             for m in list(historico)[-MAX_HISTORICO:]) + "\n"
     return P_CONVERSA.format(
         abstencao=R_ABSTEVE if p.get("decide") is False else "",
-        caso=(estado.get("caso") or "")[:6000],
+        caso=recortar_caso(estado.get("caso"))[0],
         prognostico=_bloco_prognostico(estado),
         precedentes=_bloco_precedentes(estado),
         minuta=("\nMINUTA GERADA:\n%s\n" % minuta[:MAX_MINUTA]) if minuta else "",
