@@ -27,6 +27,14 @@ JANELA_MIN = 15
 # forca bruta, barato o bastante para um login.
 _N, _R, _P, _DKLEN = 2 ** 14, 8, 1, 32
 
+PAPEIS = ("advogado", "admin", "superadmin")
+
+
+class EmailEmUso(ValueError):
+    """Criar por cima de uma conta existente trocava senha E papel de uma vez
+    (INSERT OR REPLACE). Quem tinha /api/admin virava dono de qualquer conta,
+    e a sessao da vitima nem caia — a tabela sessao e' separada."""
+
 
 def _agora():
     return dt.datetime.now(dt.timezone.utc)
@@ -45,9 +53,13 @@ def criar_usuario(conn, email, senha, papel="advogado"):
     email = email.strip().lower()
     if len(senha) < 10:
         raise ValueError("senha curta demais: mínimo 10 caracteres")
+    if papel not in PAPEIS:
+        raise ValueError("papel inválido: %s (use %s)" % (papel, "/".join(PAPEIS)))
+    if conn.execute("SELECT 1 FROM usuario WHERE email=?", (email,)).fetchone():
+        raise EmailEmUso("já existe conta para %s" % email)
     salt = os.urandom(16)
     with conn:
-        conn.execute("INSERT OR REPLACE INTO usuario "
+        conn.execute("INSERT INTO usuario "
                      "(email, senha_hash, salt, papel, criado_em, ativo) "
                      "VALUES (?,?,?,?,?,1)",
                      (email, derivar(senha, salt), salt, papel, _iso(_agora())))

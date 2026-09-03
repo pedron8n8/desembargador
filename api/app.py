@@ -1101,12 +1101,18 @@ def listar_usuarios(c=Depends(conexao), _a=Depends(admin)):
 
 
 @app.post("/api/admin/usuarios", status_code=201)
-async def novo_usuario(request: Request, c=Depends(conexao), _a=Depends(admin)):
+async def novo_usuario(request: Request, c=Depends(conexao), a=Depends(admin)):
     corpo = await request.json()
+    papel = corpo.get("papel") or "advogado"
+    # criar superadmin e' poder sobre os CEREBROS, nao sobre o escritorio: fica
+    # com quem ja' tem esse poder (ver o docstring de superadmin()).
+    if papel == "superadmin" and a["papel"] != "superadmin":
+        raise HTTPException(403, "só um superadministrador cria outro")
     try:
         email = auth.criar_usuario(c, corpo.get("email") or "",
-                                   corpo.get("senha") or "",
-                                   papel=corpo.get("papel") or "advogado")
+                                   corpo.get("senha") or "", papel=papel)
+    except auth.EmailEmUso as e:
+        raise HTTPException(409, str(e))
     except ValueError as e:
         raise HTTPException(400, str(e))
     return {"email": email}

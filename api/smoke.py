@@ -220,6 +220,33 @@ def main():
         assert cli.patch("/api/cerebros/nao-existe", json={"ativo": False},
                          headers=CAB).status_code == 404
 
+        # --- criar usuario NAO sobrescreve conta existente (era escalonamento
+        # de privilegio: um admin trocava a senha do superadmin e ficava com
+        # a conta, sem derrubar a sessao da vitima)
+        r = cli.post("/api/admin/usuarios",
+                     json={"email": "dono@teste.com", "senha": "senha-do-atacante",
+                           "papel": "superadmin"}, headers=CAB)
+        assert r.status_code == 409, r.status_code
+        # a senha do dono continua valendo
+        cli.delete("/api/sessao", headers=CAB)
+        assert cli.post("/api/sessao",
+                        json={"email": "dono@teste.com", "senha": SENHA},
+                        headers=CAB).status_code == 204
+        cli.delete("/api/sessao", headers=CAB)
+        cli.post("/api/sessao", json={"email": "chefe@teste.com", "senha": SENHA},
+                 headers=CAB)
+
+        # --- papel invalido e' recusado, e admin nao fabrica superadmin
+        assert cli.post("/api/admin/usuarios",
+                        json={"email": "novo@teste.com", "senha": "senha-longa-ok",
+                              "papel": "rei"}, headers=CAB).status_code == 400
+        assert cli.post("/api/admin/usuarios",
+                        json={"email": "novo@teste.com", "senha": "senha-longa-ok",
+                              "papel": "superadmin"}, headers=CAB).status_code == 403
+        assert cli.post("/api/admin/usuarios",
+                        json={"email": "novo@teste.com", "senha": "senha-longa-ok"},
+                        headers=CAB).status_code == 201
+
         # --- rate limit no login
         cli.delete("/api/sessao", headers=CAB)
         for _ in range(auth.MAX_TENTATIVAS):
