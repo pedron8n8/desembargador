@@ -14,6 +14,17 @@ from . import esquema
 # ANTES de importar api.app: o modulo le' esquema.WEB no lifespan, e nada aqui
 # pode encostar no banco de verdade.
 esquema.WEB = os.path.join(tempfile.mkdtemp(), "web.db")
+# ... e o mesmo vale para o feedback.db: GET /api/consultas monta a listagem a
+# partir da tabela `consulta` DELE (api/app.py:305), nao do web.db. Sem
+# redirecionar, o smoke lia as consultas reais do usuario e o fixture de
+# `t-do-outro` nunca aparecia na listagem — o assert da linha 201 era
+# insatisfazivel. Mesmo padrao do self-check de src/rag/feedback.py:332.
+from src.rag import feedback as _feedback
+_feedback.FB = os.path.join(tempfile.mkdtemp(), "fb.db")
+# criar o arquivo e o esquema JA': api/app.py abre feedback.FB em mode=ro
+# (leitura), e o SQLite recusa abrir em modo somente-leitura um arquivo que
+# ainda nao existe — precisa nascer antes da primeira requisicao do smoke.
+_feedback.db().close()
 # ... e o cookie e' Secure fora de dev, entao o TestClient (http://testserver)
 # o descartaria em silencio e todo teste de sessao falharia por engano.
 os.environ["WEB_DEV"] = "1"
@@ -142,6 +153,17 @@ def main():
                       ("t-do-outro", "outro@teste.com", "pronto", "2026-01-01",
                        0, "rubens-schulz"))
         c.close()
+        # a listagem sai da tabela `consulta` do feedback.db (api/app.py:305);
+        # `dono` e `execucao` do web.db so' filtram. Fixture sem linha aqui e'
+        # fixture invisivel.
+        fb = _feedback.db()
+        with fb:
+            fb.execute(
+                "INSERT INTO consulta (thread, criado_em, caso, prognostico_json, "
+                " minuta, custo_usd, modelos_json, cerebro) VALUES (?,?,?,?,?,?,?,?)",
+                ("t-do-outro", "2026-01-01", "caso do outro", "{}", "",
+                 0.0, "[]", "rubens-schulz"))
+        fb.close()
         threads = {x["thread"] for x in cli.get("/api/consultas").json()["itens"]}
         assert "t-do-outro" not in threads, "vazou consulta de outro usuário"
         assert cli.get("/api/consultas/t-do-outro").status_code == 404
@@ -184,6 +206,16 @@ def main():
         with c:
             c.execute("INSERT INTO dono VALUES ('t-meu','adv@teste.com')")
         c.close()
+        # mesmo acoplamento do t-do-outro: sem linha em `consulta` no
+        # feedback.db, a rota nem enxerga a thread
+        fb = _feedback.db()
+        with fb:
+            fb.execute(
+                "INSERT INTO consulta (thread, criado_em, caso, prognostico_json, "
+                " minuta, custo_usd, modelos_json, cerebro) VALUES (?,?,?,?,?,?,?,?)",
+                ("t-meu", "2026-01-01", "meu caso", "{}", "",
+                 0.0, "[]", "rubens-schulz"))
+        fb.close()
         assert cli.post("/api/consultas/t-meu/avaliacao", json={"nota": 9},
                         headers=CAB).status_code == 400
         assert cli.post("/api/consultas/t-meu/precedentes/1/veredito",
