@@ -206,11 +206,16 @@ def parse_resultados(corpo_html):
 
 
 def _total(cli, relator, categoria, cfg, ini="", fim=""):
-    """Nº de resultados de uma consulta. Sem a marca de total = zero resultados."""
+    """Nº de resultados. None = a requisicao falhou; 0 = a consulta e' vazia.
+
+    Eram a mesma coisa (-1) e as duas caiam no mesmo `<= 0`: uma queda de rede
+    na contagem de um ano fazia o ano inteiro ser pulado em silencio, logado
+    como se nao houvesse decisao nenhuma naquele periodo.
+    """
     c = dict(cfg, data_inicio_br=ini, data_fim_br=fim)
     r = cli.pagina(relator, categoria, 1, 10, c)
     if r is None:
-        return -1
+        return None
     m = RE_TOTAL.search(r.text)
     return int(m.group(1)) if m else 0
 
@@ -234,7 +239,11 @@ def _fatias(cli, relator, categoria, cfg, total_geral):
                   cfg.get("ano_fim") or date.today().year + 1)
     for ano in range(ano_ini, ano_fim + 1):
         t = _total(cli, relator, categoria, cfg, f"01/01/{ano}", f"31/12/{ano}")
-        if t <= 0:
+        if t is None:
+            log.error("Portal [%s] %s: contagem falhou — o ano NAO foi varrido. "
+                      "Rode de novo quando o portal voltar.", categoria, ano)
+            continue
+        if t == 0:
             continue
         if t <= limite:
             yield f"01/01/{ano}", f"31/12/{ano}", t
@@ -243,6 +252,10 @@ def _fatias(cli, relator, categoria, cfg, total_geral):
             ult = calendar.monthrange(ano, mes)[1]
             i2, f2 = f"01/{mes:02d}/{ano}", f"{ult:02d}/{mes:02d}/{ano}"
             t2 = _total(cli, relator, categoria, cfg, i2, f2)
+            if t2 is None:
+                log.error("Portal [%s] %s/%s: contagem falhou — mes NAO varrido.",
+                          categoria, mes, ano)
+                continue
             if t2 > 0:
                 yield i2, f2, t2
 
@@ -276,7 +289,11 @@ def _coletar_listagem(cli, cfg, config, storage):
         feitas = set((storage.get_checkpoint(chave) or {}).get("fatias_ok", []))
         total_geral = _total(cli, relator, categoria, cfg,
                              cfg.get("data_inicio_br", ""), cfg.get("data_fim_br", ""))
-        if total_geral <= 0:
+        if total_geral is None:
+            log.error("Portal [%s]: contagem geral falhou para %s — categoria "
+                      "NAO coletada nesta execução.", categoria, relator)
+            continue
+        if total_geral == 0:
             log.info("Portal [%s]: nenhum resultado para %s", categoria, relator)
             continue
         log.info("Portal [%s]: %s decisões — montando fatias%s", categoria, total_geral,
@@ -293,6 +310,16 @@ def _coletar_listagem(cli, cfg, config, storage):
                             categoria, rotulo, vistos, total)
                 vistos = max(vistos, _pagina_fatia(cli, relator, categoria, cfg,
                                                    storage, ini, fim, total))
+            # A segunda passada existe para a REORDENACAO do indice do portal.
+            # Quando o que falhou foi a rede, ela tambem falha — e marcar a
+            # fatia como feita apagava aquelas decisoes do acervo para sempre,
+            # porque fatia em `feitas` nunca mais e' revisitada (nem com
+            # --recoletar, que so' limpa checkpoint).
+            if vistos < total:
+                log.error("Portal [%s] %s: %s/%s mesmo apos repassar — fatia "
+                          "NAO marcada como concluída; rode de novo.",
+                          categoria, rotulo, vistos, total)
+                continue
             feitas.add(rotulo)
             storage.set_checkpoint(chave, {"fatias_ok": sorted(feitas)})
             log.info("Portal [%s] %s: %s/%s (banco: %s decisões)",
@@ -479,4 +506,54 @@ if __name__ == "__main__":
     # HTML legitimo do html.do (inteiro teor) nao pode ser confundido com bloqueio
     assert not PortalClient._bloqueado(
         _R("<div>ACORDAM os Desembargadores...</div>", "text/html"), binario=False)
-    print("portal_jurisprudencia: self-check OK (inclui detecção de bloqueio)")
+
+    # --- falha de rede nao pode virar "fatia concluida" nem "zero resultados"
+    class ClienteQueCai:
+        """Devolve o total certo na contagem e None ao paginar: e' exatamente o
+        portal saindo do ar no meio de uma fatia."""
+        def __init__(self):
+            self.paginas = 0
+
+        def pagina(self, relator, categoria, pg, ps, cfg):
+            if ps == 10:                       # a chamada de _total
+                r = type("R", (), {})()
+                r.text = "Resultados <b>1</b> a <b>10</b> de <b>400</b> resultados"
+                return r
+            self.paginas += 1                  # tentativa real de paginacao
+            return None                        # a paginacao morre
+
+    class StorageFalso:
+        def __init__(self):
+            self.checkpoints = {}
+
+        def upsert_decisao(self, d):
+            pass
+
+        def commit(self):
+            pass
+
+        def count(self, t):
+            return 0
+
+        def get_checkpoint(self, chave):
+            return self.checkpoints.get(chave)
+
+        def set_checkpoint(self, chave, valor):
+            self.checkpoints[chave] = valor
+
+    st = StorageFalso()
+    portal_cfg = {"categorias": ["acordaos"], "ps": 50, "limite_fatia": 100000,
+                  "delay_segundos": 0, "baixar_inteiro_teor": False,
+                  "baixar_documentos": False}
+    config = {"relator": "Fulano"}
+    cliente = ClienteQueCai()
+    _coletar_listagem(cliente, portal_cfg, config, st)
+    # mesma expressao usada dentro de _coletar_listagem para montar a chave
+    chave = f"{FONTE}:acordaos"
+    marcadas = st.checkpoints.get(chave, {}).get("fatias_ok", [])
+    assert marcadas == [], "fatia incompleta foi marcada como concluida: %r" % marcadas
+    # prova que o caminho exercitado foi mesmo a paginacao falhando (1a e 2a
+    # passada), e nao um total vazio que faria o laco das fatias nem rodar
+    assert cliente.paginas == 2, ("esperava 2 tentativas de paginacao (1a e 2a "
+                                   "passada); veio %r" % cliente.paginas)
+    print("portal_jurisprudencia: self-check OK (fatia incompleta nao e' marcada)")
