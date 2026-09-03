@@ -73,7 +73,7 @@ def _db(banco):
 
 
 def buscar(consulta, limite=40, classe=None, ano_min=None, ano_max=None,
-           excluir=(), resultados=(), banco=None):
+           excluir=(), excluir_numeros=(), resultados=(), banco=None):
     """Devolve lista de dicts ordenada por relevancia BM25 (score: menor = melhor).
 
     So' BM25 e filtros. Quem mexe na ordem depois disso — feedback do usuario,
@@ -101,6 +101,13 @@ def buscar(consulta, limite=40, classe=None, ano_min=None, ano_max=None,
     if excluir:
         sql.append("AND d.id NOT IN (%s)" % ",".join("?" * len(excluir)))
         args += list(excluir)
+    if excluir_numeros:
+        # Excluir o id do alvo nao basta na avaliacao: o mesmo processo aparece
+        # em varias linhas (agravo, embargos, reconsideracao), com texto quase
+        # identico e o mesmo desfecho. A irma sobrevivente virava o precedente
+        # numero 1 e o teste media memoria, nao previsao.
+        sql.append("AND d.numero NOT IN (%s)" % ",".join("?" * len(excluir_numeros)))
+        args += list(excluir_numeros)
     if resultados:
         sql.append("AND d.resultado IN (%s)" % ",".join("?" * len(resultados)))
         args += list(resultados)
@@ -153,3 +160,19 @@ if __name__ == "__main__":
     assert all("ancora" in d for d in r), "reindexe: faltam as colunas da ficha"
     print("\n%d resultados, ordenados por BM25 puro." % len(r))
     print("(reordenacao por idade/ancora/efeito/feedback: python -m src.rag.rerank)")
+
+    # --- excluir por PROCESSO, nao so' por linha. 4.636 das 20.363 decisoes
+    # (22,8%) dividem numero com outra: agravo + embargos de declaracao do
+    # mesmo caso, mesmas partes, texto quase clonado, mesmo desfecho. Excluir
+    # so' o id deixava a irma no indice como candidato BM25 quase perfeito, e o
+    # sistema "acertava" lendo a resposta de si mesmo.
+    linha = _db(cam["rag"]).execute(
+        "SELECT numero FROM decisao WHERE numero != '' "
+        "GROUP BY numero HAVING count(*) > 1 LIMIT 1").fetchone()
+    assert linha, "o indice nao tem processo repetido — teste sem sentido"
+    numero = linha[0]
+    q = montar_consulta(["recurso"])
+    achados = buscar(q, limite=500, banco=cam["rag"], excluir_numeros=(numero,))
+    assert all(a["numero"] != numero for a in achados), \
+        "excluir_numeros deixou passar linha do mesmo processo"
+    print("\nOK: excluir_numeros tira do indice todas as linhas do processo %s." % numero)

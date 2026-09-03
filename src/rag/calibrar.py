@@ -118,10 +118,10 @@ def pontos(casos, k=8, verboso=True, cam=None):
     from .classificador import REFORMA
     cam = cam or cerebros.caminhos()
     saida = []
-    for i, (id_, _num, cls, real, _conf, ementa) in enumerate(casos, 1):
+    for i, (id_, num, cls, real, _conf, ementa) in enumerate(casos, 1):
         termos = avaliar.termos_sem_vazamento(ementa)
         _rot, knn = avaliar.prognostico_bm25(termos, id_, None, k, usar_rerank=True,
-                                             cam=cam)
+                                             cam=cam, alvo_numero=num)
         rf = floresta.prever(" ".join(termos), classe=cls, caminho=cam["floresta"])
         p, _acordo, _fonte = floresta.combinar(knn, rf["p_reforma"] if rf else None)
         if p is not None:

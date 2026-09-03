@@ -25,12 +25,18 @@ from .grafo import PESO_CONFIANCA
 termos_sem_vazamento = lambda ementa, maximo=10: sem_vazamento(ementa, limite=maximo)
 
 
-def prognostico_bm25(termos, alvo_id, classe=None, k=8, usar_rerank=False, cam=None):
+def prognostico_bm25(termos, alvo_id, classe=None, k=8, usar_rerank=False,
+                     cam=None, alvo_numero=None):
     """Mesma ponderacao do no de prognostico do grafo, sem a nota da triagem
-    (que exige LLM). Devolve (rotulo_mais_pesado, fracao_de_reforma_no_merito)."""
+    (que exige LLM). Devolve (rotulo_mais_pesado, fracao_de_reforma_no_merito).
+
+    `alvo_numero` tira do indice TODAS as linhas do mesmo processo, nao so' a
+    linha avaliada — ver o self-check de busca.py.
+    """
     cam = cam or cerebros.caminhos()
     q = busca.montar_consulta(termos)
     cand = busca.buscar(q, limite=k * 3, classe=classe, excluir=(alvo_id,),
+                        excluir_numeros=(alvo_numero,) if alvo_numero else (),
                         banco=cam["rag"])
     if usar_rerank:
         cand = rerank.ordenar(cand, limite=k)
@@ -82,7 +88,8 @@ def rodar_offline(casos, k=8, classe=False, arranjo="knn", corte=None, cam=None)
         prev = frac = None
         if usa_knn:
             prev, frac = prognostico_bm25(termos, id_, cls if classe else None,
-                                          k, usar_rerank=usar_rr, cam=cam)
+                                          k, usar_rerank=usar_rr, cam=cam,
+                                          alvo_numero=num)
         rf = (floresta.prever(" ".join(termos), classe=cls, caminho=cam["floresta"])
               if usa_rf else None)
         p, _acordo, fonte = floresta.combinar(frac, rf["p_reforma"] if rf else None)
@@ -165,6 +172,21 @@ if __name__ == "__main__":
               "(recuperacao + contagem) sem gastar nada. Para uma consulta unica\n"
               "com o grafo completo:  python -m src.rag.cli caso.txt --so-prognostico")
         raise SystemExit(1)
+
+    # --- a avaliacao nao pode mais ver o proprio processo
+    db = sqlite3.connect("file:%s?mode=ro" % cam["rag"].replace("\\", "/"), uri=True)
+    alvo = db.execute(
+        "SELECT id, numero, ementa FROM decisao WHERE numero IN "
+        "(SELECT numero FROM decisao WHERE numero != '' GROUP BY numero "
+        " HAVING count(*) > 1) AND length(ementa) > 500 LIMIT 1").fetchone()
+    db.close()
+    assert alvo, "sem processo repetido no indice"
+    q = busca.montar_consulta(termos_sem_vazamento(alvo[2]))
+    vistos = busca.buscar(q, limite=24, excluir=(alvo[0],),
+                          excluir_numeros=(alvo[1],), banco=cam["rag"])
+    assert all(v["numero"] != alvo[1] for v in vistos)
+    print("OK: excluir_numeros tira do indice todas as linhas do processo %s "
+          "(self-check da avaliacao)." % alvo[1])
 
     casos = amostra(a.n, a.ano_min, a.seed, banco=cam["rag"])
     print("amostra: %d decisoes de merito de %d em diante, todas classificadas "
