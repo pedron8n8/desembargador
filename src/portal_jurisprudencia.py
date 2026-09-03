@@ -383,9 +383,7 @@ def _coletar_detalhes(cli, cfg, storage, out):
                 else:
                     seguidas["integra.do"] = 0
                     if r.content:
-                        ext = ".pdf" if r.content[:4] == b"%PDF" else (
-                            ".rtf" if "rtf" in (r.headers.get("Content-Type") or "")
-                            else ".txt")
+                        ext = _extensao(r.content, r.headers.get("Content-Type"))
                         nome = (d["numero_processo"] or d["numero_processo_raw"]
                                 or doc_id).replace("/", "-").replace("\\", "-")
                         destino = Path(out["documentos"]) / f"{nome}_{doc_id[:12]}{ext}"
@@ -412,6 +410,16 @@ def _coletar_detalhes(cli, cfg, storage, out):
     log.info("Portal detalhes: fim — %s em segredo de justiça, %s sem conteúdo, "
              "%s parciais (pendentes p/ a próxima execução).",
              sigilo, sem_conteudo, parciais)
+
+
+def _extensao(conteudo, content_type):
+    """PDF ja' era detectado pela assinatura; RTF so' pelo header, e servidor
+    legado manda application/octet-stream. Assinatura para os dois."""
+    if conteudo[:4] == b"%PDF":
+        return ".pdf"
+    if conteudo[:5] == rb"{\rtf" or "rtf" in (content_type or ""):
+        return ".rtf"
+    return ".txt"
 
 
 def _prep(config):
@@ -540,6 +548,14 @@ if __name__ == "__main__":
 
         def set_checkpoint(self, chave, valor):
             self.checkpoints[chave] = valor
+
+    # --- extensao do documento sai do CONTEUDO, nao so' do header. O TJSC serve
+    # RTF; um Content-Type generico salvava .txt e quebrava quem escolhe parser
+    # pela extensao.
+    assert _extensao(b"%PDF-1.7 ...", "application/octet-stream") == ".pdf"
+    assert _extensao(rb"{\rtf1\ansi ...", "application/octet-stream") == ".rtf"
+    assert _extensao(rb"{\rtf1\ansi ...", "text/rtf") == ".rtf"
+    assert _extensao(b"texto puro", "text/plain") == ".txt"
 
     st = StorageFalso()
     portal_cfg = {"categorias": ["acordaos"], "ps": 50, "limite_fatia": 100000,

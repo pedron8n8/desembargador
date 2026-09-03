@@ -66,27 +66,35 @@ class DatajudClient:
 
     def bulk_orgao(self, orgao, data_ini, data_fim, grau, cursor, page_size=100):
         """Uma página do bulk por órgão julgador. Retorna (hits, novo_cursor)."""
-        must = [{"match_phrase": {"orgaoJulgador.nome": orgao}}]
-        if grau:
-            must.append({"match": {"grau": grau}})
-        filtro = []
-        if data_ini or data_fim:
-            rng = {}
-            if data_ini:
-                rng["gte"] = data_ini
-            if data_fim:
-                rng["lte"] = data_fim
-            filtro.append({"range": {"dataAjuizamento": rng}})
-        body = {
-            "size": page_size,
-            "query": {"bool": {"must": must, "filter": filtro}},
-            "sort": [{"@timestamp": {"order": "asc"}}],
-        }
-        if cursor:
-            body["search_after"] = cursor
+        body = _corpo_bulk(orgao, data_ini, data_fim, grau, cursor, page_size)
         hits = self._search(body).get("hits", {}).get("hits", [])
         novo_cursor = hits[-1]["sort"] if hits else None
         return hits, novo_cursor
+
+
+def _corpo_bulk(orgao, data_ini, data_fim, grau, cursor, page_size):
+    must = [{"match_phrase": {"orgaoJulgador.nome": orgao}}]
+    if grau:
+        must.append({"match": {"grau": grau}})
+    filtro = []
+    if data_ini or data_fim:
+        rng = {}
+        if data_ini:
+            rng["gte"] = data_ini
+        if data_fim:
+            rng["lte"] = data_fim
+        filtro.append({"range": {"dataAjuizamento": rng}})
+    corpo = {
+        "size": page_size,
+        "query": {"bool": {"must": must, "filter": filtro}},
+        # _id desempata: search_after so' e' seguro quando a ordenacao identifica
+        # o documento unicamente, e empate de @timestamp que passe do page_size
+        # pula ou repete itens entre paginas.
+        "sort": [{"@timestamp": {"order": "asc"}}, {"_id": {"order": "asc"}}],
+    }
+    if cursor:
+        corpo["search_after"] = cursor
+    return corpo
 
 
 def _salvar_hit(storage, hit):
@@ -209,6 +217,13 @@ def _self_check():
     # na proxima execucao, so' sobra o que nunca foi perguntado
     ja_tem.add("C")
     assert [n for n in todos + ["E"] if n not in ja_tem and n not in ausentes] == ["E"]
+
+    # --- search_after precisa de criterio unico: so' @timestamp deixa empates
+    # (comuns em carga em lote do CNJ) pularem ou repetirem itens entre paginas.
+    corpo = _corpo_bulk("Gab. 04", "", "", "G2", None, 100)
+    assert corpo["sort"] == [{"@timestamp": {"order": "asc"}}, {"_id": {"order": "asc"}}], \
+        corpo["sort"]
+
     print("datajud: self-check OK — ausentes memorizados, achados preservados")
 
 
