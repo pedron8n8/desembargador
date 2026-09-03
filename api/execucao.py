@@ -290,6 +290,18 @@ def pool():
     return _pool
 
 
+def vivas_de(conn, email):
+    """Execucoes do usuario que ainda vao consumir LLM.
+
+    'fila' conta junto com 'rodando' de proposito: com MAX_WORKERS=2, o que
+    esta' na fila ja' e' custo comprometido e ja' esta' segurando a vez dos
+    outros usuarios.
+    """
+    return conn.execute(
+        "SELECT count(*) FROM execucao WHERE email=? AND estado IN ('fila','rodando')",
+        (email,)).fetchone()[0]
+
+
 def iniciar(thread, email, caso, tese="neutra", filtros=None, so_prognostico=False,
             cerebro=None, comparacao=None):
     cerebro = cerebros.resolver(cerebro)

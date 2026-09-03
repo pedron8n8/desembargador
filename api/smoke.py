@@ -221,6 +221,29 @@ def main():
         assert cli.post("/api/consultas/t-meu/precedentes/1/veredito",
                         json={"veredito": "talvez"}, headers=CAB).status_code == 400
 
+        # --- caso gigante e' recusado antes de virar tokens pagos
+        assert cli.post("/api/consultas", json={"caso": "x" * 200_000},
+                        headers=CAB).status_code == 413
+
+        # --- teto de execucoes vivas por usuario: cada consulta custa ~US$0,04
+        # e so' ha' 2 workers, entao um laco era dreno de caixa E fila travada
+        # para todo mundo.
+        c = esquema.db()
+        with c:
+            for i in range(modulo_app.MAX_VIVAS_POR_USUARIO):
+                c.execute("INSERT INTO execucao (thread, email, estado, criado_em, "
+                          "so_prognostico, cerebro) VALUES (?,?,?,?,?,?)",
+                          ("t-fila-%d" % i, "adv@teste.com", "fila", "2026-01-01",
+                           0, "rubens-schulz"))
+        c.close()
+        r = cli.post("/api/consultas", json={"caso": "um caso qualquer"},
+                     headers=CAB)
+        assert r.status_code == 429, r.status_code
+        c = esquema.db()
+        with c:
+            c.execute("UPDATE execucao SET estado='pronto' WHERE thread LIKE 't-fila-%'")
+        c.close()
+
         # --- logout encerra de verdade
         assert cli.delete("/api/sessao", headers=CAB).status_code == 204
         assert cli.get("/api/eu").status_code == 401

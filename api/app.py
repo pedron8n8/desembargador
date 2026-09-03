@@ -393,11 +393,25 @@ async def extrair_arquivo(request: Request, _u=Depends(atual)):
     return {"texto": texto, "chars": len(texto), "custo_usd": custo}
 
 
+# Um caso normal tem alguns milhares de caracteres; 120 mil e' uma peca enorme
+# ja' com anexos colados. Acima disso nao e' consulta, e' fatura. O limite do
+# Caddy (40 MB) existe para o upload em base64 do /api/extrair e nao protege
+# isto — nem existe quando a API roda sem o proxy na frente.
+MAX_CHARS_CASO = 120_000
+
+# Teto de execucoes simultaneas por usuario. Com MAX_WORKERS=2, tres na fila
+# ja' e' a vez de todo mundo comprometida.
+MAX_VIVAS_POR_USUARIO = 3
+
+
 def _pedido(corpo):
     """Valida o que é comum a uma consulta e a uma comparação."""
     caso = (corpo.get("caso") or "").strip()
     if not caso:
         raise HTTPException(400, "caso vazio")
+    if len(caso) > MAX_CHARS_CASO:
+        raise HTTPException(413, "caso longo demais: %d caracteres (máximo %d)"
+                            % (len(caso), MAX_CHARS_CASO))
     tese = corpo.get("tese") or "neutra"
     if tese != "neutra" and tese not in grafo.LADOS:
         raise HTTPException(400, "tese inválida: %s" % tese)
@@ -435,6 +449,9 @@ def _cerebro_para_rodar(slug):
 async def rodar(request: Request, c=Depends(conexao), u=Depends(atual)):
     corpo = await request.json()
     caso, tese, filtros = _pedido(corpo)
+    if execucao.vivas_de(c, u["email"]) >= MAX_VIVAS_POR_USUARIO:
+        raise HTTPException(429, "você já tem %d consultas na fila; espere uma "
+                                 "terminar" % MAX_VIVAS_POR_USUARIO)
     cerebro = _cerebro_para_rodar(corpo.get("cerebro"))
     thread = _novo_thread(c)
     execucao.iniciar(thread, u["email"], caso, tese=tese, filtros=filtros,
@@ -469,6 +486,8 @@ async def comparar(request: Request, c=Depends(conexao), u=Depends(atual)):
     slugs = [_cerebro_para_rodar(s) for s in pedidos]
     if len(set(slugs)) != len(slugs):
         raise HTTPException(400, "cérebro repetido na comparação")
+    if execucao.vivas_de(c, u["email"]) + len(slugs) > MAX_VIVAS_POR_USUARIO:
+        raise HTTPException(429, "você já tem consultas na fila; espere uma terminar")
 
     comparacao = "cmp-" + dt.datetime.now().strftime("%Y%m%d-%H%M%S")
     threads = []
