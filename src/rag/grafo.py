@@ -751,12 +751,28 @@ def no_revisar(estado):
         prognostico=json.dumps(estado["prognostico"], ensure_ascii=False),
         numeros=", ".join(numeros) or "(nenhum)",
         caso=estado["caso"][:8000], minuta=estado["minuta"])}])
-    d = json_da_resposta(txt, padrao={"aprovado": True, "problemas": []})
+    # padrao=None de proposito: com padrao={"aprovado": True} uma resposta
+    # ilegivel virava aprovacao silenciosa — o gate se desligando bem na hora
+    # em que era necessario. O no_triar ja' avisava nesse caso (ver AVISO
+    # acima); aqui nao avisava nada. Nao dar para ler a resposta e' reprovacao,
+    # nunca aprovacao.
+    try:
+        d = json_da_resposta(txt)
+        ok = True
+    except ValueError:
+        print("  AVISO: o revisor não devolveu JSON legível — a minuta volta "
+              "para o redator em vez de passar batido", flush=True)
+        d = {"aprovado": False,
+             "problemas": ["o revisor não devolveu uma resposta legível; "
+                           "a minuta não foi conferida"]}
+        ok = False
     problemas = [str(p) for p in (d.get("problemas") or [])][:5]
-    return {"criticas": problemas if not d.get("aprovado") else [],
+    aprovado = bool(d.get("aprovado")) and ok
+    return {"criticas": problemas if not aprovado else [],
             "custos": [custo],
             "prognostico": {**estado["prognostico"],
-                            "revisao_aprovou": bool(d.get("aprovado")),
+                            "revisao_aprovou": aprovado,
+                            "revisao_ok": ok,
                             "revisao_problemas": problemas}}
 
 
@@ -1015,6 +1031,34 @@ if __name__ == "__main__":
     assert _aprovado({"criticas": ["x"], "ciclo_revisao": 1}) == "redigir"
     assert _aprovado({"criticas": ["x"], "ciclo_revisao": 2}) == fim
     assert "julgar" in construir().get_graph().nodes
+
+    # --- revisor que devolve lixo NAO aprova a minuta.
+    # json_da_resposta com padrao={"aprovado": True} fazia o gate de qualidade
+    # se anular exatamente quando falhava: resposta nao parseavel virava
+    # "aprovado", sem excecao e sem log, com revisao_aprovou=true gravado.
+    # O dublê fica no namespace de `grafo` (que importou `chamar` via
+    # `from .llm import chamar`) — patchar `llm.chamar` nao pegaria, porque
+    # `no_revisar` chama o nome ja' resolvido neste modulo.
+    _chamar_real = chamar
+    _chamadas = []
+
+    def _revisor_mudo(*a, **k):
+        _chamadas.append(1)
+        return ("desculpe, nao consegui analisar",
+                {"no": "revisar", "modelo": "dublê", "tokens_in": 0,
+                 "tokens_out": 0, "custo_usd": 0.0, "cortado": False})
+
+    chamar = _revisor_mudo  # noqa: F811
+    try:
+        saida = no_revisar({"caso": "caso qualquer", "minuta": "minuta qualquer",
+                            "precedentes": [], "prognostico": {"decide": True},
+                            "ciclo_revisao": 0})
+    finally:
+        chamar = _chamar_real  # noqa: F811
+    assert _chamadas == [1], "o dublê tem de ter sido chamado exatamente uma vez"
+    assert saida["prognostico"]["revisao_ok"] is False, saida["prognostico"]
+    assert saida["prognostico"]["revisao_aprovou"] is False
+    assert saida["criticas"], "resposta ilegivel tem de voltar como critica"
 
     # ------------------------------------------------------------------
     # VAZAMENTO ENTRE CEREBROS. E' a prova barata de que a parametrizacao de
