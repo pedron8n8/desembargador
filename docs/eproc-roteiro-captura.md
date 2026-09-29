@@ -70,7 +70,7 @@ No mesmo processo:
 Só se a base já estiver pronta e o advogado tiver conta no nosso sistema.
 
 1. Em `chrome://extensions`, ligue o **Modo do desenvolvedor**, clique em **Carregar sem compactação** e escolha a
-   pasta `extensao/dist`.
+   pasta `frontend/extensao/dist`.
 2. Entre no nosso sistema no mesmo Chrome.
 3. Com o eproc aberto, clique no ícone da extensão e confira os quatro itens do checklist do spec da base
    (`docs/superpowers/specs/2026-09-29-eproc-extensao-base-design.md`, seção Testes).
