@@ -2,6 +2,7 @@ import { responder } from './lib/despacho.ts'
 
 // Guarda contra listener duplicado: o manifest injeta este arquivo, e o painel
 // reinjeta com chrome.scripting.executeScript em aba aberta antes da instalação.
+// O nome da flag está duplicado em painel/chrome.ts (enviar); mudar os dois juntos.
 const g = globalThis as { __agenteEprocSegundoCerebro?: boolean }
 if (!g.__agenteEprocSegundoCerebro) {
   g.__agenteEprocSegundoCerebro = true

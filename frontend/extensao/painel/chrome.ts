@@ -34,6 +34,13 @@ export const depsChrome: Deps = {
     } catch (e) {
       // Aba aberta antes de instalar/atualizar a extensão não tem o agente.
       if (!AGENTE_AUSENTE.test(String((e as Error)?.message))) throw e
+      // A reinjeção só acontece quando nenhum listener vivo respondeu; logo, a flag
+      // que o agente antigo deixou no mundo isolado da aba é velha por definição.
+      // Sem apagá-la, a cópia nova pularia o addListener (guarda em agente/index.ts).
+      await chrome.scripting.executeScript({
+        target: { tabId: id },
+        func: () => { delete (globalThis as { __agenteEprocSegundoCerebro?: boolean }).__agenteEprocSegundoCerebro },
+      })
       await chrome.scripting.executeScript({ target: { tabId: id }, files: ['agente.js'] })
       return await chrome.tabs.sendMessage(id, msg)
     }
