@@ -1,6 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { lerEstado, type DocLike } from './estado.ts'
+import { ErroEproc } from './erros.ts'
 
 // Documento falso: só os seletores que lerEstado consulta. Os valores vêm do
 // HTML gravado da JFRS (btn-encerrar-sessao, body.instancia-1g).
@@ -24,8 +25,14 @@ test('tela de login', () => {
   assert.deepEqual(lerEstado(doc({ senha: true, classe: '' }), 'https://eproc1g.tjsc.jus.br/eproc/index.php'), { logado: false, instancia: null, processo: null })
 })
 
-test('botão sair e campo de senha juntos: não logado (fail closed)', () => {
-  assert.equal(lerEstado(doc({ sair: true, senha: true }), CONSULTA).logado, false)
+const ehLayout = (e: unknown) => e instanceof ErroEproc && e.tipo === 'LAYOUT'
+
+test('nem sair nem senha: LAYOUT', () => {
+  assert.throws(() => lerEstado(doc({ classe: '' }), CONSULTA), ehLayout)
+})
+
+test('botão sair e campo de senha juntos: LAYOUT', () => {
+  assert.throws(() => lerEstado(doc({ sair: true, senha: true }), CONSULTA), ehLayout)
 })
 
 test('instância: classe do body; sem classe, pelo host', () => {

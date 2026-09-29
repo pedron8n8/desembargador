@@ -26,7 +26,10 @@ const erro = (e: ErroPainel): Tela => ({ tipo: 'erro', erro: e })
 
 function estadoValido(x: unknown): x is Estado {
   const e = x as Estado | null
-  return !!e && typeof e.logado === 'boolean'
+  if (!e || typeof e.logado !== 'boolean') return false
+  if (e.instancia !== '1g' && e.instancia !== '2g' && e.instancia !== null) return false
+  if (e.processo !== null && !(typeof e.processo === 'string' && /^\d{20}$/.test(e.processo))) return false
+  return !e.logado || e.instancia !== null
 }
 
 export async function abrirPainel(d: Deps): Promise<Tela> {

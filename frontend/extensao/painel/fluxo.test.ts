@@ -73,7 +73,11 @@ test('agente devolve erro conhecido', async () => {
 })
 
 test('resposta fora do formato (agente antigo, undefined, erro inventado): LAYOUT', async () => {
-  for (const r of [undefined, null, 'x', { ok: true }, { ok: false, erro: 'INVENTADO' }, { ok: true, estado: { logado: 'sim' } }]) {
+  for (const r of [undefined, null, 'x', { ok: true }, { ok: false, erro: 'INVENTADO' }, { ok: true, estado: { logado: 'sim' } },
+    { ok: true, estado: { logado: true, instancia: 'x', processo: null } },
+    { ok: true, estado: { logado: true, instancia: '1g', processo: '123' } },
+    { ok: true, estado: { logado: true, instancia: null, processo: null } },
+    { ok: true, estado: { logado: true, processo: null } }]) {
     const { d } = deps({ enviar: async () => r })
     assert.deepEqual(await abrirPainel(d), { tipo: 'erro', erro: 'LAYOUT' }, JSON.stringify(r))
   }

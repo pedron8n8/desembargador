@@ -20,3 +20,8 @@ test('exceção inesperada vira LAYOUT, nunca escapa', async () => {
   const quebrado = { body: null, querySelector: () => { throw new Error('boom') } } as DocLike
   assert.deepEqual(await responder({ tipo: 'estado' }, quebrado, URL_OK), { ok: false, erro: 'LAYOUT' })
 })
+
+test("tela irreconhecível vira {ok:false, erro:'LAYOUT'} via ErroEproc", async () => {
+  const vazio: DocLike = { body: { className: '' }, querySelector: () => null }
+  assert.deepEqual(await responder({ tipo: 'estado' }, vazio, URL_OK), { ok: false, erro: 'LAYOUT' })
+})
