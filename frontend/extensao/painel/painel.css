@@ -1,0 +1,35 @@
+body {
+  margin: 0;
+  background: var(--papel);
+  color: var(--tinta);
+  font: 14px/1.5 system-ui, sans-serif;
+}
+
+.painel {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+}
+
+.painel p {
+  margin: 0;
+}
+
+.meta {
+  color: var(--tinta-3);
+}
+
+.painel button {
+  justify-self: start;
+  padding: 6px 12px;
+  border: 1px solid var(--selo);
+  border-radius: var(--raio);
+  background: var(--selo);
+  color: var(--papel);
+  cursor: pointer;
+}
+
+.painel button.secundario {
+  background: transparent;
+  color: var(--selo);
+}
