@@ -52,6 +52,9 @@ if exist "frontend\node_modules" (
   pushd frontend
   call npx tsc --noEmit || set FALHOU=1
   call npx stylelint "src/**/*.css" || set FALHOU=1
+  call npm run --silent test:extensao || set FALHOU=1
+  set EXT_API_BASE=http://localhost:5173
+  call npm run --silent build:extensao || set FALHOU=1
   popd
 ) else (
   echo   pulado: rode "npm install" em frontend\ primeiro

@@ -315,3 +315,23 @@ Só o OpenRouter. Nada mais no sistema faz chamada paga.
 
 O rastro de custo por nó sai no fim de cada relatório e fica gravado no
 `feedback.db`.
+
+---
+
+## 8. Extensão do eproc (Chrome)
+
+Gerar, a partir de `frontend/`, apontando para a API que a extensão vai usar:
+
+```powershell
+$env:EXT_API_BASE='https://seu-dominio'   # em dev: http://localhost:5173
+npm run build:extensao
+```
+
+Carregar: `chrome://extensions` → ligar **Modo do desenvolvedor** → **Carregar sem compactação** →
+escolher `frontend/extensao/dist`. Depois de cada build, clique em **Recarregar** no cartão da extensão.
+
+Em dev, entre no sistema por `http://localhost:5173` no mesmo Chrome: o cookie de `localhost` vale para
+qualquer porta, e a extensão chama a API pelo proxy do Vite.
+
+Testes: `npm run test:extensao`. Se houver um `*.har` na raiz, parte dos testes roda contra ele; o HAR
+nunca entra no git.
