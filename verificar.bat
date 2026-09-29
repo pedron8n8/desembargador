@@ -1,6 +1,7 @@
 @echo off
 chcp 65001 >nul
 cd /d "%~dp0"
+setlocal
 set VPY=.venv\Scripts\python.exe
 set FALHOU=0
 
@@ -54,7 +55,10 @@ if exist "frontend\node_modules" (
   call npx stylelint "src/**/*.css" || set FALHOU=1
   call npm run --silent test:extensao || set FALHOU=1
   set EXT_API_BASE=http://localhost:5173
+  set EXT_OUT_DIR=%TEMP%\segundo-cerebro-ext-check
   call npm run --silent build:extensao || set FALHOU=1
+  REM %EXT_OUT_DIR% aqui dentro seria expandido antes do set (bloco entre parenteses).
+  if exist "%TEMP%\segundo-cerebro-ext-check" rmdir /s /q "%TEMP%\segundo-cerebro-ext-check"
   popd
 ) else (
   echo   pulado: rode "npm install" em frontend\ primeiro

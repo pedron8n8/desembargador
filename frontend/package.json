@@ -8,7 +8,7 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "lint:css": "stylelint \"src/**/*.css\"",
-    "build:extensao": "vite build -c vite.extensao.config.ts && esbuild extensao/agente/index.ts --bundle --format=iife --target=chrome116 --outfile=extensao/dist/agente.js",
+    "build:extensao": "node extensao/build.mjs",
     "test:extensao": "node --test \"extensao/**/*.test.ts\""
   },
   "dependencies": {
@@ -24,6 +24,7 @@
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^4.3.4",
+    "esbuild": "^0.28.2",
     "stylelint": "^16.12.0",
     "typescript": "^5.7.2",
     "vite": "^6.0.5"

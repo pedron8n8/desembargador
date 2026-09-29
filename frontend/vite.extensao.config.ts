@@ -5,7 +5,7 @@ import { montarManifest } from './extensao/manifest.ts'
 
 // Painel + service worker saem daqui, em ES modules. O agente (content script)
 // NÃO: content script não pode ser módulo, então sai do esbuild em IIFE (ver
-// o script build:extensao no package.json).
+// extensao/build.mjs, chamado pelo script build:extensao).
 const API_BASE = process.env.EXT_API_BASE ?? ''
 const manifest = montarManifest(API_BASE) // falha o build cedo se faltar a env
 const raiz = (p: string) => fileURLToPath(new URL(p, import.meta.url))
@@ -23,7 +23,8 @@ export default defineConfig({
   ],
   define: { 'import.meta.env.VITE_API_BASE': JSON.stringify(new URL(API_BASE).origin) },
   build: {
-    outDir: raiz('./extensao/dist'),
+    // emptyOutDir apaga a pasta: EXT_OUT_DIR deve apontar para uma pasta descartável.
+    outDir: process.env.EXT_OUT_DIR ?? raiz('./extensao/dist'),
     emptyOutDir: true,
     sourcemap: false,
     rollupOptions: {

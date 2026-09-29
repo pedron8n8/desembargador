@@ -333,5 +333,9 @@ escolher `frontend/extensao/dist`. Depois de cada build, clique em **Recarregar*
 Em dev, entre no sistema por `http://localhost:5173` no mesmo Chrome: o cookie de `localhost` vale para
 qualquer porta, e a extensão chama a API pelo proxy do Vite.
 
+O `verificar.bat` gera a extensão numa pasta temporária e nunca toca em `frontend/extensao/dist`. Para
+mandar um build para outro lugar, defina `EXT_OUT_DIR` (opcional); essa pasta é apagada a cada build, então
+use uma que possa ser descartada.
+
 Testes: `npm run test:extensao`. Se houver um `*.har` na raiz, parte dos testes roda contra ele; o HAR
 nunca entra no git.
