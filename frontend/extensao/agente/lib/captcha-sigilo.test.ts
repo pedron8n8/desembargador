@@ -33,8 +33,11 @@ test('sigilo de documento pelo title', () => {
   assert.equal(nivelDoTitulo(t('2')), 2)
   assert.equal(nivelDoTitulo('NIVEL 3'), 3)
   assert.equal(nivelDoTitulo('sem informação'), null)
+  assert.equal(nivelDoTitulo('Sem Sigilo (Nível 0) ... Nível 2'), 2) // múltiplos níveis → máximo
+  assert.equal(nivelDoTitulo('Nível 10'), 10)
   assert.equal(documentoSigiloso(t('0')), false)
   assert.equal(documentoSigiloso(t('1')), true)
+  assert.equal(documentoSigiloso('Sem Sigilo (Nível 0) ... Nível 2'), true) // máximo > 0
   assert.equal(documentoSigiloso('sem informação'), true) // na dúvida, não sai
   assert.equal(documentoSigiloso(null), true)
 })
@@ -44,6 +47,9 @@ test('separar: públicos na ordem original, sigilosos só contados', () => {
   assert.deepEqual(r.publicos.map((x) => x.n), ['a', 'c'])
   assert.equal(r.sigilosos, 1)
   assert.deepEqual(separar([]), { publicos: [], sigilosos: 0 })
+  const rNull = separar([null as never, { id_sigilo: '0', n: 'x' }])
+  assert.equal(rNull.publicos.length, 1)
+  assert.equal(rNull.sigilosos, 1)
 })
 
 test('exigirPublico lança SIGILOSO', () => {

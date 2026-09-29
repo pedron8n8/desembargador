@@ -21,7 +21,13 @@ for (const har of hars) {
   test(`${har}: estado de captcha gravado é reconhecido`, (t) => {
     const r = respostas('verifica_estado_captcha')
     if (!r.length) return t.skip('sem verifica_estado_captcha neste HAR')
-    for (const x of r) assert.equal(captchaLiberado(x), x.captcha.captcha_imagem === 'false' && Number(x.captcha.codigo_validade) === 1)
+    for (const x of r) {
+      if (!x?.captcha) {
+        assert.equal(captchaLiberado(x), false)
+      } else {
+        assert.equal(captchaLiberado(x), true, 'estado gravado sem desafio deveria liberar')
+      }
+    }
   })
 
   test(`${har}: busca por documento separa públicos e sigilosos sem perder nenhum`, (t) => {
@@ -31,6 +37,8 @@ for (const har of hars) {
       assert.ok(Array.isArray(x.resultados), 'resultados ausente seria LAYOUT')
       const s = separar(x.resultados)
       assert.equal(s.publicos.length + s.sigilosos, x.resultados.length)
+      assert.ok(s.publicos.every((i) => String(i.id_sigilo) === '0'), 'todos públicos devem ter id_sigilo === "0"')
+      assert.equal(s.sigilosos, x.resultados.filter((i) => String(i.id_sigilo) !== '0').length, 'contagem de sigilosos deve conferir')
     }
   })
 }
