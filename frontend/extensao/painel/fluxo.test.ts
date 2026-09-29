@@ -41,6 +41,11 @@ test('sem aba do eproc', async () => {
   assert.deepEqual(await abrirPainel(d), { tipo: 'erro', erro: 'SEM_ABA_EPROC' })
 })
 
+test('abasEproc lança erro: SEM_ABA_EPROC', async () => {
+  const { d } = deps({ abasEproc: async () => { throw new Error('chrome.tabs.query failed') } })
+  assert.deepEqual(await abrirPainel(d), { tipo: 'erro', erro: 'SEM_ABA_EPROC' })
+})
+
 test('várias abas: prefere a ativa; descartada é recarregada antes', async () => {
   const { d, chamadas } = deps({ abasEproc: async () => [aba(1), aba(2, { ativa: true, descartada: true }), aba(3)] })
   const t = await abrirPainel(d)
@@ -60,8 +65,11 @@ test('agente diz não logado', async () => {
 })
 
 test('agente devolve erro conhecido', async () => {
-  const { d } = deps({ enviar: async () => ({ ok: false, erro: 'CAPTCHA' }) })
-  assert.deepEqual(await abrirPainel(d), { tipo: 'erro', erro: 'CAPTCHA' })
+  const ERROS = ['NAO_LOGADO', 'CAPTCHA', 'LAYOUT', 'EPROC_FORA', 'SIGILOSO', 'SEM_ABA_EPROC'] as const
+  for (const tipoErro of ERROS) {
+    const { d } = deps({ enviar: async () => ({ ok: false, erro: tipoErro }) })
+    assert.deepEqual(await abrirPainel(d), { tipo: 'erro', erro: tipoErro }, tipoErro)
+  }
 })
 
 test('resposta fora do formato (agente antigo, undefined, erro inventado): LAYOUT', async () => {

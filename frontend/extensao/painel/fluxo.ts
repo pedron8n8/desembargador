@@ -14,7 +14,14 @@ export type Tela =
   | { tipo: 'erro'; erro: ErroPainel }
   | { tipo: 'pronto'; email: string; abaId: number; estado: Estado }
 
-const ERROS_DO_AGENTE: readonly string[] = ['NAO_LOGADO', 'CAPTCHA', 'LAYOUT', 'EPROC_FORA', 'SIGILOSO', 'SEM_ABA_EPROC']
+const ERROS_DO_AGENTE: Record<TipoErro, true> = {
+  NAO_LOGADO: true,
+  CAPTCHA: true,
+  LAYOUT: true,
+  EPROC_FORA: true,
+  SIGILOSO: true,
+  SEM_ABA_EPROC: true,
+}
 const erro = (e: ErroPainel): Tela => ({ tipo: 'erro', erro: e })
 
 function estadoValido(x: unknown): x is Estado {
@@ -32,7 +39,12 @@ export async function abrirPainel(d: Deps): Promise<Tela> {
     return (e as { status?: number }).status === 401 ? { tipo: 'sem_login' } : erro('SISTEMA_FORA')
   }
 
-  const abas = await d.abasEproc()
+  let abas: Aba[]
+  try {
+    abas = await d.abasEproc()
+  } catch {
+    return erro('SEM_ABA_EPROC') // chrome.tabs.query ou outro erro na busca de abas
+  }
   const aba = abas.find((a) => a.ativa) ?? abas[0]
   if (!aba) return erro('SEM_ABA_EPROC')
 
@@ -45,7 +57,7 @@ export async function abrirPainel(d: Deps): Promise<Tela> {
   }
 
   const resp = r as { ok?: unknown; erro?: unknown; estado?: unknown } | null
-  if (resp?.ok === false && typeof resp.erro === 'string' && ERROS_DO_AGENTE.includes(resp.erro)) return erro(resp.erro as TipoErro)
+  if (resp?.ok === false && typeof resp.erro === 'string' && Object.hasOwn(ERROS_DO_AGENTE, resp.erro)) return erro(resp.erro as TipoErro)
   if (resp?.ok !== true || !estadoValido(resp.estado)) return erro('LAYOUT')
   if (!resp.estado.logado) return erro('NAO_LOGADO')
   return { tipo: 'pronto', email, abaId: aba.id, estado: resp.estado }
