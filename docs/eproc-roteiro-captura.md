@@ -74,3 +74,5 @@ Só se a base já estiver pronta e o advogado tiver conta no nosso sistema.
 2. Entre no nosso sistema no mesmo Chrome.
 3. Com o eproc aberto, clique no ícone da extensão e confira os quatro itens do checklist do spec da base
    (`docs/superpowers/specs/2026-09-29-eproc-extensao-base-design.md`, seção Testes).
+4. Com uma aba do eproc aberta, clique em **Recarregar** no cartão da extensão em `chrome://extensions`, volte à aba
+   e abra o painel: ele deve responder sem precisar atualizar a página do eproc (é o caso de atualização da extensão).

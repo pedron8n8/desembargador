@@ -17,6 +17,7 @@
 3. **O processo aberto vem da URL, não do DOM.** A tela de detalhe é `controlador.php?acao=processo_selecionar&...&num_processo=<20 dígitos>`. O `id="txtNumProcesso"` que o guia cita não existe no HTML gravado (só existe `txtNumProcessoPesquisaRapida`, que é o campo de busca).
 4. **Política em `/privacidade.html`, estática**, em `frontend/public/`. O FastAPI já serve arquivos reais de `dist/` sem login (`api/app.py:1164-1171`), e uma página React exigiria login.
 5. **Erro a mais no painel: `SISTEMA_FORA`**, para quando a nossa API não responde (qualquer falha que não seja 401). O spec não previa esse caso, e sem ele a tela ficaria muda.
+6. **`frontend/src/api.ts` muda**: a base da API vem de `VITE_API_BASE` e o `fetch` usa `credentials: 'include'`, para o painel (página `chrome-extension://`) conversar com a API. No site, `VITE_API_BASE` é indefinido e nada muda.
 
 ## Global Constraints
 
@@ -1560,6 +1561,7 @@ Os itens 2 a 4 da seção Testes do spec, seguindo o bloco "Se sobrar tempo" de 
 2. Logado, num processo: o painel mostra a instância e o número formatado.
 3. Logado, fora de processo: "Nenhum processo aberto nesta aba.".
 4. Depois de sair do eproc: "Sua sessão no eproc caiu…".
+5. Com uma aba do eproc aberta, clique em **Recarregar** no cartão da extensão em `chrome://extensions`, volte à aba e abra o painel: ele deve responder sem precisar atualizar a página do eproc (é o caso de atualização da extensão).
 
 Se algum seletor falhar (por exemplo, o painel diz `NAO_LOGADO` estando logado), o HAR gravado na mesma call mostra o HTML certo. Ajuste `estado.ts` e o teste dele.
 

@@ -1,5 +1,7 @@
-// Cliente da API. Same-origin (o Vite faz proxy de /api), então o cookie de
-// sessão vai sozinho e não há CORS nem `credentials` para configurar.
+// Cliente da API. No site as rotas são same-origin (o Vite faz proxy de /api) e o
+// cookie de sessão vai sozinho. No painel da extensão, `VITE_API_BASE` prefixa a
+// rota e `credentials: 'include'` manda o cookie entre origens (permitido porque
+// a extensão tem host_permissions para a origem da API).
 
 export class ErroApi extends Error {
   constructor(public status: number, mensagem: string) {
