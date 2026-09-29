@@ -1,7 +1,6 @@
 # Extensão eproc — "Analisar este processo" (subprojeto B)
 
-Data: 29/09/2026. Status: **rascunho**. Escrito enquanto os HARs do TJSC não chegam. As decisões marcadas
-**[DECIDIR]** foram tomadas por mim como padrão e precisam do seu ok. As marcadas **[HAR]** dependem do
+Data: 29/09/2026. Status: **aprovado em 29/09/2026** (decisões [DECIDIR] aceitas; itens [HAR] ainda pendentes). As marcadas **[HAR]** dependem do
 subprojeto 0.
 
 Depende de: base (A), `2026-09-29-eproc-extensao-base-design.md`.

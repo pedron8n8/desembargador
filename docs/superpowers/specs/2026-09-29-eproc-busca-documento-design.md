@@ -1,6 +1,6 @@
 # Extensão eproc — busca por CPF/CNPJ (subprojeto C)
 
-Data: 29/09/2026. Status: **rascunho**. As decisões marcadas **[DECIDIR]** precisam do seu ok. As marcadas
+Data: 29/09/2026. Status: **aprovado em 29/09/2026** (decisões [DECIDIR] aceitas; itens [HAR] ainda pendentes). As marcadas
 **[HAR]** dependem do subprojeto 0.
 
 Depende de: base (A). Referência: `eproc_guia_tecnico_extensao.md`, seções 5 a 7, 17 e 18 (fluxo validado na

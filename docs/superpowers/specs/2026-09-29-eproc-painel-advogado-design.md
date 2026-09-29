@@ -1,8 +1,8 @@
 # Extensão eproc — painel do advogado (subprojeto D)
 
-Data: 29/09/2026. Status: **rascunho e o mais dependente de HAR dos quatro**. Não há nenhuma captura da tela
+Data: 29/09/2026. Status: **aprovado em 29/09/2026** (decisões [DECIDIR] aceitas; itens [HAR] ainda pendentes). Não há nenhuma captura da tela
 `painel_adv_listar`, então o desenho abaixo é o comportamento desejado. Os seletores e as chamadas serão
-definidos quando o HAR chegar. As decisões marcadas **[DECIDIR]** precisam do seu ok.
+definidos quando o HAR chegar.
 
 Depende de: base (A). O botão "Analisar" depende de B.
 

@@ -1,6 +1,6 @@
 # Extensão eproc — base (subprojeto A)
 
-Data: 29/09/2026. Status: aguardando revisão.
+Data: 29/09/2026. Status: aprovado em 29/09/2026.
 
 ## Contexto e objetivo
 

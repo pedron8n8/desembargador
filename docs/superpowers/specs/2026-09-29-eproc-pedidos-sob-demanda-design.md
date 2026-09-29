@@ -1,6 +1,6 @@
 # Extensão eproc — pedidos sob demanda durante a consulta (subprojeto E)
 
-Data: 29/09/2026. Status: **rascunho**. As decisões marcadas **[DECIDIR]** precisam do seu ok. Não depende de
+Data: 29/09/2026. Status: **aprovado em 29/09/2026** (decisões [DECIDIR] aceitas; itens [HAR] ainda pendentes). Não depende de
 HAR novo, porque usa as primitivas de B.
 
 Depende de: A e B. Usa o campo `origem` que B grava na consulta.
