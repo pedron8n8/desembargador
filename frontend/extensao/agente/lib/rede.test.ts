@@ -117,3 +117,16 @@ test('fila: um erro não trava as chamadas seguintes', async () => {
   assert.equal(await tipoDe(rede.postar('a', [])), 'EPROC_FORA')
   assert.deepEqual(await rede.postar('a', []), { ok: 1 })
 })
+
+test('timeout durante leitura do corpo vira EPROC_FORA', async () => {
+  const respostaComTimeout = {
+    ok: true,
+    status: 200,
+    url: BASE,
+    redirected: false,
+    arrayBuffer: async () => { throw new DOMException('t', 'TimeoutError') },
+  } as unknown as Response
+  const rede = criarRede({ base: BASE, ...semEspera, fetch: async () => respostaComTimeout })
+  assert.equal(await tipoDe(rede.postar('a', [])), 'EPROC_FORA')
+  assert.equal(await tipoDe(rede.baixarPagina('a')), 'EPROC_FORA')
+})

@@ -60,7 +60,12 @@ export function criarRede(op: Opcoes) {
     if (r.status === 401 || r.status === 403) throw new ErroEproc('NAO_LOGADO', 'status ' + r.status)
     if (!r.ok) throw new ErroEproc('EPROC_FORA', 'status ' + r.status)
     if (r.redirected && URL_LOGIN.test(new URL(r.url).pathname)) throw new ErroEproc('NAO_LOGADO', 'redirecionado')
-    const texto = decodificar(await r.arrayBuffer())
+    let texto: string
+    try {
+      texto = decodificar(await r.arrayBuffer())
+    } catch (e) {
+      throw new ErroEproc('EPROC_FORA', String(e))
+    }
     if (PARECE_LOGIN.test(texto.slice(0, 20000))) throw new ErroEproc('NAO_LOGADO', 'tela de login')
     return texto
   }
@@ -80,6 +85,9 @@ export function criarRede(op: Opcoes) {
         }
       })
     },
+    // Contrato: garante apenas "não é uma tela de login óbvia" (detecta via campo
+    // de senha ou redirecionamento). Cada chamador DEVE validar que a página contém
+    // os elementos esperados; nunca retorna resultado vazio.
     baixarPagina(url: string): Promise<string> {
       return naFila(() => requisitar(url, { method: 'GET' }))
     },
