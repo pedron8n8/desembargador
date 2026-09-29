@@ -15,7 +15,8 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
-    "types": ["vite/client"]
+    "types": ["vite/client", "chrome"]
   },
-  "include": ["src"]
+  "include": ["src", "extensao"],
+  "exclude": ["extensao/**/*.test.ts", "extensao/dist"]
 }

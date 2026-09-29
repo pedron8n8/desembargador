@@ -9,7 +9,11 @@ export class ErroApi extends Error {
 
 export async function req<T>(rota: string, init?: RequestInit): Promise<T> {
   const mutante = init?.method && init.method !== 'GET'
-  const r = await fetch(rota, {
+  // No site, VITE_API_BASE é undefined e a rota continua relativa (same-origin).
+  // No painel da extensão, a página é chrome-extension://, então a rota precisa
+  // da origem da API, e o cookie só vai com credentials: 'include'.
+  const r = await fetch((import.meta.env.VITE_API_BASE ?? '') + rota, {
+    credentials: 'include',
     ...init,
     headers: {
       ...(init?.body ? { 'Content-Type': 'application/json' } : {}),
