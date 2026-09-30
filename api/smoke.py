@@ -100,6 +100,14 @@ def main():
         assert modulo_app._origem({"origem": {"eproc": "5" * 20, "instancia": "2g",
                                               "extra": "ignorado"}}) == \
             {"eproc": "5" * 20, "instancia": "2g"}
+        # digitos nao-ASCII (ex.: arabe-indicos) nao sao "20 digitos": \d do Python 3 os aceita
+        from fastapi import HTTPException
+        try:
+            modulo_app._origem({"origem": {"eproc": "٠" * 20, "instancia": "1g"}})
+        except HTTPException as e:
+            assert e.status_code == 400, e.status_code
+        else:
+            raise AssertionError("_origem aceitou digitos nao-ASCII")
 
         # formato invalido e' 400; a validacao vem antes do cerebro e do pool, entao
         # nao gasta LLM
