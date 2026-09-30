@@ -48,3 +48,16 @@ test('texto vazio e texto enorme: termina, sem travar nas expressões regulares'
   const enorme = 'a1 '.repeat(40000) + '529.982.247-25 ' + '12.345.678/9012'.repeat(5000)
   assert.ok(minimizar(enorme).includes('[CPF]'))
 })
+
+test('OAB seguido de muito espaço em branco não trava (tempo linear)', () => {
+  for (const sujo of ['OAB' + ' '.repeat(200000) + 'x', 'OAB '.repeat(50000), 'OAB/SC' + ' '.repeat(200000) + 'x']) {
+    const t0 = performance.now()
+    minimizar(sujo)
+    assert.ok(performance.now() - t0 < 1000, 'demorou demais: ' + Math.round(performance.now() - t0) + ' ms')
+  }
+})
+
+test('as formas de OAB continuam sendo reconhecidas com espaço antes da barra', () => {
+  assert.equal(minimizar('OAB /SC 12.345'), '[OAB]')
+  assert.equal(minimizar('OAB  -  RS  nº  123456'), '[OAB]')
+})

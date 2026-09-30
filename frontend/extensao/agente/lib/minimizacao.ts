@@ -13,7 +13,7 @@ const REGRAS: [RegExp, string][] = [
   [/\b\d{3}\.\d{3}\.\d{3}-\d{2}\b/g, '[CPF]'],
   [/\b\d{14}\b/g, '[CNPJ]'],
   [/\b\d{11}\b/g, '[CPF]'],
-  [new RegExp(String.raw`\bOAB\s*[/-]?\s*(?:${UFS})\s*(?:n[º°o.]*\s*)?[\d.]{3,9}[A-Z]?\b`, 'gi'), '[OAB]'], // OAB/SC 12.345
+  [new RegExp(String.raw`\bOAB\s*(?:[/-]\s*)?(?:${UFS})\s*(?:n[º°o.]*\s*)?[\d.]{3,9}[A-Z]?\b`, 'gi'), '[OAB]'], // OAB/SC 12.345
   [new RegExp(String.raw`\b(?:${UFS})\d{4,6}[A-Z]?\b`, 'g'), '[OAB]'], // RS012345, como aparece na tela
 ]
 
