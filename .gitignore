@@ -31,3 +31,6 @@ caddy_config/
 # eproc — HAR tem nomes reais de partes e URLs assinadas da sessao do advogado
 *.har
 /eproc_guia_tecnico_extensao.md
+
+# cache por sessao do hook de design (caminhos absolutos da maquina); a config.json ao lado e versionada
+.landingperfect/hook.cache.json

@@ -1,0 +1,17 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "cream-palette",
+        "value": "*",
+        "files": [
+          "frontend/public/privacidade.html"
+        ],
+        "createdAt": "2026-09-29T22:41:33.530Z",
+        "reason": "user confirmed: #faf8f4 é o token --papel do design system do projeto (frontend/src/estilo/tokens.css)"
+      }
+    ]
+  }
+}
