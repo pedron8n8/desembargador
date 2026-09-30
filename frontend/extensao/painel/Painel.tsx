@@ -1,17 +1,18 @@
 import { useCallback, useEffect, useState } from 'react'
 import { executar, depsChrome } from './chrome.ts'
-import { abrirPainel, type Tela } from './fluxo.ts'
+import { abrirPainel, type Deps, type Tela } from './fluxo.ts'
 import { diagnostico, MENSAGENS } from './mensagens.ts'
 
 const VERSAO = chrome.runtime.getManifest().version
 const formatar = (n: string) => n.replace(/^(\d{7})(\d{2})(\d{4})(\d)(\d{2})(\d{4})$/, '$1-$2.$3.$4.$5.$6')
 
-export function Painel() {
+// `deps` só muda na página de demonstração (demo.tsx), que injeta um eproc de mentira.
+export function Painel({ deps = depsChrome }: { deps?: Deps }) {
   const [tela, setTela] = useState<Tela | null>(null)
   const carregar = useCallback(() => {
     setTela(null)
-    abrirPainel(depsChrome).then(setTela, () => setTela({ tipo: 'erro', erro: 'LAYOUT' }))
-  }, [])
+    abrirPainel(deps).then(setTela, () => setTela({ tipo: 'erro', erro: 'LAYOUT' }))
+  }, [deps])
   useEffect(carregar, [carregar])
 
   if (!tela) return <main className="painel"><p className="meta">Verificando…</p></main>

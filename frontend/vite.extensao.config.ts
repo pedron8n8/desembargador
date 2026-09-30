@@ -28,7 +28,13 @@ export default defineConfig({
     emptyOutDir: true,
     sourcemap: false,
     rollupOptions: {
-      input: { painel: raiz('./extensao/painel.html'), sw: raiz('./extensao/sw.ts') },
+      input: {
+        painel: raiz('./extensao/painel.html'),
+        sw: raiz('./extensao/sw.ts'),
+        // Página de demonstração com dados fictícios: só no build de apresentação,
+        // nunca no pacote da loja.
+        ...(process.env.EXT_DEMO === '1' ? { demo: raiz('./extensao/demo.html') } : {}),
+      },
       output: { entryFileNames: '[name].js', chunkFileNames: 'chunks/[name].js', assetFileNames: 'assets/[name][extname]' },
     },
   },

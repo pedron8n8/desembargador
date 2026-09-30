@@ -339,3 +339,19 @@ use uma que possa ser descartada.
 
 Testes: `npm run test:extensao`. Se houver um `*.har` na raiz, parte dos testes roda contra ele; o HAR
 nunca entra no git.
+
+### Demonstração da extensão (sem login e sem eproc)
+
+Para apresentar o painel sem conta no sistema e sem estar logado no eproc, gere um build de demonstração
+numa pasta própria (PowerShell, a partir de `frontend/`):
+
+```powershell
+$env:EXT_DEMO='1'; $env:EXT_API_BASE='http://localhost:5173'; $env:EXT_OUT_DIR="$PWD\extensao\dist-demo"
+npm run build:extensao
+Remove-Item Env:EXT_DEMO, Env:EXT_OUT_DIR
+```
+
+Carregue `frontend/extensao/dist-demo` em `chrome://extensions`. Copie o **ID** da extensão no cartão dela e
+abra `chrome-extension://<ID>/demo.html`: a página mostra o painel de verdade com dados fictícios e uma lista
+de cenários (processo aberto no 1º e no 2º grau, sessão caída, captcha, sigilo, sistema fora do ar...).
+`EXT_DEMO` nunca deve estar definida no build que vai para a loja: a página de demonstração só existe nele.
