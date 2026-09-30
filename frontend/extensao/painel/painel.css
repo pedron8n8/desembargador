@@ -66,3 +66,8 @@ textarea.caso {
   opacity: 0.5;
   cursor: default;
 }
+
+.lista li.destaque {
+  padding-left: 8px;
+  border-left: 3px solid var(--alerta);
+}

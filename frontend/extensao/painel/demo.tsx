@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import '../../src/estilo/tokens.css'
 import './painel.css'
+import { fonteAdvogadoDemo } from './advogado/demo-advogado.ts'
 import { apiDemo, fonteDemo } from './analisar/demo-analise.ts'
 import { cenarios } from './demo-cenarios.ts'
 import { Painel } from './Painel.tsx'
@@ -13,6 +14,7 @@ function Demo() {
   const lista = useMemo(() => cenarios(), [])
   const fonte = useMemo(() => fonteDemo(), [])
   const api = useMemo(() => apiDemo(), [])
+  const advogado = useMemo(() => fonteAdvogadoDemo(), [])
   const [i, setI] = useState(0)
   return (
     <div style={{ display: 'flex', gap: 32, padding: 24, alignItems: 'flex-start', flexWrap: 'wrap' }}>
@@ -36,7 +38,7 @@ function Demo() {
         </div>
       </div>
       <div style={{ width: 344, border: '1px solid var(--linha-forte)', background: 'var(--papel)' }}>
-        <Painel key={lista[i].id} deps={lista[i].deps} fonte={fonte} api={api} abrir={() => {}} />
+        <Painel key={lista[i].id} deps={lista[i].deps} fonte={fonte} api={api} advogado={advogado} abrir={() => {}} />
       </div>
     </div>
   )

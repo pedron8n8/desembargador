@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
+import { Advogado } from './advogado/Advogado.tsx'
+import type { FonteAdvogado } from './advogado/fonteAdvogado.ts'
 import { Analisar } from './analisar/Analisar.tsx'
 import type { ApiAnalise } from './analisar/apiAnalise.ts'
 import type { Fonte } from './analisar/fonte.ts'
@@ -13,11 +15,12 @@ const formatar = (n: string) => n.replace(/^(\d{7})(\d{2})(\d{4})(\d)(\d{2})(\d{
 // que injeta um eproc e um servidor de mentira. No painel de verdade `fonte` fica
 // indefinida até as primitivas de rede da B existirem, e sem ela o botão "Analisar"
 // nem aparece: nenhum botão que não funciona.
-type Props = { deps?: Deps; fonte?: Fonte; api?: ApiAnalise; abrir?: (url: string) => void }
+type Props = { deps?: Deps; fonte?: Fonte; api?: ApiAnalise; advogado?: FonteAdvogado; abrir?: (url: string) => void }
 
-export function Painel({ deps = depsChrome, fonte, api, abrir = abrirAba }: Props) {
+export function Painel({ deps = depsChrome, fonte, api, advogado, abrir = abrirAba }: Props) {
   const [tela, setTela] = useState<Tela | null>(null)
   const [analisando, setAnalisando] = useState(false)
+  const [noAdvogado, setNoAdvogado] = useState(false)
   const carregar = useCallback(() => {
     setTela(null)
     abrirPainel(deps).then(setTela, () => setTela({ tipo: 'erro', erro: 'LAYOUT' }))
@@ -59,6 +62,7 @@ export function Painel({ deps = depsChrome, fonte, api, abrir = abrirAba }: Prop
         abrir={abrir} sair={() => setAnalisando(false)} />
     )
   }
+  if (noAdvogado && advogado) return <Advogado fonte={advogado} instancia={estado.instancia} sair={() => setNoAdvogado(false)} />
   return (
     <main className="painel">
       <p className="meta">{email}</p>
@@ -69,6 +73,7 @@ export function Painel({ deps = depsChrome, fonte, api, abrir = abrirAba }: Prop
         <p className="meta">Nenhum processo aberto nesta aba.</p>
       )}
       {estado.processo && fonte && api && <button onClick={() => setAnalisando(true)}>Analisar este processo</button>}
+      {advogado && <button onClick={() => setNoAdvogado(true)}>Intimações e prazos</button>}
       <button className="secundario" onClick={carregar}>Atualizar</button>
     </main>
   )

@@ -1,4 +1,5 @@
 import { ErroEproc } from './erros.ts'
+import { acaoProibida } from './proibidas.ts'
 
 // O controlador_ajax declara iso-8859-1 até em JSON; response.text() assumiria
 // UTF-8 e estragaria acento cru. Estrito primeiro, porque UTF-8 válido quase
@@ -20,6 +21,8 @@ type Opcoes = {
   intervaloMs?: number
   esperar?: (ms: number) => Promise<void>
   agora?: () => number
+  /** Ações que esta rede nunca dispara (ver proibidas.ts). Padrão: ACOES_PROIBIDAS. */
+  proibidas?: readonly string[]
 }
 
 export function criarRede(op: Opcoes) {
@@ -44,6 +47,12 @@ export function criarRede(op: Opcoes) {
     })
     fila = vez.catch(() => {})
     return vez
+  }
+
+  // Recusa ANTES de entrar na fila: não gasta o intervalo e nem toca o eproc.
+  function recusar(url: string): Promise<never> | null {
+    const a = acaoProibida(url, op.proibidas)
+    return a ? Promise.reject(new ErroEproc('LAYOUT', 'ação proibida: ' + a)) : null
   }
 
   async function requisitar(url: string, init: RequestInit): Promise<string> {
@@ -72,6 +81,8 @@ export function criarRede(op: Opcoes) {
 
   return {
     postar(url: string, pares: [string, string][]): Promise<unknown> {
+      const barrada = recusar(url)
+      if (barrada) return barrada
       return naFila(async () => {
         const texto = await requisitar(url, {
           method: 'POST',
@@ -89,6 +100,8 @@ export function criarRede(op: Opcoes) {
     // de senha ou redirecionamento). Cada chamador DEVE validar que a página contém
     // os elementos esperados; nunca retorna resultado vazio.
     baixarPagina(url: string): Promise<string> {
+      const barrada = recusar(url)
+      if (barrada) return barrada
       return naFila(() => requisitar(url, { method: 'GET' }))
     },
   }
