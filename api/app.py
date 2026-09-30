@@ -421,6 +421,21 @@ def _pedido(corpo):
                         "excluir": tuple(f.get("excluir") or ())}
 
 
+def _origem(corpo):
+    """De onde veio a consulta: {'eproc': '<20 digitos>', 'instancia': '1g'|'2g'}
+    quando veio da extensao do eproc, None quando veio do site. Formato invalido
+    e' 400: gravar lixo aqui viraria "veio do eproc, processo <lixo>" no site."""
+    o = corpo.get("origem")
+    if o is None:
+        return None
+    if (not isinstance(o, dict) or not isinstance(o.get("eproc"), str)
+            or not re.fullmatch(r"\d{20}", o["eproc"])
+            or o.get("instancia") not in ("1g", "2g")):
+        raise HTTPException(400, "origem inválida: use {eproc: 20 dígitos, "
+                                 "instancia: '1g' ou '2g'}")
+    return {"eproc": o["eproc"], "instancia": o["instancia"]}
+
+
 def _novo_thread(c, sufixo=""):
     thread = dt.datetime.now().strftime("%Y%m%d-%H%M%S") + sufixo
     if c.execute("SELECT 1 FROM execucao WHERE thread=?", (thread,)).fetchone():
@@ -449,6 +464,7 @@ def _cerebro_para_rodar(slug):
 async def rodar(request: Request, c=Depends(conexao), u=Depends(atual)):
     corpo = await request.json()
     caso, tese, filtros = _pedido(corpo)
+    origem = _origem(corpo)
     if execucao.vivas_de(c, u["email"]) >= MAX_VIVAS_POR_USUARIO:
         raise HTTPException(429, "você já tem %d consultas na fila; espere uma "
                                  "terminar" % MAX_VIVAS_POR_USUARIO)
@@ -456,7 +472,7 @@ async def rodar(request: Request, c=Depends(conexao), u=Depends(atual)):
     thread = _novo_thread(c)
     execucao.iniciar(thread, u["email"], caso, tese=tese, filtros=filtros,
                      so_prognostico=bool(corpo.get("so_prognostico")),
-                     cerebro=cerebro)
+                     cerebro=cerebro, origem=origem)
     return {"thread": thread, "cerebro": cerebro}
 
 
@@ -675,6 +691,8 @@ def detalhe(thread: str, c=Depends(conexao), u=Depends(atual)):
                         segundos=r["segundos"] if r else None, markdown=texto)
     d["estado"] = r["estado"] if r else "pronto"
     d["erro"] = r["erro"] if r else None
+    d["origem"] = ({"eproc": r["origem_eproc"], "instancia": r["origem_instancia"]}
+                   if r and r["origem_eproc"] else None)
     d["proximo_no"] = st.next[0] if st.next else None
     return d
 

@@ -107,6 +107,12 @@ def _migrar(c):
     if _coluna(c, "execucao", "comparacao", "comparacao TEXT"):
         feito.append("execucao.comparacao")
     c.execute("CREATE INDEX IF NOT EXISTS ix_exec_comparacao ON execucao(comparacao)")
+    # De onde veio a consulta, quando veio do eproc (extensao): numero do processo
+    # (20 digitos) e instancia ('1g'|'2g'). NULL em toda consulta feita no site.
+    if _coluna(c, "execucao", "origem_eproc", "origem_eproc TEXT"):
+        feito.append("execucao.origem_eproc")
+    if _coluna(c, "execucao", "origem_instancia", "origem_instancia TEXT"):
+        feito.append("execucao.origem_instancia")
     return feito
 
 

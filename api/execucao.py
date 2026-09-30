@@ -303,8 +303,11 @@ def vivas_de(conn, email):
 
 
 def iniciar(thread, email, caso, tese="neutra", filtros=None, so_prognostico=False,
-            cerebro=None, comparacao=None):
+            cerebro=None, comparacao=None, origem=None):
+    """`origem`: {'eproc': '<20 digitos>', 'instancia': '1g'|'2g'} quando a
+    consulta veio da extensao do eproc; None quando veio do site."""
     cerebro = cerebros.resolver(cerebro)
+    origem = origem or {}
     c = db()
     try:
         with c:
@@ -313,9 +316,10 @@ def iniciar(thread, email, caso, tese="neutra", filtros=None, so_prognostico=Fal
             c.execute(
                 "INSERT OR REPLACE INTO execucao "
                 "(thread, email, estado, criado_em, so_prognostico, cerebro, "
-                " comparacao) VALUES (?,?,?,?,?,?,?)",
+                " comparacao, origem_eproc, origem_instancia) "
+                "VALUES (?,?,?,?,?,?,?,?,?)",
                 (thread, email, "fila", _agora(), int(bool(so_prognostico)),
-                 cerebro, comparacao))
+                 cerebro, comparacao, origem.get("eproc"), origem.get("instancia")))
             c.execute("INSERT OR REPLACE INTO dono (thread, email) VALUES (?,?)",
                       (thread, email))
     finally:

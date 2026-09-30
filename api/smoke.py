@@ -35,6 +35,7 @@ from src import cerebros                           # noqa: E402
 
 from . import app as modulo_app                    # noqa: E402
 from . import auth                                 # noqa: E402
+from . import execucao                             # noqa: E402
 
 SENHA = "senha-de-teste-longa"
 CAB = {"X-Requerido-Por": "web"}
@@ -90,6 +91,52 @@ def main():
                         headers=CAB).status_code == 400
         assert cli.post("/api/consultas", json={"caso": "x", "tese": "inventada"},
                         headers=CAB).status_code == 400
+
+        # --- origem (consulta que veio da extensao do eproc). Primeiro a funcao pura,
+        # SEM nenhum POST: se ela ainda nao existir, o smoke tem de cair aqui, e nao
+        # depois de um POST aceito por engano (que rodaria LLM de verdade).
+        assert modulo_app._origem({}) is None
+        assert modulo_app._origem({"origem": None}) is None
+        assert modulo_app._origem({"origem": {"eproc": "5" * 20, "instancia": "2g",
+                                              "extra": "ignorado"}}) == \
+            {"eproc": "5" * 20, "instancia": "2g"}
+
+        # formato invalido e' 400; a validacao vem antes do cerebro e do pool, entao
+        # nao gasta LLM
+        for ruim in ("x", "", {}, {"eproc": "123", "instancia": "1g"},
+                     {"eproc": "5" * 20, "instancia": "3g"},
+                     {"eproc": 5 * 10 ** 19, "instancia": "1g"},
+                     {"eproc": "5" * 20}):
+            assert cli.post("/api/consultas", json={"caso": "x", "origem": ruim},
+                            headers=CAB).status_code == 400, ruim
+
+        # ... e a origem valida vira coluna. Chama iniciar() com o pool trocado por
+        # um que nao roda nada: rodar de verdade gastaria LLM.
+        class _SemPool:
+            def submit(self, *a, **k):
+                return None
+
+        pool_real = execucao.pool
+        execucao.pool = lambda: _SemPool()
+        try:
+            execucao.iniciar("t-origem", "adv@teste.com", "caso",
+                             origem={"eproc": "5" * 20, "instancia": "2g"})
+            execucao.iniciar("t-sem-origem", "adv@teste.com", "caso")
+        finally:
+            execucao.pool = pool_real
+        c = esquema.db()
+        try:
+            linha = lambda t: tuple(c.execute(          # noqa: E731
+                "SELECT origem_eproc, origem_instancia FROM execucao WHERE thread=?",
+                (t,)).fetchone())
+            assert linha("t-origem") == ("5" * 20, "2g"), linha("t-origem")
+            assert linha("t-sem-origem") == (None, None)
+            # nao ficar na fila: essas linhas contariam para o teto de consultas vivas
+            with c:
+                c.execute("UPDATE execucao SET estado='pronto' "
+                          "WHERE thread IN ('t-origem','t-sem-origem')")
+        finally:
+            c.close()
 
         # --- acervo
         corpus = cli.get("/api/corpus?por_pagina=5").json()
