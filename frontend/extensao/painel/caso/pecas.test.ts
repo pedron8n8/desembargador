@@ -1,7 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import type { Peca } from '../../agente/lib/caso.ts'
-import { preselecionar, TIPOS } from './pecas.ts'
+import { bloqueadasPorSigilo, preselecionar, TIPOS } from './pecas.ts'
 
 const SENT = TIPOS.sentenca[0], DEC = TIPOS.decisao[0], REC = TIPOS.recurso[0], INIC = TIPOS.inicial[0], CONT = TIPOS.contestacao[0]
 const p = (tipo: string, evento: number, extra: Partial<Peca> = {}): Peca => ({
@@ -50,4 +50,19 @@ test('empate de número de evento é resolvido de forma estável (a primeira da 
   const a = p(SENT, 10, { ref: 'a' }), b = p(SENT, 10, { ref: 'b' })
   assert.equal(preselecionar([a, b])[0].peca.ref, 'a')
   assert.equal(preselecionar([b, a])[0].peca.ref, 'b')
+})
+
+test('bloqueadasPorSigilo: diz quais papéis têm a peça escolhida em sigilo', () => {
+  assert.deepEqual(bloqueadasPorSigilo([p(SENT, 40, { sigiloso: true }), p(DEC, 30)]), ['decisao'])
+  assert.deepEqual(bloqueadasPorSigilo([p(INIC, 1, { sigiloso: true }), p(SENT, 40)]), ['inicial'])
+  assert.deepEqual(bloqueadasPorSigilo([p(SENT, 40), p(REC, 45, { sigiloso: true })]), ['recurso'])
+})
+
+test('bloqueadasPorSigilo: nada em sigilo, ou nada a escolher, dá lista vazia', () => {
+  assert.deepEqual(bloqueadasPorSigilo([p(SENT, 40), p(INIC, 1)]), [])
+  assert.deepEqual(bloqueadasPorSigilo([]), [])
+})
+
+test('preselecionar não muda: continua ignorando as sigilosas', () => {
+  assert.deepEqual(resumo([p(SENT, 40, { sigiloso: true }), p(DEC, 30)]), ['decisao:30'])
 })
