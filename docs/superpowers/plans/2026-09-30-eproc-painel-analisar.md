@@ -15,6 +15,14 @@
 - A `Fonte` real (primitivas `processo`, `eventos`, `documento` que leem o HTML do eproc do TJSC) e a ligação do botão no painel de verdade (`main.tsx` passaria `fonte` e `apiReal`): depende do HAR do TJSC.
 - Teste manual no Chrome: por decisão do usuário, **todo o teste manual fica para o final**. Os testes automatizados de cada tarefa (TDD) rodam normalmente.
 - Conversa sobre o processo, nota e feedback no painel, análise em lote: ver `docs/eproc-features-futuras.md`.
+- **Obrigações do plano da ligação real (Fonte e apiReal), apontadas na revisão final:**
+  - implementar a `Fonte` presa ao processo e à aba capturados no clique do botão (hoje só a `origem` é capturada; se o advogado navegar a aba do eproc para outro processo no meio do fluxo, os documentos poderiam vir de outro processo);
+  - passar `fonte` e `apiReal` como constantes de módulo a partir do `main.tsx` (o efeito de `Analisar` depende de `[fonte, api]`) e comentar isso;
+  - decidir a política dos documentos em arquivo (PDF com camada de texto extraído no navegador, ou OCR de terceiros com consentimento e texto honesto em `/privacidade`; a linha de `/privacidade` ainda não existe no site);
+  - a `Fonte` real só lança `ErroEproc`, sem URL ou hash nas mensagens;
+  - teste manual do cookie `SameSite=Lax` a partir da origem da extensão (`/api/cerebros`, POST e o GET de streaming);
+  - teste que garanta que o `painel.js` de produção não contém `demo-` nem strings da API fictícia;
+  - decidir se o painel precisa dos filtros de classe e ano da consulta (a spec do B cita "filtros" junto do cérebro e da tese; o painel os omite).
 
 ## Global Constraints
 
