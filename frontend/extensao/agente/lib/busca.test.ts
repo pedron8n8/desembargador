@@ -93,3 +93,13 @@ test('item nulo ou não-objeto na lista conta como sigiloso: fail closed, sem ex
   assert.equal(r.processos.length, 1)
   assert.equal(r.sigilosos, 2)
 })
+
+test('link sem query antes do # ganha "?" (não "&")', () => {
+  assert.equal(linkDoProcesso('controlador.php#_processo=1&hash=h'), 'controlador.php?num_processo=1&hash=h')
+})
+
+test('resultado público com número numérico, link vazio ou link não-string é LAYOUT', () => {
+  assert.throws(() => lerBusca({ resultados: [item({ nr_processo: 50012345620208240023 })] }), eLayout)
+  assert.throws(() => lerBusca({ resultados: [item({ linkProcessoAssinado: '' })] }), eLayout)
+  assert.throws(() => lerBusca({ resultados: [item({ linkProcessoAssinado: 7 })] }), eLayout)
+})

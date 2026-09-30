@@ -70,7 +70,8 @@ export function linkDoProcesso(linkAssinado: string): string {
   const hash = frag.get('hash')
   if (!numero || !hash) throw new ErroEproc('LAYOUT', 'link do processo sem número ou hash')
   const params = new URLSearchParams({ num_processo: numero, hash })
-  return `${linkAssinado.slice(0, i)}&${params.toString()}`
+  const antes = linkAssinado.slice(0, i)
+  return `${antes}${antes.includes('?') ? '&' : '?'}${params.toString()}`
 }
 
 export type ProcessoDaLista = {
@@ -108,7 +109,7 @@ export function lerBusca(resposta: unknown): ResultadoBusca {
     if (typeof r.nr_processo !== 'string' || !/^\d{20}$/.test(r.nr_processo)) {
       throw new ErroEproc('LAYOUT', 'resultado sem número de processo válido')
     }
-    if (typeof r.linkProcessoAssinado !== 'string') throw new ErroEproc('LAYOUT', 'resultado sem link do processo')
+    if (typeof r.linkProcessoAssinado !== 'string' || !r.linkProcessoAssinado) throw new ErroEproc('LAYOUT', 'resultado sem link do processo')
     return {
       numero: r.nr_processo,
       autuacao: texto(r.autuacao),
