@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { mensagemDoErro } from '../analisar/erro.ts'
-import { ehAcompanhado, linhaDoHistorico, type Acompanhado, type ApiSistema, type Instancia, type ItemHistorico } from './apiSistema.ts'
+import { ehAcompanhado, linhaDoHistorico, montarCarregamento, type Acompanhado, type ApiSistema, type Instancia, type ItemHistorico } from './apiSistema.ts'
 
 const formatar = (n: string) => n.replace(/^(\d{7})(\d{2})(\d{4})(\d)(\d{2})(\d{4})$/, '$1-$2.$3.$4.$5.$6')
 
@@ -18,15 +18,20 @@ type Props = {
  */
 export function Sistema({ api, processo, abrir, sair }: Props) {
   const [dados, setDados] = useState<{ historico: ItemHistorico[]; lista: Acompanhado[] } | null>(null)
+  const [trabalhando, setTrabalhando] = useState(false)
   const [erro, setErro] = useState<string | null>(null)
   const ocupado = useRef(false)
   const numero = processo?.numero
 
   useEffect(() => {
     let vivo = true
-    Promise.all([numero ? api.historico(numero) : Promise.resolve([]), api.acompanhados()]).then(
-      ([historico, lista]) => vivo && setDados({ historico, lista }),
-      (e) => vivo && setErro(mensagemDoErro(e)),
+    void Promise.allSettled([numero ? api.historico(numero) : Promise.resolve([]), api.acompanhados()]).then(
+      ([historico, lista]) => {
+        if (!vivo) return
+        const r = montarCarregamento(historico, lista, mensagemDoErro)
+        setDados(r.dados)
+        setErro(r.aviso)
+      },
     )
     return () => { vivo = false }
   }, [api, numero])
@@ -34,6 +39,7 @@ export function Sistema({ api, processo, abrir, sair }: Props) {
   async function alternar() {
     if (!processo || !dados || ocupado.current) return
     ocupado.current = true
+    setTrabalhando(true)
     try {
       if (ehAcompanhado(dados.lista, processo.numero)) await api.parar(processo.numero)
       else await api.acompanhar(processo.numero, processo.instancia)
@@ -43,6 +49,7 @@ export function Sistema({ api, processo, abrir, sair }: Props) {
       setErro(mensagemDoErro(e))
     } finally {
       ocupado.current = false
+      setTrabalhando(false)
     }
   }
 
@@ -63,7 +70,7 @@ export function Sistema({ api, processo, abrir, sair }: Props) {
       {processo && (
         <>
           <p>Processo <strong>{formatar(processo.numero)}</strong></p>
-          <button onClick={() => void alternar()}>
+          <button disabled={trabalhando} onClick={() => void alternar()}>
             {ehAcompanhado(lista, processo.numero) ? 'Parar de acompanhar' : 'Acompanhar este processo'}
           </button>
           <h2 className="resumo">Consultas deste processo</h2>

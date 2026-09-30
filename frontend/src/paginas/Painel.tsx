@@ -20,11 +20,18 @@ function EstadoConsulta({ i }: { i: ItemLista }) {
   return <span className="selo">—</span>
 }
 
+/** ?eproc= da URL: 'todas', 20 dígitos ASCII (com máscara, normaliza) ou nada. */
+export function filtroEproc(bruto: string | null): string {
+  if (bruto === 'todas') return 'todas'
+  const d = (bruto ?? '').replace(/[^0-9]/g, '')
+  return /^[0-9]{20}$/.test(d) && /^[0-9.\-\s]+$/.test(bruto ?? '') ? d : ''
+}
+
 export function Painel() {
   // ?eproc=todas (só as da extensão) ou ?eproc=<20 dígitos> (as de um processo)
   const [busca, setBusca] = useSearchParams()
-  const eproc = busca.get('eproc') ?? ''
-  const { data, isLoading } = useQuery({
+  const eproc = filtroEproc(busca.get('eproc'))
+  const { data, isLoading, isError } = useQuery({
     queryKey: ['consultas', eproc],
     queryFn: () => get<{ total: number; itens: ItemLista[] }>(
       '/api/consultas' + (eproc ? `?eproc=${encodeURIComponent(eproc)}` : ''),
@@ -51,7 +58,7 @@ export function Painel() {
         <div>
           <h1>Consultas</h1>
           <p className="sub">
-            {data ? `${data.total} no total` : 'carregando…'}
+            {data ? `${data.total} no total` : isError ? 'indisponível' : 'carregando…'}
           </p>
         </div>
         <Link className="botao" to="/consulta/nova">
@@ -90,10 +97,13 @@ export function Painel() {
       </div>
 
       {isLoading && <p className="vazio">carregando…</p>}
+      {isError && <p role="alert" className="vazio">Não consegui carregar as consultas.</p>}
 
-      {!isLoading && itens.length === 0 && (
+      {!isLoading && !isError && itens.length === 0 && (
         <p className="vazio">
-          Nenhuma consulta ainda. <Link to="/consulta/nova">Comece por uma.</Link>
+          {eproc ? 'Nenhuma consulta para este filtro.' : (
+            <>Nenhuma consulta ainda. <Link to="/consulta/nova">Comece por uma.</Link></>
+          )}
         </p>
       )}
 

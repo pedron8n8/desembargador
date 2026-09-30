@@ -174,6 +174,88 @@ def main():
         assert cli.delete("/api/acompanhados/" + "5" * 20, headers=CAB).status_code == 204
         assert cli.get("/api/acompanhados").json() == {"itens": []}
 
+        # --- isolamento e paginacao do historico por eproc, e dos acompanhados.
+        # So' linhas de banco; nenhum POST de consulta.
+        def _entra(email):
+            k = TestClient(modulo_app.app)
+            assert k.post("/api/sessao", json={"email": email, "senha": SENHA},
+                          headers=CAB).status_code == 204
+            return k
+
+        c = esquema.db()
+        with c:
+            for t, e, org in (("t-origem-outro", "outro@teste.com", "5" * 20),
+                              ("t-fb-origem", "adv@teste.com", "7" * 20)):
+                c.execute("INSERT INTO dono VALUES (?,?)", (t, e))
+                c.execute("INSERT INTO execucao (thread, email, estado, criado_em, "
+                          "so_prognostico, cerebro, origem_eproc, origem_instancia) "
+                          "VALUES (?,?,?,?,?,?,?,?)",
+                          (t, e, "pronto", "2026-01-02", 0, "rubens-schulz", org, "1g"))
+        c.close()
+        fb = _feedback.db()
+        with fb:
+            fb.execute(
+                "INSERT INTO consulta (thread, criado_em, caso, prognostico_json, "
+                " minuta, custo_usd, modelos_json, cerebro) VALUES (?,?,?,?,?,?,?,?)",
+                ("t-fb-origem", "2026-01-02", "caso com origem", "{}", "",
+                 0.0, "[]", "rubens-schulz"))
+        fb.close()
+
+        ths = lambda k, q: [i["thread"] for i in k.get("/api/consultas" + q).json()["itens"]]  # noqa: E731
+        outro = _entra("outro@teste.com")
+        assert ths(outro, "?eproc=todas") == ["t-origem-outro"], ths(outro, "?eproc=todas")
+        assert "t-origem" not in ths(outro, "?eproc=" + "5" * 20)
+        admin = _entra("chefe@teste.com")
+        assert {"t-origem", "t-origem-outro", "t-fb-origem"} <= set(ths(admin, "?eproc=todas"))
+
+        # primeiro laco de `listar` (consulta ja' no feedback.db): filtro, total e pagina
+        assert sorted(ths(cli, "?eproc=todas")) == ["t-fb-origem", "t-origem"]
+        assert ths(cli, "?eproc=" + "7" * 20) == ["t-fb-origem"]
+        assert ths(cli, "?eproc=" + "8" * 20) == []
+        assert cli.get("/api/consultas?eproc=" + "7" * 20).json()["total"] == 1
+        assert cli.get("/api/consultas?eproc=" + "8" * 20).json()["total"] == 0
+        pg = cli.get("/api/consultas?eproc=todas&por_pagina=1").json()
+        assert pg["total"] == 2 and len(pg["itens"]) == 1, pg
+        pg2 = cli.get("/api/consultas?eproc=todas&por_pagina=1&pagina=1").json()
+        assert pg2["total"] == 2 and pg2["itens"][0]["thread"] != pg["itens"][0]["thread"]
+
+        # acompanhados: cada um so' enxerga e so' apaga o proprio
+        assert cli.put("/api/acompanhados/" + "5" * 20, json={"instancia": "2g"},
+                       headers=CAB).status_code == 204
+        assert outro.get("/api/acompanhados").json() == {"itens": []}
+        assert outro.delete("/api/acompanhados/" + "5" * 20, headers=CAB).status_code == 204
+        assert [i["processo"] for i in cli.get("/api/acompanhados").json()["itens"]] == ["5" * 20]
+        assert admin.put("/api/acompanhados/" + "8" * 20, json={}, headers=CAB).status_code == 204
+        assert [i["processo"] for i in admin.get("/api/acompanhados").json()["itens"]] == ["8" * 20]
+        assert admin.delete("/api/acompanhados/" + "8" * 20, headers=CAB).status_code == 204
+        assert cli.delete("/api/acompanhados/" + "5" * 20, headers=CAB).status_code == 204
+
+        # limite por usuario: o 201o NOVO e' 400; repetir um existente continua 204
+        c = esquema.db()
+        auth.criar_usuario(c, "lotado@teste.com", SENHA)
+        with c:
+            for n in range(modulo_app.MAX_ACOMPANHADOS):
+                c.execute("INSERT INTO acompanhado VALUES (?,?,?,?)",
+                          ("lotado@teste.com", "%020d" % n, None, "2026-01-01T00:00:00"))
+        c.close()
+        lotado = _entra("lotado@teste.com")
+        r = lotado.put("/api/acompanhados/" + "9" * 20, json={}, headers=CAB)
+        assert r.status_code == 400 and "limite" in r.text, (r.status_code, r.text)
+        assert lotado.put("/api/acompanhados/" + "%020d" % 5, json={"instancia": "1g"},
+                          headers=CAB).status_code == 204
+        assert len(lotado.get("/api/acompanhados").json()["itens"]) == modulo_app.MAX_ACOMPANHADOS
+
+        # limpa: as linhas extras nao podem mexer nas contagens dos testes seguintes
+        c = esquema.db()
+        with c:
+            c.execute("DELETE FROM dono WHERE thread IN ('t-origem-outro','t-fb-origem')")
+            c.execute("DELETE FROM execucao WHERE thread IN ('t-origem-outro','t-fb-origem')")
+        c.close()
+        fb = _feedback.db()
+        with fb:
+            fb.execute("DELETE FROM consulta WHERE thread='t-fb-origem'")
+        fb.close()
+
         # --- acervo
         corpus = cli.get("/api/corpus?por_pagina=5").json()
         assert corpus["total"] > 1000 and len(corpus["itens"]) == 5

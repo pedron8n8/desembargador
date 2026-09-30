@@ -1195,6 +1195,9 @@ def _processo(numero, instancia=None):
         raise HTTPException(400, "instancia: '1g' ou '2g'")
 
 
+MAX_ACOMPANHADOS = 200
+
+
 @app.get("/api/acompanhados")
 def acompanhados(c=Depends(conexao), u=Depends(atual)):
     """Lista de processos que ESTE usuario acompanha (so' dele, nem o admin ve a de outro)."""
@@ -1208,6 +1211,11 @@ def acompanhar(processo: str, corpo: dict = Body(default={}), c=Depends(conexao)
                u=Depends(atual)):
     _processo(processo, corpo.get("instancia"))
     with c:
+        if not c.execute("SELECT 1 FROM acompanhado WHERE email=? AND processo=?",
+                         (u["email"], processo)).fetchone() and c.execute(
+                "SELECT COUNT(*) FROM acompanhado WHERE email=?",
+                (u["email"],)).fetchone()[0] >= MAX_ACOMPANHADOS:
+            raise HTTPException(400, "limite de processos acompanhados")
         c.execute("INSERT OR IGNORE INTO acompanhado VALUES (?,?,?,?)",
                   (u["email"], processo, corpo.get("instancia"),
                    dt.datetime.now().isoformat(timespec="seconds")))

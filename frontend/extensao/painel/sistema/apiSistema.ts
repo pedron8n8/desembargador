@@ -39,3 +39,29 @@ export function linhaDoHistorico(i: ItemHistorico): { titulo: string; estado: st
   else estado = '—'
   return { titulo, estado }
 }
+
+export type DadosSistema = { historico: ItemHistorico[]; lista: Acompanhado[] }
+
+/**
+ * Junta o resultado das duas leituras sem deixar uma falha esconder a outra.
+ * `dados` é null só quando as duas falharam; uma falha parcial vira `aviso`.
+ */
+export function montarCarregamento(
+  historico: PromiseSettledResult<ItemHistorico[]>,
+  lista: PromiseSettledResult<Acompanhado[]>,
+  mensagem: (e: unknown) => string,
+): { dados: DadosSistema | null; aviso: string | null } {
+  if (historico.status === 'rejected' && lista.status === 'rejected') {
+    return { dados: null, aviso: mensagem(lista.reason) }
+  }
+  const avisos: string[] = []
+  if (historico.status === 'rejected') avisos.push(`Histórico indisponível: ${mensagem(historico.reason)}`)
+  if (lista.status === 'rejected') avisos.push(`Lista de acompanhados indisponível: ${mensagem(lista.reason)}`)
+  return {
+    dados: {
+      historico: historico.status === 'fulfilled' ? historico.value : [],
+      lista: lista.status === 'fulfilled' ? lista.value : [],
+    },
+    aviso: avisos.join(' ') || null,
+  }
+}

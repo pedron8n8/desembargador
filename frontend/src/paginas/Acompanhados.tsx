@@ -10,7 +10,7 @@ export function Acompanhados() {
   const qc = useQueryClient()
   const [numero, setNumero] = useState('')
   const [erro, setErro] = useState('')
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['acompanhados'],
     queryFn: () => get<{ itens: Acompanhado[] }>('/api/acompanhados'),
   })
@@ -31,8 +31,13 @@ export function Acompanhados() {
   }
 
   async function remover(processo: string) {
-    await del(`/api/acompanhados/${processo}`)
-    qc.invalidateQueries({ queryKey: ['acompanhados'] })
+    setErro('')
+    try {
+      await del(`/api/acompanhados/${processo}`)
+      qc.invalidateQueries({ queryKey: ['acompanhados'] })
+    } catch (x) {
+      setErro(x instanceof Error ? x.message : 'Não consegui parar de acompanhar.')
+    }
   }
 
   return (
@@ -40,7 +45,7 @@ export function Acompanhados() {
       <header className="cabecalho">
         <div>
           <h1>Processos acompanhados</h1>
-          <p className="sub">{isLoading ? 'carregando…' : `${itens.length} no total`}</p>
+          <p className="sub">{isLoading ? 'carregando…' : isError ? 'indisponível' : `${itens.length} no total`}</p>
         </div>
       </header>
 
@@ -53,7 +58,14 @@ export function Acompanhados() {
       </form>
       {erro && <p role="alert" style={{ color: 'var(--alerta)' }}>{erro}</p>}
 
-      {!isLoading && itens.length === 0 && <p className="vazio">Nenhum processo acompanhado.</p>}
+      {isError && (
+        <p role="alert" style={{ color: 'var(--alerta)' }}>
+          Não consegui carregar a lista.{' '}
+          <button type="button" className="leve" onClick={() => void refetch()}>tentar de novo</button>
+        </p>
+      )}
+
+      {!isLoading && !isError && itens.length === 0 && <p className="vazio">Nenhum processo acompanhado.</p>}
 
       {itens.length > 0 && (
         <div className="tabela-rolavel">

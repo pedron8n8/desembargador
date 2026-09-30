@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { ehAcompanhado, linhaDoHistorico, type ItemHistorico } from './apiSistema.ts'
+import { ehAcompanhado, linhaDoHistorico, montarCarregamento, type ItemHistorico } from './apiSistema.ts'
 import { apiSistemaDemo } from './demo-sistema.ts'
 
 const H = (x: Partial<ItemHistorico> = {}): ItemHistorico => ({
@@ -36,4 +36,19 @@ test('demonstração: acompanhar é idempotente e parar remove', async () => {
   await a.parar('7'.repeat(20))
   assert.equal((await a.acompanhados()).length, antes)
   assert.deepEqual(await a.historico('9'.repeat(20)), [])
+})
+
+test('montarCarregamento: falha parcial mantém a parte que carregou e avisa', () => {
+  const ok = { status: 'fulfilled', value: [] } as PromiseFulfilledResult<never[]>
+  const ruim = { status: 'rejected', reason: new Error('x') } as PromiseRejectedResult
+  const m = (e: unknown) => (e as Error).message
+  const lista = [{ processo: '1'.repeat(20), instancia: null, criado_em: '' }]
+  const a = montarCarregamento(ruim, { status: 'fulfilled', value: lista }, m)
+  assert.deepEqual(a.dados?.lista, lista)
+  assert.match(a.aviso ?? '', /Histórico indisponível: x/)
+  const b = montarCarregamento(ok, ruim, m)
+  assert.deepEqual(b.dados?.lista, [])
+  assert.match(b.aviso ?? '', /acompanhados indisponível/)
+  assert.deepEqual(montarCarregamento(ok, ok, m), { dados: { historico: [], lista: [] }, aviso: null })
+  assert.deepEqual(montarCarregamento(ruim, ruim, m), { dados: null, aviso: 'x' })
 })
