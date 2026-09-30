@@ -429,7 +429,7 @@ def _origem(corpo):
     if o is None:
         return None
     if (not isinstance(o, dict) or not isinstance(o.get("eproc"), str)
-            or not re.fullmatch(r"\d{20}", o["eproc"])
+            or not re.fullmatch(r"[0-9]{20}", o["eproc"])
             or o.get("instancia") not in ("1g", "2g")):
         raise HTTPException(400, "origem inválida: use {eproc: 20 dígitos, "
                                  "instancia: '1g' ou '2g'}")
