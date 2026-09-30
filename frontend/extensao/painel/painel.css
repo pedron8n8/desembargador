@@ -68,6 +68,6 @@ textarea.caso {
 }
 
 .lista li.destaque {
-  padding-left: 8px;
-  border-left: 3px solid var(--alerta);
+  padding: 4px 8px;
+  background: color-mix(in srgb, var(--alerta) 10%, transparent);
 }
