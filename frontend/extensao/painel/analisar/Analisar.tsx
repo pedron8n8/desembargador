@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { Capa } from '../../agente/lib/caso.ts'
 import type { ListaCerebros } from '../../../src/api.ts'
 import { montarCaso, type Montagem } from '../caso/montagem.ts'
@@ -6,6 +6,7 @@ import type { Papel } from '../caso/pecas.ts'
 import { aplicar, andamentoInicial, type Andamento } from './andamento.ts'
 import { corpoDaConsulta, type ApiAnalise, type Origem, type Tese } from './apiAnalise.ts'
 import { escolherCerebro } from './cerebro.ts'
+import { mensagemDoErro } from './erro.ts'
 import type { Fonte } from './fonte.ts'
 import { lerPecas, type FalhaDePeca } from './ler.ts'
 import { alternar, marcadas, prepararLista, type ItemLista } from './lista.ts'
@@ -28,7 +29,6 @@ const NO: Record<string, string> = {
   triagem: 'lendo o caso', recuperar: 'buscando precedentes', triar: 'escolhendo os análogos', prognostico: 'calculando o prognóstico',
   redigir: 'redigindo a minuta', revisar: 'revisando a minuta', julgar: 'avaliando a minuta',
 }
-const mensagemDe = (e: unknown) => (e instanceof Error && e.message ? e.message : 'Algo deu errado.')
 
 type Props = { fonte: Fonte; api: ApiAnalise; origem: Origem; abrir: (url: string) => void; sair: () => void }
 
@@ -38,7 +38,11 @@ export function Analisar({ fonte, api, origem, abrir, sair }: Props) {
   const [tese, setTese] = useState<Tese>('neutra')
   const [soPrognostico, setSoPrognostico] = useState(false)
   const [cerebro, setCerebro] = useState('')
-  const falhou = (e: unknown, thread?: string) => setEtapa({ t: 'erro', mensagem: mensagemDe(e), thread })
+  // Trava contra clique duplo: o ref vale na hora (dois cliques no mesmo instante veem o
+  // mesmo estado velho); o estado só desabilita o botão.
+  const ocupado = useRef(false)
+  const [bloqueado, setBloqueado] = useState(false)
+  const falhou = (e: unknown, thread?: string) => setEtapa({ t: 'erro', mensagem: mensagemDoErro(e), thread })
 
   useEffect(() => {
     let vivo = true
@@ -56,6 +60,9 @@ export function Analisar({ fonte, api, origem, abrir, sair }: Props) {
   }, [fonte, api])
 
   async function montar(l: Lista) {
+    if (ocupado.current) return
+    ocupado.current = true
+    setBloqueado(true)
     setEtapa({ t: 'montando' })
     try {
       const { itens, falhas } = await lerPecas(fonte, api, marcadas(l.itens))
@@ -64,10 +71,16 @@ export function Analisar({ fonte, api, origem, abrir, sair }: Props) {
       setEtapa({ t: 'texto', l, m, falhas })
     } catch (e) {
       falhou(e)
+    } finally {
+      ocupado.current = false
+      setBloqueado(false)
     }
   }
 
   async function rodar() {
+    if (ocupado.current) return
+    ocupado.current = true
+    setBloqueado(true)
     let thread: string | undefined
     try {
       const { thread: t } = await api.rodar(corpoDaConsulta({ texto, cerebro, tese, soPrognostico, origem }))
@@ -83,6 +96,9 @@ export function Analisar({ fonte, api, origem, abrir, sair }: Props) {
       setEtapa({ t: 'pronto', thread: t, resumo: resumirPrognostico(await api.consulta(t)), custo: andamento.custo_usd })
     } catch (e) {
       falhou(e, thread)
+    } finally {
+      ocupado.current = false
+      setBloqueado(false)
     }
   }
 
@@ -113,7 +129,7 @@ export function Analisar({ fonte, api, origem, abrir, sair }: Props) {
               </li>
             ))}
           </ul>
-          <button disabled={escolhidas === 0} onClick={() => montar(l)}>Montar o caso</button>
+          <button disabled={escolhidas === 0 || bloqueado} onClick={() => montar(l)}>Montar o caso</button>
           <button className="secundario" onClick={sair}>Voltar</button>
         </main>
       )
@@ -130,7 +146,7 @@ export function Analisar({ fonte, api, origem, abrir, sair }: Props) {
           <textarea className="caso" value={texto} onChange={(e) => setTexto(e.target.value)} rows={12} aria-label="Texto do caso" />
           <p className={passou ? 'aviso' : 'meta'}>
             {texto.length.toLocaleString('pt-BR')} de {m.limite.toLocaleString('pt-BR')} caracteres
-            {passou && `: o sistema lê só os primeiros ${m.limite.toLocaleString('pt-BR')}; o final não entra na análise${m.cortadas.length ? ` (${m.cortadas.join('; ')})` : ''}.`}
+            {passou && `: o sistema lê só os primeiros ${m.limite.toLocaleString('pt-BR')}; o final não entra na análise${m.cortadas.length ? ` (no texto montado, ficariam de fora: ${m.cortadas.join('; ')})` : ''}.`}
           </p>
           <label>Cérebro{' '}
             <select value={cerebro} onChange={(e) => setCerebro(e.target.value)}>
@@ -145,7 +161,7 @@ export function Analisar({ fonte, api, origem, abrir, sair }: Props) {
             </select>
           </label>
           <label><input type="checkbox" checked={soPrognostico} onChange={(e) => setSoPrognostico(e.target.checked)} /> Só o prognóstico (mais rápido e barato)</label>
-          <button disabled={!texto.trim() || !cerebro} onClick={rodar}>Rodar a análise</button>
+          <button disabled={!texto.trim() || !cerebro || bloqueado} onClick={rodar}>Rodar a análise</button>
           <button className="secundario" onClick={() => setEtapa({ t: 'lista', l })}>Voltar às peças</button>
         </main>
       )
