@@ -9,6 +9,8 @@ import { abrirPainel, type Deps, type Tela } from './fluxo.ts'
 import { diagnostico, MENSAGENS } from './mensagens.ts'
 import { AnalisarTexto } from './texto/AnalisarTexto.tsx'
 import type { TextoLido } from './texto/fonteTexto.ts'
+import { Sistema } from './sistema/Sistema.tsx'
+import type { ApiSistema } from './sistema/apiSistema.ts'
 import { Precedentes } from './texto/Precedentes.tsx'
 import { debounce } from './util/debounce.ts'
 
@@ -26,6 +28,7 @@ type Props = {
   fonte?: Fonte
   api?: ApiAnalise
   advogado?: FonteAdvogado
+  sistema?: ApiSistema
   lerTexto?: (abaId: number) => Promise<TextoLido>
   observar?: (aoMudar: () => void) => () => void
   abrir?: (url: string) => void
@@ -33,9 +36,9 @@ type Props = {
 
 // Qual sub-tela está aberta por cima do painel (null = o painel). Com uma aberta, o
 // painel NÃO se atualiza sozinho: isso derrubaria a tela em uso.
-type Sub = null | { t: 'analisar' } | { t: 'advogado' } | { t: 'texto' } | { t: 'analisarTexto'; texto: string }
+type Sub = null | { t: 'analisar' } | { t: 'advogado' } | { t: 'sistema' } | { t: 'texto' } | { t: 'analisarTexto'; texto: string }
 
-export function Painel({ deps = depsChrome, fonte, api, advogado, lerTexto = lerTextoDaAba, observar = observarAba, abrir = abrirAba }: Props) {
+export function Painel({ deps = depsChrome, fonte, api, advogado, sistema, lerTexto = lerTextoDaAba, observar = observarAba, abrir = abrirAba }: Props) {
   const [tela, setTela] = useState<Tela | null>(null)
   const [sub, setSub] = useState<Sub>(null)
   const carregar = useCallback(() => {
@@ -96,6 +99,9 @@ export function Painel({ deps = depsChrome, fonte, api, advogado, lerTexto = ler
     return <Analisar fonte={fonte} api={api} origem={origem} abrir={abrir} sair={fechar} />
   }
   if (sub?.t === 'advogado' && advogado) return <Advogado fonte={advogado} instancia={estado.instancia} sair={fechar} />
+  if (sub?.t === 'sistema' && sistema) {
+    return <Sistema api={sistema} processo={origem && { numero: origem.eproc, instancia: origem.instancia }} abrir={abrir} sair={fechar} />
+  }
   if (sub?.t === 'texto' && api) {
     return <Precedentes lerTexto={lerDaAba} api={api} abrir={abrir} analisar={(texto) => setSub({ t: 'analisarTexto', texto })} sair={fechar} />
   }
@@ -111,6 +117,7 @@ export function Painel({ deps = depsChrome, fonte, api, advogado, lerTexto = ler
       )}
       {estado.processo && fonte && api && <button onClick={() => setSub({ t: 'analisar' })}>Analisar este processo</button>}
       {api && <button onClick={() => setSub({ t: 'texto' })}>Texto da tela do eproc</button>}
+      {sistema && <button onClick={() => setSub({ t: 'sistema' })}>Histórico e acompanhados</button>}
       {advogado && <button onClick={() => setSub({ t: 'advogado' })}>Intimações e prazos</button>}
       <button className="secundario" onClick={carregar}>Atualizar</button>
     </main>

@@ -16,7 +16,7 @@ import os
 import re
 import sqlite3
 
-from fastapi import Depends, FastAPI, HTTPException, Query, Request, Response
+from fastapi import Body, Depends, FastAPI, HTTPException, Query, Request, Response
 from fastapi.responses import FileResponse, PlainTextResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -299,9 +299,20 @@ def _dono_ou_403(c, thread, u):
         raise HTTPException(404, "consulta não encontrada")
 
 
+def _da_origem(processo, filtro):
+    """A consulta passa no filtro `eproc`? Sem filtro, todas passam."""
+    if not filtro:
+        return True
+    return processo is not None and (filtro == "todas" or processo == filtro)
+
+
 @app.get("/api/consultas")
 def listar(c=Depends(conexao), u=Depends(atual), pagina: int = 0,
-           por_pagina: int = Query(25, le=100), cerebro: str = Query(None)):
+           por_pagina: int = Query(25, le=100), cerebro: str = Query(None),
+           eproc: str = Query(None)):
+    # eproc: "todas" = so' as que vieram da extensao; 20 digitos = as daquele processo
+    if eproc and eproc != "todas" and not re.fullmatch(r"[0-9]{20}", eproc):
+        raise HTTPException(400, "eproc: use 'todas' ou o número de 20 dígitos")
     fb = sqlite3.connect("file:%s?mode=ro" % feedback.FB.replace("\\", "/"), uri=True)
     fb.row_factory = sqlite3.Row
     try:
@@ -316,7 +327,8 @@ def listar(c=Depends(conexao), u=Depends(atual), pagina: int = 0,
 
     meus = {r["thread"]: r["email"] for r in c.execute("SELECT thread, email FROM dono")}
     estados = {r["thread"]: r for r in c.execute(
-        "SELECT thread, estado, erro, segundos, cerebro, comparacao FROM execucao")}
+        "SELECT thread, estado, erro, segundos, cerebro, comparacao, "
+        "origem_eproc, origem_instancia FROM execucao")}
     # nome legivel sem uma consulta por linha
     nomes = {x["slug"]: x["nome"] for x in cerebros.listar(incluir_inativos=True)}
 
@@ -334,6 +346,8 @@ def listar(c=Depends(conexao), u=Depends(atual), pagina: int = 0,
         slug = p.get("cerebro") or (e["cerebro"] if e else None)             or cerebros.CEREBRO_LEGADO
         if cerebro and slug != cerebro:
             continue
+        if not _da_origem(e["origem_eproc"] if e else None, eproc):
+            continue
         saida.append({
             "thread": l["thread"], "criado_em": l["criado_em"],
             "resumo": (l["resumo"] or "").strip(),
@@ -346,6 +360,8 @@ def listar(c=Depends(conexao), u=Depends(atual), pagina: int = 0,
             "da_cli": d is None,
             "cerebro": slug, "cerebro_nome": nomes.get(slug, slug),
             "comparacao": e["comparacao"] if e else None,
+            "origem_eproc": e["origem_eproc"] if e else None,
+            "origem_instancia": e["origem_instancia"] if e else None,
         })
 
     # Execuções que ainda não chegaram ao feedback.db. Normalmente são as que
@@ -360,13 +376,17 @@ def listar(c=Depends(conexao), u=Depends(atual), pagina: int = 0,
         slug = r["cerebro"] or cerebros.CEREBRO_LEGADO
         if cerebro and slug != cerebro:
             continue
+        if not _da_origem(r["origem_eproc"], eproc):
+            continue
         saida.append({"thread": r["thread"], "criado_em": r["criado_em"],
                       "resumo": "", "custo_usd": None, "nota_humano": None,
                       "nota_juiz": None, "decide": None, "probabilidade_pct": None,
                       "resultado_provavel": None, "estado": r["estado"],
                       "erro": r["erro"], "da_cli": False,
                       "cerebro": slug, "cerebro_nome": nomes.get(slug, slug),
-                      "comparacao": r["comparacao"]})
+                      "comparacao": r["comparacao"],
+                      "origem_eproc": r["origem_eproc"],
+                      "origem_instancia": r["origem_instancia"]})
     saida.sort(key=lambda x: x["criado_em"] or "", reverse=True)
     return {"total": len(saida),
             "itens": saida[pagina * por_pagina:(pagina + 1) * por_pagina]}
@@ -1163,6 +1183,46 @@ def desativar(email: str, c=Depends(conexao), _a=Depends(admin)):
     with c:
         c.execute("UPDATE usuario SET ativo=0 WHERE email=?", (email.lower(),))
         c.execute("DELETE FROM sessao WHERE email=?", (email.lower(),))
+    return Response(status_code=204)
+
+
+# ------------------------------------------------- processos acompanhados
+
+def _processo(numero, instancia=None):
+    if not isinstance(numero, str) or not re.fullmatch(r"[0-9]{20}", numero):
+        raise HTTPException(400, "processo: 20 dígitos")
+    if instancia not in (None, "1g", "2g"):
+        raise HTTPException(400, "instancia: '1g' ou '2g'")
+
+
+@app.get("/api/acompanhados")
+def acompanhados(c=Depends(conexao), u=Depends(atual)):
+    """Lista de processos que ESTE usuario acompanha (so' dele, nem o admin ve a de outro)."""
+    return {"itens": [dict(r) for r in c.execute(
+        "SELECT processo, instancia, criado_em FROM acompanhado "
+        "WHERE email=? ORDER BY criado_em DESC", (u["email"],))]}
+
+
+@app.put("/api/acompanhados/{processo}", status_code=204)
+def acompanhar(processo: str, corpo: dict = Body(default={}), c=Depends(conexao),
+               u=Depends(atual)):
+    _processo(processo, corpo.get("instancia"))
+    with c:
+        c.execute("INSERT OR IGNORE INTO acompanhado VALUES (?,?,?,?)",
+                  (u["email"], processo, corpo.get("instancia"),
+                   dt.datetime.now().isoformat(timespec="seconds")))
+        if corpo.get("instancia"):
+            c.execute("UPDATE acompanhado SET instancia=? WHERE email=? AND processo=?",
+                      (corpo["instancia"], u["email"], processo))
+    return Response(status_code=204)
+
+
+@app.delete("/api/acompanhados/{processo}", status_code=204)
+def desacompanhar(processo: str, c=Depends(conexao), u=Depends(atual)):
+    _processo(processo)
+    with c:
+        c.execute("DELETE FROM acompanhado WHERE email=? AND processo=?",
+                  (u["email"], processo))
     return Response(status_code=204)
 
 

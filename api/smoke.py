@@ -146,6 +146,34 @@ def main():
         finally:
             c.close()
 
+        # --- historico por processo do eproc (secao 5): so' leituras e linhas de banco,
+        # nenhum POST de consulta
+        assert modulo_app._da_origem(None, None) and modulo_app._da_origem("5" * 20, None)
+        assert not modulo_app._da_origem(None, "todas")
+        assert modulo_app._da_origem("5" * 20, "todas")
+        assert not modulo_app._da_origem("5" * 20, "6" * 20)
+        assert cli.get("/api/consultas?eproc=abc").status_code == 400
+        itens = cli.get("/api/consultas?eproc=todas").json()["itens"]
+        assert [i["thread"] for i in itens] == ["t-origem"], itens
+        assert itens[0]["origem_eproc"] == "5" * 20 and itens[0]["origem_instancia"] == "2g"
+        assert cli.get("/api/consultas?eproc=" + "6" * 20).json()["itens"] == []
+        sem = {i["thread"]: i for i in cli.get("/api/consultas").json()["itens"]}
+        assert sem["t-sem-origem"]["origem_eproc"] is None
+
+        # --- processos acompanhados: por usuario, idempotente, validado
+        assert cli.get("/api/acompanhados").json() == {"itens": []}
+        assert cli.put("/api/acompanhados/123", json={}, headers=CAB).status_code == 400
+        assert cli.put("/api/acompanhados/" + "5" * 20, json={"instancia": "9g"},
+                       headers=CAB).status_code == 400
+        assert cli.put("/api/acompanhados/" + "5" * 20, json={"instancia": "2g"}).status_code == 403
+        for _ in range(2):
+            assert cli.put("/api/acompanhados/" + "5" * 20, json={"instancia": "2g"},
+                           headers=CAB).status_code == 204
+        lista = cli.get("/api/acompanhados").json()["itens"]
+        assert [(i["processo"], i["instancia"]) for i in lista] == [("5" * 20, "2g")], lista
+        assert cli.delete("/api/acompanhados/" + "5" * 20, headers=CAB).status_code == 204
+        assert cli.get("/api/acompanhados").json() == {"itens": []}
+
         # --- acervo
         corpus = cli.get("/api/corpus?por_pagina=5").json()
         assert corpus["total"] > 1000 and len(corpus["itens"]) == 5

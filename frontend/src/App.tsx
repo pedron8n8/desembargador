@@ -4,6 +4,7 @@ import { NavLink, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { ROTULO_PAPEL, get, type Usuario } from './api'
 import { useCerebro } from './cerebro'
 import { Acervo } from './paginas/Acervo'
+import { Acompanhados } from './paginas/Acompanhados'
 import { Apresentacao } from './paginas/Apresentacao'
 import { Cerebros } from './paginas/Cerebros'
 import { Comparacao } from './paginas/Comparacao'
@@ -76,6 +77,9 @@ function Lateral({ u }: { u: Usuario }) {
         <NavLink to="/consulta/nova" className={item}>
           Nova consulta
         </NavLink>
+        <NavLink to="/acompanhados" className={item}>
+          Processos acompanhados
+        </NavLink>
         <hr />
         <NavLink to="/acervo" className={item}>
           Acervo
@@ -137,6 +141,7 @@ function Sistema() {
           <Route path="/consulta/:thread" element={<Consulta />} />
           <Route path="/consulta/:thread/:aba" element={<Consulta />} />
           <Route path="/conversa/:thread" element={<Conversa />} />
+          <Route path="/acompanhados" element={<Acompanhados />} />
           <Route path="/comparacoes" element={<Comparacoes />} />
           <Route path="/comparacao/:comparacao" element={<Comparacao />} />
           <Route path="/acervo" element={<Acervo />} />

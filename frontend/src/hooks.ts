@@ -159,6 +159,10 @@ export const usd = (v: number | null | undefined) =>
 export const pct = (v: number | null | undefined, casas = 0) =>
   v == null ? '—' : `${v.toFixed(casas)}%`
 
+/** 20 dígitos -> 0000000-00.0000.0.00.0000 (o que não tem 20 dígitos volta como veio) */
+export const numeroCNJ = (n: string) =>
+  n.replace(/^(\d{7})(\d{2})(\d{4})(\d)(\d{2})(\d{4})$/, '$1-$2.$3.$4.$5.$6')
+
 export const dataBR = (s: string | null | undefined) => {
   if (!s) return '—'
   const d = new Date(s.length <= 10 ? `${s}T00:00:00` : s)

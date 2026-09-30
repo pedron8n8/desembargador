@@ -1,8 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 
 import { get, type ItemLista } from '../api'
-import { dataBR, pct, usd } from '../hooks'
+import { dataBR, numeroCNJ, pct, usd } from '../hooks'
 
 const RODANDO = new Set(['fila', 'rodando'])
 
@@ -21,9 +21,14 @@ function EstadoConsulta({ i }: { i: ItemLista }) {
 }
 
 export function Painel() {
+  // ?eproc=todas (só as da extensão) ou ?eproc=<20 dígitos> (as de um processo)
+  const [busca, setBusca] = useSearchParams()
+  const eproc = busca.get('eproc') ?? ''
   const { data, isLoading } = useQuery({
-    queryKey: ['consultas'],
-    queryFn: () => get<{ total: number; itens: ItemLista[] }>('/api/consultas'),
+    queryKey: ['consultas', eproc],
+    queryFn: () => get<{ total: number; itens: ItemLista[] }>(
+      '/api/consultas' + (eproc ? `?eproc=${encodeURIComponent(eproc)}` : ''),
+    ),
     // enquanto houver consulta rodando, a lista se atualiza sozinha
     refetchInterval: (q) =>
       (q.state.data?.itens ?? []).some((i) => RODANDO.has(i.estado)) ? 4000 : false,
@@ -53,6 +58,18 @@ export function Painel() {
           Nova consulta
         </Link>
       </header>
+
+      <p className="sub" style={{ marginBottom: 'var(--e8)' }}>
+        {eproc ? (
+          <>
+            {eproc === 'todas' ? 'Só as consultas que vieram do eproc' : `Processo ${numeroCNJ(eproc)}`}
+            {' · '}
+            <button className="leve" onClick={() => setBusca({})}>ver todas</button>
+          </>
+        ) : (
+          <Link to="/?eproc=todas">Ver só as que vieram do eproc</Link>
+        )}
+      </p>
 
       <div className="faixa" style={{ marginBottom: 'var(--e8)' }}>
         <div className="medida">
@@ -116,6 +133,13 @@ export function Painel() {
                     <Link to={`/consulta/${i.thread}`} style={{ color: 'var(--tinta)' }}>
                       {i.resumo || <span style={{ color: 'var(--tinta-3)' }}>(sem texto)</span>}
                     </Link>
+                    {i.origem_eproc && (
+                      <div style={{ fontSize: 'var(--t-xs)' }}>
+                        <Link to={`/?eproc=${i.origem_eproc}`}>
+                          eproc {i.origem_instancia === '2g' ? '2º grau' : '1º grau'} · {numeroCNJ(i.origem_eproc)}
+                        </Link>
+                      </div>
+                    )}
                     {i.erro && (
                       <div style={{ color: 'var(--alerta)', fontSize: 'var(--t-xs)' }}>{i.erro}</div>
                     )}

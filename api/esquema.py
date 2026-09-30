@@ -58,6 +58,12 @@ CREATE TABLE IF NOT EXISTS execucao (
 -- (o indice de `comparacao` tambem vive em _migrar: aqui a coluna ainda nao
 --  existe e o CREATE INDEX falharia)
 
+-- Processos que o advogado marcou para acompanhar (numero de 20 digitos, sem mascara).
+-- Nao guarda nada do processo em si: so' o numero, que ele mesmo informou.
+CREATE TABLE IF NOT EXISTS acompanhado (
+  email TEXT, processo TEXT, instancia TEXT, criado_em TEXT,
+  PRIMARY KEY (email, processo));
+
 CREATE TABLE IF NOT EXISTS evento (
   thread TEXT, seq INTEGER, tipo TEXT, payload_json TEXT, criado_em TEXT,
   PRIMARY KEY (thread, seq));

@@ -5,6 +5,7 @@ import './painel.css'
 import { fonteAdvogadoDemo } from './advogado/demo-advogado.ts'
 import { apiDemo, fonteDemo } from './analisar/demo-analise.ts'
 import { cenarios } from './demo-cenarios.ts'
+import { apiSistemaDemo } from './sistema/demo-sistema.ts'
 import { Painel } from './Painel.tsx'
 
 // Texto de MENTIRA que o painel "leria" da tela do eproc na demonstração, com um CPF e uma OAB
@@ -25,6 +26,7 @@ function Demo() {
   const fonte = useMemo(() => fonteDemo(), [])
   const api = useMemo(() => apiDemo(), [])
   const advogado = useMemo(() => fonteAdvogadoDemo(), [])
+  const sistema = useMemo(() => apiSistemaDemo(), [])
   const [i, setI] = useState(0)
   return (
     <div style={{ display: 'flex', gap: 32, padding: 24, alignItems: 'flex-start', flexWrap: 'wrap' }}>
@@ -48,7 +50,7 @@ function Demo() {
         </div>
       </div>
       <div style={{ width: 344, border: '1px solid var(--linha-forte)', background: 'var(--papel)' }}>
-        <Painel key={lista[i].id} deps={lista[i].deps} fonte={fonte} api={api} advogado={advogado} lerTexto={lerTextoDemo} observar={semObservar} abrir={() => {}} />
+        <Painel key={lista[i].id} deps={lista[i].deps} fonte={fonte} api={api} advogado={advogado} sistema={sistema} lerTexto={lerTextoDemo} observar={semObservar} abrir={() => {}} />
       </div>
     </div>
   )

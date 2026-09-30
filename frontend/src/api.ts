@@ -43,6 +43,8 @@ export async function req<T>(rota: string, init?: RequestInit): Promise<T> {
 export const get = <T,>(rota: string) => req<T>(rota)
 export const post = <T,>(rota: string, corpo?: unknown) =>
   req<T>(rota, { method: 'POST', body: JSON.stringify(corpo ?? {}) })
+export const put = <T,>(rota: string, corpo?: unknown) =>
+  req<T>(rota, { method: 'PUT', body: JSON.stringify(corpo ?? {}) })
 export const del = <T,>(rota: string) => req<T>(rota, { method: 'DELETE' })
 
 /** Extensões que o servidor sabe ler. Só filtro do diálogo — quem decide o
@@ -297,7 +299,12 @@ export type ItemLista = {
   estado: string
   erro: string | null
   da_cli: boolean
+  /** processo do eproc (20 dígitos) quando a consulta veio da extensão */
+  origem_eproc: string | null
+  origem_instancia: '1g' | '2g' | null
 }
+
+export type Acompanhado = { processo: string; instancia: '1g' | '2g' | null; criado_em: string }
 
 export type LinhaPeso = {
   id: number
