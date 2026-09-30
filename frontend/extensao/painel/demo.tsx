@@ -7,6 +7,16 @@ import { apiDemo, fonteDemo } from './analisar/demo-analise.ts'
 import { cenarios } from './demo-cenarios.ts'
 import { Painel } from './Painel.tsx'
 
+// Texto de MENTIRA que o painel "leria" da tela do eproc na demonstração, com um CPF e uma OAB
+// fictícios para a minimização aparecer. Nada aqui toca o eproc.
+const TEXTO_DEMO = {
+  texto: 'A apelante, EMPRESA EXEMPLO LTDA (CNPJ [CNPJ]), por seu advogado ([OAB]), requer a exclusão do ICMS da base de cálculo do PIS e da Cofins, conforme a tese firmada pelo Supremo Tribunal Federal, e a restituição dos valores recolhidos a maior nos últimos cinco anos.',
+  fonte: 'selecao' as const,
+  cortado: false,
+}
+const lerTextoDemo = async () => TEXTO_DEMO
+const semObservar = () => () => {}
+
 // Página de demonstração: só entra no build com EXT_DEMO=1 (ver
 // vite.extensao.config.ts). É o painel de verdade com dados fictícios, para
 // apresentar sem login no sistema e sem eproc.
@@ -38,7 +48,7 @@ function Demo() {
         </div>
       </div>
       <div style={{ width: 344, border: '1px solid var(--linha-forte)', background: 'var(--papel)' }}>
-        <Painel key={lista[i].id} deps={lista[i].deps} fonte={fonte} api={api} advogado={advogado} abrir={() => {}} />
+        <Painel key={lista[i].id} deps={lista[i].deps} fonte={fonte} api={api} advogado={advogado} lerTexto={lerTextoDemo} observar={semObservar} abrir={() => {}} />
       </div>
     </div>
   )

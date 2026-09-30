@@ -26,3 +26,10 @@ test('acima do limite do servidor (413) é recusado aqui, com a mensagem de quan
   assert.doesNotThrow(() => corpoDaConsulta({ ...base, texto: 'a'.repeat(LIMITE_ENVIO) }))
   assert.throws(() => corpoDaConsulta({ ...base, texto: 'a'.repeat(LIMITE_ENVIO + 1) }), (e) => e instanceof RangeError && /120000/.test(e.message))
 })
+
+test('sem origem (texto que não veio de um processo identificado), o corpo não leva o campo', () => {
+  const { origem: _omitida, ...semOrigem } = base
+  const c = corpoDaConsulta(semOrigem)
+  assert.equal('origem' in c, false)
+  assert.equal(c.caso, 'caso de teste')
+})

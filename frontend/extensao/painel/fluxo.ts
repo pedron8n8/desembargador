@@ -7,7 +7,7 @@ export type Deps = {
   eu(): Promise<{ email: string }>
   abasEproc(): Promise<Aba[]>
   recarregar(id: number): Promise<void>
-  enviar(id: number, msg: { tipo: 'estado' }): Promise<unknown>
+  enviar(id: number, msg: { tipo: 'estado' | 'texto' }): Promise<unknown>
 }
 export type Tela =
   | { tipo: 'sem_login' }

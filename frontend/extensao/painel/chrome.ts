@@ -1,6 +1,7 @@
 import { get } from '../../src/api.ts'
 import { EPROC_HOSTS } from '../manifest.ts'
 import type { Acao } from './mensagens.ts'
+import { lerRespostaTexto, type TextoLido } from './texto/fonteTexto.ts'
 import type { Deps } from './fluxo.ts'
 
 const EPROC_RE = /^https:\/\/eproc[12]g\.tjsc\.jus\.br\//
@@ -45,6 +46,25 @@ export const depsChrome: Deps = {
       return await chrome.tabs.sendMessage(id, msg)
     }
   },
+}
+
+/** O texto da tela do eproc (a seleção do advogado ou a página), pedido ao agente da aba. */
+export async function lerTextoDaAba(abaId: number): Promise<TextoLido> {
+  return lerRespostaTexto(await depsChrome.enviar(abaId, { tipo: 'texto' }))
+}
+
+/** Avisa quando o advogado troca de aba ou uma aba termina de carregar; devolve quem cancela. */
+export function observarAba(aoMudar: () => void): () => void {
+  const ativada = () => aoMudar()
+  const atualizada = (_id: number, info: { status?: string }) => {
+    if (info.status === 'complete') aoMudar()
+  }
+  chrome.tabs.onActivated.addListener(ativada)
+  chrome.tabs.onUpdated.addListener(atualizada)
+  return () => {
+    chrome.tabs.onActivated.removeListener(ativada)
+    chrome.tabs.onUpdated.removeListener(atualizada)
+  }
 }
 
 /** Abre uma página (por exemplo, a consulta no sistema) numa aba nova. */

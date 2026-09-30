@@ -4,6 +4,7 @@
 // propósito, para a minimização aparecer no caso montado. Nada aqui toca rede.
 import type { Capa, Peca } from '../../agente/lib/caso.ts'
 import type { Consulta, ListaCerebros } from '../../../src/api.ts'
+import type { ResultadoPrecedentes } from '../texto/precedentes.ts'
 import { TIPOS } from '../caso/pecas.ts'
 import type { ApiAnalise, CorpoConsulta } from './apiAnalise.ts'
 import type { DocumentoLido, Fonte } from './fonte.ts'
@@ -66,6 +67,16 @@ const CEREBROS = {
 
 const NOS = ['triagem', 'recuperar', 'triar', 'prognostico']
 
+// Precedentes FICTÍCIOS (números inventados) para a demonstração da busca por texto.
+const PRECEDENTES_DEMO: ResultadoPrecedentes['itens'] = [
+  { id: 101, numero: '0001111-22.2019.8.24.0023', classe: 'APELAÇÃO CÍVEL', orgao: '6ª Câmara de Direito Comercial', data: '2023-05-12', resultado: 'provido',
+    ementa: 'TRIBUTÁRIO. PIS E COFINS. EXCLUSÃO DO ICMS DA BASE DE CÁLCULO. TESE FIRMADA PELO SUPREMO TRIBUNAL FEDERAL. RECURSO PROVIDO PARA RECONHECER O DIREITO À RESTITUIÇÃO DOS VALORES RECOLHIDOS A MAIOR.' },
+  { id: 102, numero: '0002222-33.2020.8.24.0023', classe: 'APELAÇÃO CÍVEL', orgao: '6ª Câmara de Direito Comercial', data: '2022-11-03', resultado: 'desprovido',
+    ementa: 'TRIBUTÁRIO. PRESCRIÇÃO QUINQUENAL. PEDIDO DE RESTITUIÇÃO. SENTENÇA MANTIDA. RECURSO DESPROVIDO.' },
+  { id: 103, numero: '0003333-44.2021.8.24.0023', classe: 'AGRAVO DE INSTRUMENTO', orgao: '6ª Câmara de Direito Comercial', data: '2024-01-22', resultado: 'parcialmente provido',
+    ementa: 'AGRAVO DE INSTRUMENTO. TUTELA DE URGÊNCIA. AUSÊNCIA DOS REQUISITOS LEGAIS NA ORIGEM. DECISÃO REFORMADA EM PARTE PARA AFASTAR A MULTA DIÁRIA.' },
+]
+
 export function apiDemo(pausaMs = 400): ApiAnalise & { ultimoCorpo(): CorpoConsulta | null } {
   let corpo: CorpoConsulta | null = null
   return {
@@ -91,6 +102,12 @@ export function apiDemo(pausaMs = 400): ApiAnalise & { ultimoCorpo(): CorpoConsu
       } as unknown as Consulta
     },
     urlDoSite: (thread) => `#consulta-${thread}`,
+    async buscarPrecedentes(q, _cerebro) {
+      await esperar(pausaMs)
+      if (!q.trim()) return { total: 0, itens: [] }
+      return { total: PRECEDENTES_DEMO.length, itens: PRECEDENTES_DEMO }
+    },
+    urlDoPrecedente: (cerebro, id) => `#acervo-${cerebro}-${id}`,
     ultimoCorpo: () => corpo,
   }
 }

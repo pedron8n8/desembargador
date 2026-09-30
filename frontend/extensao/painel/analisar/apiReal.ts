@@ -1,4 +1,5 @@
 import { get, post, type Consulta, type ListaCerebros } from '../../../src/api.ts'
+import type { ResultadoPrecedentes } from '../texto/precedentes.ts'
 import type { ApiAnalise } from './apiAnalise.ts'
 import { lerStream } from './sse.ts'
 
@@ -28,4 +29,7 @@ export const apiReal: ApiAnalise = {
   },
   consulta: (thread) => get<Consulta>(`/api/consultas/${thread}`),
   urlDoSite: (thread) => `${BASE}/consulta/${thread}`,
+  buscarPrecedentes: (q, cerebro) =>
+    get<ResultadoPrecedentes>(`/api/corpus?q=${encodeURIComponent(q)}&cerebro=${encodeURIComponent(cerebro)}&por_pagina=10`),
+  urlDoPrecedente: (cerebro, id) => `${BASE}/acervo/${cerebro}/${id}`,
 }
