@@ -88,3 +88,8 @@ test('um caractere abaixo do limite exato já excede e lista a peça', () => {
   assert.equal(m.excede, true)
   assert.deepEqual(m.cortadas, ['DECISÃO RECORRIDA — S'])
 })
+
+test('peça marcada à mão entra com o rótulo OUTRA PEÇA', () => {
+  const m = montarCaso(CAPA, [item('outra', 'ATO ORDINATÓRIO 1', 20, 'intime-se')], 20000)
+  assert.ok(m.texto.includes('=== OUTRA PEÇA — ATO ORDINATÓRIO 1 (evento 20, 10/03/2025) ===\nintime-se'))
+})

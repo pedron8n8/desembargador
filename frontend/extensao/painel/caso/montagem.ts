@@ -9,6 +9,7 @@ const ROTULO: Record<Papel, string> = {
   recurso: 'RECURSO',
   inicial: 'PETIÇÃO INICIAL',
   contestacao: 'CONTESTAÇÃO',
+  outra: 'OUTRA PEÇA',
 }
 
 export type Item = { papel: Papel; peca: Peca; texto: string }

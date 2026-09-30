@@ -11,7 +11,8 @@ export const TIPOS = {
   contestacao: ['CONT'],
 }
 
-export type Papel = 'decisao' | 'recurso' | 'inicial' | 'contestacao'
+// 'outra' é a peça que o advogado marca à mão; `preselecionar` nunca a devolve.
+export type Papel = 'decisao' | 'recurso' | 'inicial' | 'contestacao' | 'outra'
 export type Selecao = { papel: Papel; peca: Peca }
 
 const ultima = (ps: Peca[]) => ps.reduce<Peca | undefined>((a, p) => (!a || p.evento > a.evento ? p : a), undefined)
