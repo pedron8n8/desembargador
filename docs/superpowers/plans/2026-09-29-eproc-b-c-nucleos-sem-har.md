@@ -16,6 +16,12 @@
 - As telas do painel para B e C, e a leitura do `max_chars_caso` em `GET /api/config` (o campo `busca.max_chars_caso` já existe lá; `montarCaso` só recebe o número).
 - A confirmação dos códigos de tipo de documento do TJSC (ver `TIPOS` na Task 3).
 - **Limitação conhecida da minimização:** CPF/CNPJ escritos com espaços no lugar da pontuação (`529 982 247 25`) não são reconhecidos. Reconhecer isso arriscaria apagar datas e valores; fica como está até o HAR mostrar como o TJSC escreve.
+- **Obrigações do plano das telas (B2/C2), apontadas na revisão final:**
+  - o painel deve bloquear ou avisar antes de enviar um caso com mais de 120.000 caracteres: o servidor recusa com 413 (`MAX_CHARS_CASO` em `api/app.py`), e `montarCaso` só conhece o limite de leitura (`busca.max_chars_caso`, 20.000 por padrão);
+  - `montarCaso` pode devolver `excede: true` com `cortadas` vazia (o cabeçalho sozinho já passa do limite): a tela precisa tratar esse caso;
+  - a tela deve chamar `bloqueadasPorSigilo` e avisar quando a sentença ou outra peça-chave está em sigilo;
+  - quem produzir `Peca` e `Capa` a partir do HTML do TJSC converte `evento` com `Number()` (NaN é `LAYOUT`), trata nível de sigilo desconhecido como sigiloso e passa todo texto por `minimizar`;
+  - confirmar no HAR do TJSC os códigos `APELACAO`, `AGRAVO` e `CONT` em `TIPOS`.
 
 ## Global Constraints
 
