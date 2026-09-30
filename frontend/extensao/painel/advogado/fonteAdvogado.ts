@@ -1,3 +1,4 @@
+// OBRIGAÇÃO da leitura real: para item sigiloso o agente deve devolver só a contagem, nunca processo/classe/evento
 /** Um item do painel do advogado do eproc (uma intimação ou um prazo pendente). */
 export type ItemPainel = {
   ref: string // referência opaca; o link assinado do processo fica só no agente

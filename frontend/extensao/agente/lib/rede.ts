@@ -1,5 +1,5 @@
 import { ErroEproc } from './erros.ts'
-import { acaoProibida } from './proibidas.ts'
+import { acaoProibida, acaoProibidaNosPares } from './proibidas.ts'
 
 // O controlador_ajax declara iso-8859-1 até em JSON; response.text() assumiria
 // UTF-8 e estragaria acento cru. Estrito primeiro, porque UTF-8 válido quase
@@ -50,8 +50,8 @@ export function criarRede(op: Opcoes) {
   }
 
   // Recusa ANTES de entrar na fila: não gasta o intervalo e nem toca o eproc.
-  function recusar(url: string): Promise<never> | null {
-    const a = acaoProibida(url, op.proibidas)
+  function recusar(url: string, pares: [string, string][] = []): Promise<never> | null {
+    const a = acaoProibida(url, op.proibidas) ?? acaoProibidaNosPares(pares, op.proibidas)
     return a ? Promise.reject(new ErroEproc('LAYOUT', 'ação proibida: ' + a)) : null
   }
 
@@ -65,6 +65,12 @@ export function criarRede(op: Opcoes) {
       })
     } catch (e) {
       throw new ErroEproc('EPROC_FORA', String(e))
+    }
+    // Limite: a requisição intermediária já aconteceu; o fechamento total depende do HAR.
+    // Aqui só impedimos que o corpo de uma ação proibida chegue a quem chamou.
+    if (r.redirected) {
+      const a = acaoProibida(r.url, op.proibidas)
+      if (a) throw new ErroEproc('LAYOUT', 'ação proibida: ' + a)
     }
     if (r.status === 401 || r.status === 403) throw new ErroEproc('NAO_LOGADO', 'status ' + r.status)
     if (!r.ok) throw new ErroEproc('EPROC_FORA', 'status ' + r.status)
@@ -81,7 +87,7 @@ export function criarRede(op: Opcoes) {
 
   return {
     postar(url: string, pares: [string, string][]): Promise<unknown> {
-      const barrada = recusar(url)
+      const barrada = recusar(url, pares)
       if (barrada) return barrada
       return naFila(async () => {
         const texto = await requisitar(url, {

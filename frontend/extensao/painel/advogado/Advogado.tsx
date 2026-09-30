@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { mensagemDoErro } from '../analisar/erro.ts'
+import { mensagemControlada } from '../analisar/erro.ts'
 import type { FonteAdvogado } from './fonteAdvogado.ts'
 import { avisoSigilosos, mensagemVazia, prepararPainel, ROTULO_TIPO, type LinhaPainel } from './painelAdvogado.ts'
 
@@ -15,6 +15,11 @@ const SITUACAO: Record<LinhaPainel['situacao'], string | null> = {
   sem_prazo: null,
 }
 
+// Constante de módulo: um padrão `() => new Date()` seria função nova a cada render, entraria
+// nas deps do useCallback/useEffect e recarregaria sem parar. Sem montar React não há teste
+// simples disso; a estabilidade está garantida por construção (o efeito só depende de fonte/hoje).
+const agora = () => new Date()
+
 type Props = { fonte: FonteAdvogado; instancia: '1g' | '2g' | null; hoje?: () => Date; sair: () => void }
 
 /**
@@ -22,7 +27,7 @@ type Props = { fonte: FonteAdvogado; instancia: '1g' | '2g' | null; hoje?: () =>
  * sistema não calcula prazo processual. "Abrir no eproc" abre o PROCESSO, nunca a
  * intimação (abrir intimação pode registrar ciência).
  */
-export function Advogado({ fonte, instancia, hoje = () => new Date(), sair }: Props) {
+export function Advogado({ fonte, instancia, hoje = agora, sair }: Props) {
   const [estado, setEstado] = useState<Estado>({ t: 'carregando' })
   const ocupado = useRef(false)
 
@@ -34,7 +39,7 @@ export function Advogado({ fonte, instancia, hoje = () => new Date(), sair }: Pr
       const r = prepararPainel(await fonte.painel(), hoje())
       setEstado({ t: 'lista', linhas: r.linhas, sigilosos: r.sigilosos })
     } catch (e) {
-      setEstado({ t: 'erro', mensagem: mensagemDoErro(e) })
+      setEstado({ t: 'erro', mensagem: mensagemControlada(e) })
     } finally {
       ocupado.current = false
     }
@@ -48,7 +53,7 @@ export function Advogado({ fonte, instancia, hoje = () => new Date(), sair }: Pr
     try {
       await fonte.abrir(ref)
     } catch (e) {
-      setEstado({ ...atual, aviso: mensagemDoErro(e) })
+      setEstado({ ...atual, aviso: mensagemControlada(e) })
     }
   }
 
@@ -73,7 +78,7 @@ export function Advogado({ fonte, instancia, hoje = () => new Date(), sair }: Pr
       {vazia && <p>{vazia}</p>}
       <ul className="lista">
         {estado.linhas.map((l) => (
-          <li key={l.item.ref} className={l.situacao === 'sem_prazo' || l.situacao === 'normal' ? undefined : 'destaque'}>
+          <li key={l.item.ref} className={(l.situacao === 'sem_prazo' || l.situacao === 'normal') && !l.dataIlegivel ? undefined : 'destaque'}>
             <strong>{l.processoFormatado}</strong> <span className="meta">· {ROTULO_TIPO[l.item.tipo]} · {l.item.classe}</span>
             <br />
             {l.item.evento}

@@ -2,7 +2,13 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { ErroEproc } from '../../agente/lib/erros.ts'
 import { MENSAGENS } from '../mensagens.ts'
-import { mensagemDoErro } from './erro.ts'
+import { mensagemControlada, mensagemDoErro } from './erro.ts'
+
+test('mensagemControlada: ErroEproc pela tabela; qualquer outro erro vira texto genérico, sem message cru', () => {
+  assert.equal(mensagemControlada(new ErroEproc('LAYOUT', 'seletor x')), MENSAGENS.LAYOUT.texto)
+  assert.equal(mensagemControlada(new Error('stack interna /home/x')), 'Algo deu errado.')
+  assert.equal(mensagemControlada('texto solto'), 'Algo deu errado.')
+})
 
 test('erro do agente: texto da tabela do painel, pelo tipo, sem o detalhe técnico', () => {
   const m = mensagemDoErro(new ErroEproc('LAYOUT', 'seletor x'))

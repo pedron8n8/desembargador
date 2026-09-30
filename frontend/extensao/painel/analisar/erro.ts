@@ -7,6 +7,11 @@ import { MENSAGENS } from '../mensagens.ts'
  * técnico (seletor, redirecionamento) que não é para a tela. Os outros erros (do nosso
  * servidor, do corpo da consulta) já têm mensagem escrita para o usuário.
  */
+/** Como `mensagemDoErro`, mas nunca mostra o `message` de erro que não é do agente (texto genérico). */
+export function mensagemControlada(e: unknown): string {
+  return e instanceof ErroEproc ? MENSAGENS[e.tipo].texto : 'Algo deu errado.'
+}
+
 export function mensagemDoErro(e: unknown): string {
   if (e instanceof ErroEproc) return MENSAGENS[e.tipo].texto
   return e instanceof Error && e.message ? e.message : 'Algo deu errado.'

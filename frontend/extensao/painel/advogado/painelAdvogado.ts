@@ -1,4 +1,5 @@
 import { formatarNumeroProcesso } from '../../agente/lib/numero.ts'
+import { ErroEproc } from '../../agente/lib/erros.ts'
 import type { ItemPainel } from './fonteAdvogado.ts'
 
 export type Situacao = 'vencido' | 'proximo' | 'normal' | 'sem_prazo'
@@ -8,7 +9,7 @@ export type LinhaPainel = {
   situacao: Situacao
   /** Dias corridos até o prazo final que o eproc informa (negativo = já passou); null sem data legível. */
   dias: number | null
-  /** O eproc mandou uma data que não conseguimos ler: mostramos o texto dele e não destacamos nada. */
+  /** O eproc mandou uma data que não conseguimos ler: mostramos o texto dele, destacamos o item e nunca o chamamos de vencido. */
   dataIlegivel: boolean
 }
 
@@ -32,8 +33,18 @@ export function lerData(texto: string): number | null {
   return d.getUTCFullYear() === ano && d.getUTCMonth() === mes - 1 && d.getUTCDate() === dia ? t : null
 }
 
-/** O dia do calendário de `hoje` (no fuso local) como meia-noite UTC, para subtrair dias inteiros. */
-const diaDe = (hoje: Date) => Date.UTC(hoje.getFullYear(), hoje.getMonth(), hoje.getDate())
+const BRASILIA = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo', year: 'numeric', month: '2-digit', day: '2-digit' })
+
+/** O dia do calendário de `hoje` em Brasília (não o fuso da máquina) como meia-noite UTC, para subtrair dias inteiros. */
+function diaDe(hoje: Date): number {
+  const [ano, mes, dia] = BRASILIA.format(hoje).split('-').map(Number)
+  return Date.UTC(ano, mes - 1, dia)
+}
+
+const TIPOS = new Set<string>(['intimacao', 'prazo', 'outro'])
+
+/** Ordem: data ilegível (topo, junto dos vencidos), prazo crescente, sem prazo por último. */
+const chave = (l: LinhaPainel) => (l.dataIlegivel ? -Infinity : (l.dias ?? Infinity))
 
 function linha(item: ItemPainel, hoje: number): LinhaPainel {
   const base = { item, processoFormatado: formatarNumeroProcesso(item.processo) }
@@ -46,14 +57,17 @@ function linha(item: ItemPainel, hoje: number): LinhaPainel {
 
 /**
  * Prepara a lista: só os públicos (sigilosos viram contagem e nunca saem daqui), ordenados
- * pelo prazo final crescente (vencidos primeiro; sem data por último; empate por processo).
+ * pelo prazo final crescente (data ilegível e vencidos primeiro; sem prazo por último; empate por processo).
  */
 export function prepararPainel(itens: ItemPainel[], hoje: Date): { linhas: LinhaPainel[]; sigilosos: number; total: number } {
   const dia = diaDe(hoje)
-  const publicos = itens.filter((i) => !i.sigiloso)
+  // Só `false` é público; `true` é sigiloso; qualquer outro valor é resposta que não entendemos.
+  for (const i of itens) if (typeof i.sigiloso !== 'boolean') throw new ErroEproc('LAYOUT', 'sigiloso inválido')
+  const publicos = itens.filter((i) => i.sigiloso === false)
+  for (const i of publicos) if (!TIPOS.has(i.tipo)) throw new ErroEproc('LAYOUT', 'tipo desconhecido')
   const linhas = publicos
     .map((i) => linha(i, dia))
-    .sort((a, b) => (a.dias ?? Infinity) - (b.dias ?? Infinity) || a.item.processo.localeCompare(b.item.processo))
+    .sort((a, b) => chave(a) - chave(b) || a.item.processo.localeCompare(b.item.processo))
   return { linhas, sigilosos: itens.length - publicos.length, total: itens.length }
 }
 
