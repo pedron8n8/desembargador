@@ -33,8 +33,8 @@ export function aplicar(a: Andamento, e: EventoSse): Andamento {
       return no ? { ...a, no, nos: a.nos.includes(no) ? a.nos : [...a.nos, no] } : a
     }
     case 'no_fim': {
-      const custos = Array.isArray(p.custos) ? (p.custos as Payload[]) : []
-      const soma = custos.reduce((s, c) => s + numero(c.custo_usd), 0)
+      const custos = Array.isArray(p.custos) ? (p.custos as (Payload | null)[]) : []
+      const soma = custos.reduce((s, c) => s + numero(c?.custo_usd), 0)
       return { ...a, no: a.no === texto(p.no) ? null : a.no, custo_usd: a.custo_usd + soma }
     }
     case 'fim':

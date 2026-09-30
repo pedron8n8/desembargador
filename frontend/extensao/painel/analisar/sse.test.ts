@@ -93,3 +93,48 @@ test('andamento: payload estranho não quebra nem inventa estado', () => {
   assert.equal(aplicar(base, ev('erro', {})).erro, 'a consulta falhou')
   assert.equal(aplicar(base, ev('no_fim', { no: 'a', custos: 'x' })).custo_usd, 0)
 })
+
+// timeout só para o teste NUNCA travar a suíte se a correção faltar
+const comPrazo = <T,>(p: Promise<T>, ms = 1000) =>
+  Promise.race([p, new Promise<never>((_, rej) => setTimeout(() => rej(new Error('lerStream não terminou: travou esperando o servidor fechar')), ms))])
+
+test('lerStream termina no evento fim mesmo que o servidor nunca feche a conexão', async () => {
+  const bytes = new TextEncoder().encode(bloco(1, 'no_inicio', { no: 'triagem' }) + bloco(2, 'fim', { segundos: 1 }))
+  let cancelado = false
+  const corpo = new ReadableStream<Uint8Array>({
+    start(c) { c.enqueue(bytes) }, // nunca fecha
+    cancel() { cancelado = true },
+  })
+  const eventos: EventoSse[] = []
+  await comPrazo(lerStream(corpo, (e) => eventos.push(e)))
+  assert.deepEqual(eventos.map((e) => e.tipo), ['no_inicio', 'fim'])
+  assert.equal(cancelado, true)
+})
+
+test('o mesmo para erro, e nada depois do evento terminal é entregue', async () => {
+  const bytes = new TextEncoder().encode(bloco(1, 'erro', { mensagem: 'sem crédito' }) + bloco(2, 'log', { linha: 'depois' }) + bloco(3, 'fim', {}))
+  const corpo = new ReadableStream<Uint8Array>({ start(c) { c.enqueue(bytes) } })
+  const eventos: EventoSse[] = []
+  await comPrazo(lerStream(corpo, (e) => eventos.push(e)))
+  assert.deepEqual(eventos.map((e) => e.tipo), ['erro'])
+})
+
+test('exceção do consumidor propaga (não é engolida) e o stream é cancelado', async () => {
+  const { ler } = coletar()
+  assert.doesNotThrow(() => ler('id: 1\nevent: log\ndata: {isso não é json\n\n')) // lixo continua ignorado
+  const leitor = criarLeitorSse(() => { throw new Error('bug do consumidor') })
+  assert.throws(() => leitor(bloco(1, 'log', {})), /bug do consumidor/)
+  let cancelado = false
+  const corpo = new ReadableStream<Uint8Array>({
+    start(c) { c.enqueue(new TextEncoder().encode(bloco(1, 'log', {}))) },
+    cancel() { cancelado = true },
+  })
+  await assert.rejects(comPrazo(lerStream(corpo, () => { throw new Error('bug do consumidor') })), /bug do consumidor/)
+  assert.equal(cancelado, true)
+})
+
+test('andamento: custos com item nulo não quebram a soma', () => {
+  const ev = (tipo: string, dados: unknown): EventoSse => ({ id: 1, tipo, dados })
+  const a = aplicar(andamentoInicial(), ev('no_fim', { no: 'x', custos: [null, { custo_usd: 0.01 }, 'lixo'] }))
+  assert.ok(Math.abs(a.custo_usd - 0.01) < 1e-9)
+})

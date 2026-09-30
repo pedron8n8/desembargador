@@ -32,23 +32,41 @@ export function criarLeitorSse(aoEvento: (e: EventoSse) => void): (pedaco: strin
         else if (campo === 'data') dados.push(valor)
       }
       if (!tipo) continue
+      let lido: unknown
       try {
-        aoEvento({ id, tipo, dados: JSON.parse(dados.join('\n')) })
+        lido = JSON.parse(dados.join('\n'))
       } catch {
-        /* data ilegível: ignora */
+        continue // data ilegível: ignora
       }
+      aoEvento({ id, tipo, dados: lido }) // fora do try: bug do consumidor não é engolido
     }
   }
 }
 
-/** Lê o corpo de uma resposta SSE até ele fechar, entregando cada evento. */
+/**
+ * Lê o corpo de uma resposta SSE, entregando cada evento, até ele fechar ou até o
+ * primeiro evento terminal (`fim` ou `erro`). O servidor reenvia o terminal de uma
+ * consulta que já acabou e mantém a conexão aberta com pings; por isso não dá para
+ * esperar que ele feche. Nada que venha depois do terminal é entregue.
+ */
 export async function lerStream(corpo: ReadableStream<Uint8Array>, aoEvento: (e: EventoSse) => void): Promise<void> {
-  const ler = criarLeitorSse(aoEvento)
+  let terminou = false
+  const ler = criarLeitorSse((e) => {
+    if (terminou) return
+    aoEvento(e)
+    if (e.tipo === 'fim' || e.tipo === 'erro') terminou = true
+  })
   const decodificador = new TextDecoder()
   const leitor = corpo.getReader()
-  for (;;) {
-    const { done, value } = await leitor.read()
-    if (done) break
-    ler(decodificador.decode(value, { stream: true }))
+  try {
+    while (!terminou) {
+      const { done, value } = await leitor.read()
+      if (done) break
+      ler(decodificador.decode(value, { stream: true }))
+    }
+  } finally {
+    // cancel() é o que avisa o servidor para largar a conexão
+    try { await leitor.cancel() } catch { /* já fechado */ }
+    try { leitor.releaseLock() } catch { /* já solto */ }
   }
 }
