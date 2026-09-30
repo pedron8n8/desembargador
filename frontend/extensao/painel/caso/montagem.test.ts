@@ -2,6 +2,7 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import type { Capa, Peca } from '../../agente/lib/caso.ts'
 import { montarCaso, type Item } from './montagem.ts'
+import { ErroEproc } from '../../agente/lib/erros.ts'
 
 const CAPA: Capa = {
   numero: '50012345620208240023', classe: 'APELAÇÃO CÍVEL', orgao: '6ª Câmara de Direito Comercial',
@@ -65,4 +66,25 @@ test('limite inválido (NaN, zero, negativo, indefinido, infinito) falha em vez 
   for (const l of [NaN, 0, -1, undefined as unknown as number, Infinity]) {
     assert.throws(() => montarCaso(CAPA, [], l), RangeError, String(l))
   }
+})
+
+test('última barreira: CPF, CNPJ e OAB que sobraram no cabeçalho ou no corpo saem do texto', () => {
+  const capa = { ...CAPA, poloAtivo: ['FULANO (CPF 529.982.247-25)'] }
+  const m = montarCaso(capa, [item('decisao', 'S', 1, 'parte no CNPJ 11.222.333/0001-81, advogado OAB/SC 12.345')], 20000)
+  assert.ok(m.texto.includes('FULANO (CPF [CPF])'))
+  assert.ok(m.texto.includes('CNPJ [CNPJ], advogado [OAB]'))
+  assert.ok(!/529\.982|11\.222|12\.345/.test(m.texto))
+})
+
+test('peça sigilosa é recusada com SIGILOSO, nunca montada', () => {
+  const sigilosa = item('decisao', 'S', 1, 'texto secreto')
+  sigilosa.peca.sigiloso = true
+  assert.throws(() => montarCaso(CAPA, [sigilosa], 20000), (e) => e instanceof ErroEproc && e.tipo === 'SIGILOSO')
+})
+
+test('um caractere abaixo do limite exato já excede e lista a peça', () => {
+  const base = montarCaso(CAPA, [item('decisao', 'S', 1, 'abc')], 20000)
+  const m = montarCaso(CAPA, [item('decisao', 'S', 1, 'abc')], base.chars - 1)
+  assert.equal(m.excede, true)
+  assert.deepEqual(m.cortadas, ['DECISÃO RECORRIDA — S'])
 })
