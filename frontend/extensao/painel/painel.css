@@ -33,3 +33,36 @@ body {
   background: transparent;
   color: var(--selo);
 }
+
+.lista {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 6px;
+}
+
+.aviso {
+  color: var(--alerta);
+}
+
+.resumo {
+  margin: 0;
+  font-size: 18px;
+  font-weight: normal;
+}
+
+textarea.caso {
+  box-sizing: border-box;
+  width: 100%;
+  border: 1px solid var(--linha-forte);
+  border-radius: var(--raio);
+  background: var(--papel);
+  color: var(--tinta);
+  font: inherit;
+}
+
+.painel button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}

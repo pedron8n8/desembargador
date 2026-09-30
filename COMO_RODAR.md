@@ -355,3 +355,8 @@ Carregue `frontend/extensao/dist-demo` em `chrome://extensions`. Copie o **ID** 
 abra `chrome-extension://<ID>/demo.html`: a página mostra o painel de verdade com dados fictícios e uma lista
 de cenários (processo aberto no 1º e no 2º grau, sessão caída, captcha, sigilo, sistema fora do ar...).
 `EXT_DEMO` nunca deve estar definida no build que vai para a loja: a página de demonstração só existe nele.
+
+Nos cenários com processo aberto, o botão **Analisar este processo** percorre o fluxo inteiro com dados
+fictícios: escolher as peças, montar o caso (com CPF, CNPJ e OAB já removidos), rodar, acompanhar e ver o
+resumo do prognóstico. No painel de verdade esse botão só aparece quando as primitivas de leitura do eproc
+do TJSC existirem.

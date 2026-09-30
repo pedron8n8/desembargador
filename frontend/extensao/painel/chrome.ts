@@ -47,6 +47,11 @@ export const depsChrome: Deps = {
   },
 }
 
+/** Abre uma página (por exemplo, a consulta no sistema) numa aba nova. */
+export const abrirAba = (url: string) => {
+  void chrome.tabs.create({ url })
+}
+
 export async function executar(acao: Acao) {
   const base = import.meta.env.VITE_API_BASE as string
   if (acao === 'abrir_login') await chrome.tabs.create({ url: base + '/' })
