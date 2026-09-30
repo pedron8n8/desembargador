@@ -4,7 +4,9 @@ import { aplicar, andamentoInicial, type Andamento } from '../analisar/andamento
 import { corpoDaConsulta, LIMITE_ENVIO, type ApiAnalise, type Origem, type Tese } from '../analisar/apiAnalise.ts'
 import { escolherCerebro } from '../analisar/cerebro.ts'
 import { mensagemDoErro } from '../analisar/erro.ts'
+import type { FonteDoTexto } from './fonteTexto.ts'
 import { resumirPrognostico, type Resumo } from '../analisar/resumo.ts'
+import { origemDoTexto, podeEnviar, ROTULO_SIGILO } from './envio.ts'
 
 type Etapa =
   | { t: 'carregando' }
@@ -18,20 +20,21 @@ const NO: Record<string, string> = {
   redigir: 'redigindo a minuta', revisar: 'revisando a minuta', julgar: 'avaliando a minuta',
 }
 
-type Props = { texto: string; api: ApiAnalise; origem?: Origem; abrir: (url: string) => void; sair: () => void }
+type Props = { texto: string; fonte: FonteDoTexto; api: ApiAnalise; origem?: Origem; abrir: (url: string) => void; sair: () => void }
 
 /**
  * Analisa um TEXTO avulso (o que o advogado selecionou na tela do eproc, ou a página
  * aberta): o mesmo caminho do "Analisar este processo" depois da montagem do caso, sem a
  * etapa de escolher peças. Reaproveita todos os módulos puros; só a tela é própria.
  */
-export function AnalisarTexto({ texto: inicial, api, origem, abrir, sair }: Props) {
+export function AnalisarTexto({ texto: inicial, fonte, api, origem, abrir, sair }: Props) {
   const [etapa, setEtapa] = useState<Etapa>({ t: 'carregando' })
   const [texto, setTexto] = useState(inicial)
   const [tese, setTese] = useState<Tese>('neutra')
   const [soPrognostico, setSoPrognostico] = useState(false)
   const [cerebro, setCerebro] = useState('')
   const [bloqueado, setBloqueado] = useState(false)
+  const [confirmou, setConfirmou] = useState(false)
   const ocupado = useRef(false)
 
   useEffect(() => {
@@ -49,12 +52,13 @@ export function AnalisarTexto({ texto: inicial, api, origem, abrir, sair }: Prop
   }, [api])
 
   async function rodar(atual: Extract<Etapa, { t: 'texto' }>) {
+    if (!podeEnviar({ fonte, confirmou, texto })) return
     if (ocupado.current) return // trava síncrona: dois cliques no mesmo instante criariam duas consultas pagas
     ocupado.current = true
     setBloqueado(true)
     let thread: string | undefined
     try {
-      const { thread: t } = await api.rodar(corpoDaConsulta({ texto, cerebro, tese, soPrognostico, origem }))
+      const { thread: t } = await api.rodar(corpoDaConsulta({ texto, cerebro, tese, soPrognostico, origem: origemDoTexto(fonte, origem) }))
       thread = t
       let andamento = andamentoInicial()
       setEtapa({ t: 'rodando', andamento })
@@ -90,6 +94,9 @@ export function AnalisarTexto({ texto: inicial, api, origem, abrir, sair }: Prop
           {etapa.erro && <p className="aviso" role="alert">{etapa.erro}</p>}
           {etapa.aviso && <p className="aviso" role="alert">{etapa.aviso}</p>}
           <p className="aviso">O texto vem da tela do eproc. Não use conteúdo de processo em sigilo.</p>
+          {fonte === 'pagina' && (
+            <label><input type="checkbox" checked={confirmou} onChange={(e) => setConfirmou(e.target.checked)} disabled={bloqueado} /> {ROTULO_SIGILO}</label>
+          )}
           <textarea className="caso" value={texto} onChange={(e) => setTexto(e.target.value)} rows={12} aria-label="Texto do caso" disabled={bloqueado} />
           <p className={passou ? 'aviso' : 'meta'}>
             {texto.length.toLocaleString('pt-BR')} de {etapa.limite.toLocaleString('pt-BR')} caracteres
@@ -109,7 +116,7 @@ export function AnalisarTexto({ texto: inicial, api, origem, abrir, sair }: Prop
             </select>
           </label>
           <label><input type="checkbox" checked={soPrognostico} onChange={(e) => setSoPrognostico(e.target.checked)} /> Só o prognóstico (mais rápido e barato)</label>
-          <button disabled={!texto.trim() || !cerebro || acima || bloqueado} onClick={() => void rodar(etapa)}>Rodar a análise</button>
+          <button disabled={!podeEnviar({ fonte, confirmou, texto }) || !cerebro || acima || bloqueado} onClick={() => void rodar(etapa)}>Rodar a análise</button>
           <button className="secundario" disabled={bloqueado} onClick={sair}>Voltar</button>
         </main>
       )

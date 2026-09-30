@@ -4,7 +4,8 @@ import type { ListaCerebros } from '../../../src/api.ts'
 import { escolherCerebro } from '../analisar/cerebro.ts'
 import { mensagemDoErro } from '../analisar/erro.ts'
 import type { ApiAnalise } from '../analisar/apiAnalise.ts'
-import type { TextoLido } from './fonteTexto.ts'
+import type { FonteDoTexto, TextoLido } from './fonteTexto.ts'
+import { podeEnviar, ROTULO_SIGILO } from './envio.ts'
 import { linhaDoPrecedente, type ResultadoPrecedentes } from './precedentes.ts'
 import { termosDeBusca } from './termos.ts'
 
@@ -24,7 +25,7 @@ type Props = {
   api: Pick<ApiAnalise, 'cerebros' | 'buscarPrecedentes' | 'urlDoPrecedente'>
   abrir: (url: string) => void
   /** Leva o texto (já minimizado) para o fluxo de análise. */
-  analisar: (texto: string) => void
+  analisar: (texto: string, fonte: FonteDoTexto) => void
   sair: () => void
 }
 
@@ -37,6 +38,7 @@ export function Precedentes({ lerTexto, api, abrir, analisar, sair }: Props) {
   const [etapa, setEtapa] = useState<Etapa>({ t: 'carregando' })
   const [texto, setTexto] = useState('')
   const [cerebro, setCerebro] = useState('')
+  const [confirmou, setConfirmou] = useState(false)
   const ocupado = useRef(false)
 
   useEffect(() => {
@@ -54,6 +56,7 @@ export function Precedentes({ lerTexto, api, abrir, analisar, sair }: Props) {
   }, [lerTexto, api])
 
   async function buscar(e: Edicao) {
+    if (!podeEnviar({ fonte: e.texto.fonte, confirmou, texto })) return
     if (ocupado.current) return
     ocupado.current = true
     const q = termosDeBusca(minimizar(texto).slice(0, TEXTO_DA_BUSCA))
@@ -90,14 +93,24 @@ export function Precedentes({ lerTexto, api, abrir, analisar, sair }: Props) {
             {e.texto.cortado && ' (cortado: o fim ficou de fora)'}
           </p>
           <p className="aviso">O texto vem da tela do eproc. Não use conteúdo de processo em sigilo.</p>
+          {e.texto.fonte === 'pagina' && (
+            <label><input type="checkbox" checked={confirmou} onChange={(ev) => setConfirmou(ev.target.checked)} /> {ROTULO_SIGILO}</label>
+          )}
           <textarea className="caso" value={texto} onChange={(ev) => setTexto(ev.target.value)} rows={8} aria-label="Texto para a busca" />
           <label>Cérebro{' '}
             <select value={cerebro} onChange={(ev) => setCerebro(ev.target.value)}>
               {ativos.map((c) => <option key={c.slug} value={c.slug}>{c.nome}</option>)}
             </select>
           </label>
-          <button disabled={!texto.trim() || !cerebro} onClick={() => void buscar(e)}>Buscar precedentes</button>
-          <button className="secundario" disabled={!texto.trim()} onClick={() => analisar(minimizar(texto))}>Analisar este texto</button>
+          {(() => {
+            const ok = podeEnviar({ fonte: e.texto.fonte, confirmou, texto })
+            return (
+              <>
+                <button disabled={!ok || !cerebro} onClick={() => void buscar(e)}>Buscar precedentes</button>
+                <button className="secundario" disabled={!ok} onClick={() => analisar(minimizar(texto), e.texto.fonte)}>Analisar este texto</button>
+              </>
+            )
+          })()}
           <button className="secundario" onClick={sair}>Voltar</button>
         </main>
       )

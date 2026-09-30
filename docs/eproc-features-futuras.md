@@ -83,6 +83,14 @@ git, contém dados reais de processo).
 | Checagem de origem em `rede.ts` antes de buscar links vindos do HTML do eproc | P | Segurança: fazer antes de a B começar a seguir links |
 | Ajuste automático de seletores quando o eproc mudar | G | Código remoto é proibido, só configuração; não recomendado agora |
 
+## Obrigações da leitura real
+
+Dependem do eproc real (HAR); a base atual não as resolve.
+
+- **Sigilo no texto da tela:** `agente/lib/texto.ts` deve detectar o marcador de sigilo da tela e devolver `ErroEproc` `SIGILOSO`. Até lá, sem seleção o painel exige a confirmação do advogado.
+- **Abas (M1):** `observarAba` dispara em qualquer aba (não só do eproc) e `abasEproc` cai em `abas[0]` quando nenhuma está ativa; a leitura real deve olhar só a aba ativa da janela e ignorar mudanças de outras.
+- **Iframes (M2):** o agente roda só no frame de topo; se o eproc renderizar o processo em iframes, será preciso `all_frames` no manifest e escolher/mesclar o frame certo (hoje `document.body.innerText` e a seleção não entram nos iframes).
+
 ## Não fazer (e por quê)
 
 - **Abrir ou marcar intimação:** registra ciência e conta prazo.

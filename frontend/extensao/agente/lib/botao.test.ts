@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { ID_BOTAO, montarBotao, type DocMinimo, type ElementoMinimo } from './botao.ts'
+import { abaDoPedidoDeAbrir, ID_BOTAO, montarBotao, type DocMinimo, type ElementoMinimo } from './botao.ts'
 
 // DOM de mentira: só registra o que o código faz, para testar sem navegador.
 class Falso implements ElementoMinimo {
@@ -9,12 +9,14 @@ class Falso implements ElementoMinimo {
   textContent: string | null = null
   style = { cssText: '' }
   filhos: unknown[] = []
+  modo: string | null = null
   raiz: { filhos: unknown[]; append(...f: unknown[]): void } | null = null
   cliques: (() => void)[] = []
   tag: string
   constructor(tag: string) { this.tag = tag }
   append(...f: unknown[]) { this.filhos.push(...f) }
-  attachShadow() {
+  attachShadow(init: { mode: 'open' | 'closed' }) {
+    this.modo = init.mode
     this.raiz = { filhos: [], append(...f: unknown[]) { this.filhos.push(...f) } }
     return this.raiz
   }
@@ -37,6 +39,8 @@ test('cria o botão dentro de um shadow DOM fechado, fixo no canto, com o rótul
   assert.equal(montarBotao(doc, () => cliques++), true)
   const hospedeiro = doc.corpo.filhos[0] as Falso
   assert.equal(hospedeiro.id, ID_BOTAO)
+  assert.equal(hospedeiro.modo, 'closed')
+  assert.match(hospedeiro.style.cssText, /^all:initial;/)
   assert.match(hospedeiro.style.cssText, /position:fixed/)
   const [estilo, botao] = hospedeiro.raiz!.filhos as Falso[]
   assert.equal(estilo.tag, 'style')
@@ -56,4 +60,14 @@ test('página sem corpo (ainda carregando): não faz nada e não quebra', () => 
   const doc = docFalso(false)
   assert.equal(montarBotao(doc, () => {}), false)
   assert.equal(doc.corpo.filhos.length, 0)
+})
+
+test('abaDoPedidoDeAbrir: só a própria extensão, mensagem certa e aba definida', () => {
+  const ok = { id: 'eu', tab: { id: 7 } }
+  assert.equal(abaDoPedidoDeAbrir({ tipo: 'abrir_painel' }, ok, 'eu'), 7)
+  assert.equal(abaDoPedidoDeAbrir({ tipo: 'abrir_painel' }, { ...ok, id: 'outro' }, 'eu'), null)
+  assert.equal(abaDoPedidoDeAbrir({ tipo: 'abrir_painel' }, { id: 'eu' }, 'eu'), null)
+  assert.equal(abaDoPedidoDeAbrir({ tipo: 'outro' }, ok, 'eu'), null)
+  assert.equal(abaDoPedidoDeAbrir(null, ok, 'eu'), null)
+  assert.equal(abaDoPedidoDeAbrir({ tipo: 'abrir_painel' }, { id: 'eu', tab: { id: 0 } }, 'eu'), 0)
 })

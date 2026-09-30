@@ -13,6 +13,8 @@ import { Sistema } from './sistema/Sistema.tsx'
 import type { ApiSistema } from './sistema/apiSistema.ts'
 import { Precedentes } from './texto/Precedentes.tsx'
 import { debounce } from './util/debounce.ts'
+import { ultimaValida } from './util/ultimaValida.ts'
+import type { FonteDoTexto } from './texto/fonteTexto.ts'
 
 const VERSAO = chrome.runtime.getManifest().version
 const formatar = (n: string) => n.replace(/^(\d{7})(\d{2})(\d{4})(\d)(\d{2})(\d{4})$/, '$1-$2.$3.$4.$5.$6')
@@ -36,29 +38,43 @@ type Props = {
 
 // Qual sub-tela está aberta por cima do painel (null = o painel). Com uma aberta, o
 // painel NÃO se atualiza sozinho: isso derrubaria a tela em uso.
-type Sub = null | { t: 'analisar' } | { t: 'advogado' } | { t: 'sistema' } | { t: 'texto' } | { t: 'analisarTexto'; texto: string }
+type Sub = null | { t: 'analisar' } | { t: 'advogado' } | { t: 'sistema' } | { t: 'texto' } | { t: 'analisarTexto'; texto: string; fonte: FonteDoTexto }
 
 export function Painel({ deps = depsChrome, fonte, api, advogado, sistema, lerTexto = lerTextoDaAba, observar = observarAba, abrir = abrirAba }: Props) {
   const [tela, setTela] = useState<Tela | null>(null)
   const [sub, setSub] = useState<Sub>(null)
+  // Só a resposta da chamada mais recente chama setTela; as antigas e as que chegam depois
+  // do unmount são descartadas (util/ultimaValida.ts).
+  const ultima = useRef(ultimaValida())
+  useEffect(() => {
+    const u = ultima.current
+    return () => u.encerrar()
+  }, [])
+  const semSub = useRef(true)
+  semSub.current = sub === null
   const carregar = useCallback(() => {
+    const vale = ultima.current.iniciar()
     setTela(null)
-    abrirPainel(deps).then(setTela, () => setTela({ tipo: 'erro', erro: 'LAYOUT' }))
+    abrirPainel(deps).then((t) => { if (vale()) setTela(t) }, () => { if (vale()) setTela({ tipo: 'erro', erro: 'LAYOUT' }) })
   }, [deps])
   useEffect(carregar, [carregar])
 
   // Acompanha o advogado: troca de aba ou aba que termina de carregar atualiza o painel, em
   // silêncio (sem voltar ao "Verificando…") e só quando nenhuma sub-tela está aberta.
-  const semSub = useRef(true)
-  semSub.current = sub === null
-  const atualizar = useCallback(() => {
-    if (semSub.current) abrirPainel(deps).then(setTela, () => {})
+  // `forcar` serve ao `fechar`, que reatualiza no mesmo instante em que a sub-tela sai.
+  const atualizar = useCallback((forcar = false) => {
+    if (!forcar && !semSub.current) return
+    const vale = ultima.current.iniciar()
+    abrirPainel(deps).then((t) => { if (vale() && semSub.current) setTela(t) }, () => {})
   }, [deps])
   useEffect(() => {
-    const espera = debounce(atualizar, 600)
+    const espera = debounce(() => atualizar(), 600)
     const parar = observar(espera)
     return () => { parar(); espera.cancelar() }
   }, [atualizar, observar])
+
+  // Abrir sub-tela descarta o que está em voo: uma resposta tardia mudaria a aba (abaId) por baixo dela.
+  const abrirSub = (s: Sub) => { ultima.current.invalidar(); setSub(s) }
 
   // O texto é lido da aba que o painel mostrou; estável enquanto a aba for a mesma.
   const abaId = tela?.tipo === 'pronto' ? tela.abaId : undefined
@@ -94,7 +110,11 @@ export function Painel({ deps = depsChrome, fonte, api, advogado, sistema, lerTe
 
   const { estado, email } = tela
   const origem = estado.processo && estado.instancia ? { eproc: estado.processo, instancia: estado.instancia } : undefined
-  const fechar = () => setSub(null)
+  const fechar = () => {
+    semSub.current = true
+    setSub(null)
+    atualizar(true)
+  }
   if (sub?.t === 'analisar' && fonte && api && origem) {
     return <Analisar fonte={fonte} api={api} origem={origem} abrir={abrir} sair={fechar} />
   }
@@ -103,9 +123,9 @@ export function Painel({ deps = depsChrome, fonte, api, advogado, sistema, lerTe
     return <Sistema api={sistema} processo={origem && { numero: origem.eproc, instancia: origem.instancia }} abrir={abrir} sair={fechar} />
   }
   if (sub?.t === 'texto' && api) {
-    return <Precedentes lerTexto={lerDaAba} api={api} abrir={abrir} analisar={(texto) => setSub({ t: 'analisarTexto', texto })} sair={fechar} />
+    return <Precedentes lerTexto={lerDaAba} api={api} abrir={abrir} analisar={(texto, fonte) => abrirSub({ t: 'analisarTexto', texto, fonte })} sair={fechar} />
   }
-  if (sub?.t === 'analisarTexto' && api) return <AnalisarTexto texto={sub.texto} api={api} origem={origem} abrir={abrir} sair={fechar} />
+  if (sub?.t === 'analisarTexto' && api) return <AnalisarTexto texto={sub.texto} fonte={sub.fonte} api={api} origem={origem} abrir={abrir} sair={fechar} />
   return (
     <main className="painel">
       <p className="meta">{email}</p>
@@ -115,10 +135,10 @@ export function Painel({ deps = depsChrome, fonte, api, advogado, sistema, lerTe
       ) : (
         <p className="meta">Nenhum processo aberto nesta aba.</p>
       )}
-      {estado.processo && fonte && api && <button onClick={() => setSub({ t: 'analisar' })}>Analisar este processo</button>}
-      {api && <button onClick={() => setSub({ t: 'texto' })}>Texto da tela do eproc</button>}
-      {sistema && <button onClick={() => setSub({ t: 'sistema' })}>Histórico e acompanhados</button>}
-      {advogado && <button onClick={() => setSub({ t: 'advogado' })}>Intimações e prazos</button>}
+      {estado.processo && fonte && api && <button onClick={() => abrirSub({ t: 'analisar' })}>Analisar este processo</button>}
+      {api && <button onClick={() => abrirSub({ t: 'texto' })}>Texto da tela do eproc</button>}
+      {sistema && <button onClick={() => abrirSub({ t: 'sistema' })}>Histórico e acompanhados</button>}
+      {advogado && <button onClick={() => abrirSub({ t: 'advogado' })}>Intimações e prazos</button>}
       <button className="secundario" onClick={carregar}>Atualizar</button>
     </main>
   )

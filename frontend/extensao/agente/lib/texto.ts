@@ -19,6 +19,10 @@ export const TETO_TEXTO = 100_000
  * Não sabemos se a página é de um processo em sigilo (a tela é do eproc; só o HAR do
  * TJSC mostrará onde ele avisa isso): quem decide enviar é o advogado, e a tela do
  * painel avisa para não enviar conteúdo sigiloso.
+ *
+ * OBRIGAÇÃO da leitura real (HAR): detectar o marcador de sigilo da tela e devolver
+ * ErroEproc SIGILOSO. Até lá, sem seleção o painel exige a confirmação do advogado
+ * (painel/texto/envio.ts).
  */
 export function lerTexto(leitor: LeitorDePagina, teto = TETO_TEXTO): TextoLido {
   const selecionado = leitor.selecao().trim()

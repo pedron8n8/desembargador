@@ -1,6 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { ErroEproc } from '../../agente/lib/erros.ts'
+import { podeEnviar, origemDoTexto } from './envio.ts'
 import { lerRespostaTexto } from './fonteTexto.ts'
 import { EMENTA_MAX, linhaDoPrecedente, resumirEmenta, type PrecedenteResumo } from './precedentes.ts'
 import { termosDeBusca } from './termos.ts'
@@ -66,4 +67,19 @@ test('linhaDoPrecedente: título, meta só com o que existe, ementa resumida', (
   const l = linhaDoPrecedente(P({ classe: null, orgao: null, resultado: null }))
   assert.equal(l.titulo, '5001234-56.2020.8.24.0023')
   assert.equal(l.meta, '2024-03-10')
+})
+
+test('podeEnviar: página inteira exige confirmação de sigilo; seleção não; texto vazio nunca', () => {
+  assert.equal(podeEnviar({ fonte: 'pagina', confirmou: false, texto: 'abc' }), false)
+  assert.equal(podeEnviar({ fonte: 'pagina', confirmou: true, texto: 'abc' }), true)
+  assert.equal(podeEnviar({ fonte: 'selecao', confirmou: false, texto: 'abc' }), true)
+  assert.equal(podeEnviar({ fonte: 'selecao', confirmou: true, texto: '  ' }), false)
+  assert.equal(podeEnviar({ fonte: 'pagina', confirmou: true, texto: '' }), false)
+})
+
+test('origemDoTexto: só com seleção a origem segue na consulta', () => {
+  const o = { eproc: '1', instancia: '1g' }
+  assert.equal(origemDoTexto('selecao', o), o)
+  assert.equal(origemDoTexto('pagina', o), undefined)
+  assert.equal(origemDoTexto('selecao', undefined), undefined)
 })

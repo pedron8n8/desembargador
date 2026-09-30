@@ -1,7 +1,7 @@
 import { ErroEproc, type TipoErro } from '../../agente/lib/erros.ts'
-import type { TextoLido } from '../../agente/lib/texto.ts'
+import type { FonteDoTexto, TextoLido } from '../../agente/lib/texto.ts'
 
-export type { TextoLido }
+export type { FonteDoTexto, TextoLido }
 
 const ERROS: Record<TipoErro, true> = {
   NAO_LOGADO: true, CAPTCHA: true, LAYOUT: true, EPROC_FORA: true, SIGILOSO: true, SEM_ABA_EPROC: true,

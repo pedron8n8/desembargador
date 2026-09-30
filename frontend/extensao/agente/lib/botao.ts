@@ -24,6 +24,16 @@ const CSS =
   'button{font:13px system-ui,sans-serif;padding:8px 12px;border:0;border-radius:2px;background:#2f4a3f;color:#faf8f4;cursor:pointer;opacity:.92}' +
   'button:hover{opacity:1}'
 
+/**
+ * O service worker só abre o painel a pedido dos NOSSOS content scripts: mesma extensão
+ * (remetente.id) e vindo de uma aba. Devolve o tabId, ou null se o pedido não vale.
+ */
+export function abaDoPedidoDeAbrir(msg: unknown, remetente: { id?: string; tab?: { id?: number } }, idProprio: string): number | null {
+  const tabId = remetente.tab?.id
+  const tipo = (msg as { tipo?: unknown } | null)?.tipo
+  return remetente.id === idProprio && tipo === 'abrir_painel' && tabId !== undefined ? tabId : null
+}
+
 /** Cria o botão uma única vez. Devolve false se já existia ou se a página ainda não tem corpo. */
 export function montarBotao(doc: DocMinimo, aoClicar: () => void): boolean {
   if (!doc.body || doc.getElementById(ID_BOTAO)) return false

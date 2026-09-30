@@ -21,6 +21,11 @@ if (!g.__agenteEprocSegundoCerebro) {
   })
   // Botão flutuante que abre o painel lateral (o service worker faz o sidePanel.open).
   montarBotao(document, () => {
-    chrome.runtime.sendMessage({ tipo: 'abrir_painel' }).catch(() => {})
+    // Pode lançar de forma síncrona ('Extension context invalidated', extensão recarregada).
+    try {
+      chrome.runtime.sendMessage({ tipo: 'abrir_painel' }).catch(() => {})
+    } catch {
+      // sem extensão viva não há painel para abrir
+    }
   })
 }

@@ -1,3 +1,4 @@
+import { abaDoPedidoDeAbrir } from './agente/lib/botao.ts'
 // Só isto. Quem orquestra é o painel (ver spec, "Arquitetura"): ele fica vivo
 // enquanto aberto, e o service worker morre depois de ~30 s ocioso.
 const abrirNoClique = () =>
@@ -9,8 +10,6 @@ chrome.runtime.onInstalled.addListener(abrirNoClique)
 // pedido dos NOSSOS content scripts, e sem `await` antes: sidePanel.open precisa rodar no
 // mesmo turno do gesto do usuário (o clique).
 chrome.runtime.onMessage.addListener((msg, remetente) => {
-  const tabId = remetente.tab?.id
-  if (remetente.id === chrome.runtime.id && msg?.tipo === 'abrir_painel' && tabId !== undefined) {
-    chrome.sidePanel.open({ tabId }).catch(() => {})
-  }
+  const tabId = abaDoPedidoDeAbrir(msg, remetente, chrome.runtime.id)
+  if (tabId !== null) chrome.sidePanel.open({ tabId }).catch(() => {})
 })
